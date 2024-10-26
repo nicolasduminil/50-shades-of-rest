@@ -1,6 +1,7 @@
 package fr.simplex_software.fifty_shades_of_rest.async_clients.java8.tests;
 
 import fr.simplex_software.fifty_shades_of_rest.async_clients.java8.*;
+import fr.simplex_software.fifty_shades_of_rest.common_tests.*;
 import io.quarkus.test.common.http.*;
 import io.quarkus.test.junit.*;
 import jakarta.ws.rs.client.*;
@@ -17,14 +18,13 @@ import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestBlockingJava8CurrentTimeResource
+public class TestBlockingJava8CurrentTimeResource extends BaseRestAssured
 {
   private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
   private static final String ENCODED = URLEncoder.encode("Europe/Kaliningrad", StandardCharsets.UTF_8);
   @TestHTTPEndpoint(CurrentTimeResource.class)
   @TestHTTPResource
   URL timeSrvUrl;
-  private URI timeSrvUri;
 
   @BeforeAll
   public void beforeAll() throws URISyntaxException

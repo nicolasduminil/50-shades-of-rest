@@ -1,6 +1,6 @@
-package fr.simple_software.fifty_shades_of_rest.classic.tests;
+package fr.simplex_software.fifty_shades_of_rest.async_clients.jaxrs20.tests;
 
-import fr.simplex_software.fifty_shades_of_rest.classic.*;
+import fr.simplex_software.fifty_shades_of_rest.async_clients.jaxrs20.*;
 import fr.simplex_software.fifty_shades_of_rest.common_tests.*;
 import io.quarkus.test.common.http.*;
 import io.quarkus.test.junit.*;
@@ -11,7 +11,6 @@ import java.net.*;
 import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestCurrentTimeResource extends BaseRestAssured
 {
   @TestHTTPEndpoint(CurrentTimeResource.class)

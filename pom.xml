@@ -13,6 +13,7 @@
     <module>classic</module>
     <module>async-clients</module>
     <module>base-resources</module>
+    <module>common-tests</module>
   </modules>
   <properties>
     <maven.compiler.source>21</maven.compiler.source>
@@ -44,6 +45,13 @@
         <groupId>fr.simplex-software.workshop</groupId>
         <artifactId>base-resources</artifactId>
         <version>1.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>fr.simplex-software.workshop</groupId>
+        <artifactId>common-tests</artifactId>
+        <version>1.0-SNAPSHOT</version>
+        <type>test-jar</type>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.assertj</groupId>

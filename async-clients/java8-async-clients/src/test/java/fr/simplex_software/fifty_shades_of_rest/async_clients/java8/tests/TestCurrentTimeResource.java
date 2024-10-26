@@ -1,6 +1,6 @@
-package fr.simple_software.fifty_shades_of_rest.classic.tests;
+package fr.simplex_software.fifty_shades_of_rest.async_clients.java8.tests;
 
-import fr.simplex_software.fifty_shades_of_rest.classic.*;
+import fr.simplex_software.fifty_shades_of_rest.async_clients.java8.*;
 import fr.simplex_software.fifty_shades_of_rest.common_tests.*;
 import io.quarkus.test.common.http.*;
 import io.quarkus.test.junit.*;

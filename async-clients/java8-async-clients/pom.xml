@@ -10,6 +10,14 @@
   </parent>
   <artifactId>java8-async-clients</artifactId>
   <name>50 Shades of REST :: the Java 8 async clients module</name>
+  <dependencies>
+    <dependency>
+      <groupId>fr.simplex-software.workshop</groupId>
+      <artifactId>common-tests</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
   <build>
     <plugins>
       <plugin>

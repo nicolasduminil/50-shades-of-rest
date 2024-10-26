@@ -5,11 +5,11 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>fr.simplex-software.workshop</groupId>
-    <artifactId>async-clients</artifactId>
+    <artifactId>50-shades-of-rest</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>jaxrs21-async-clients</artifactId>
-  <name>50 Shades of REST :: the JAX-RS 2.1 async clients module</name>
+  <artifactId>common-tests</artifactId>
+  <name>50 Shades of REST :: the common tests module</name>
   <dependencies>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -30,8 +30,16 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>io.quarkus.platform</groupId>
-        <artifactId>quarkus-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

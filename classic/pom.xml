@@ -48,6 +48,11 @@
       <artifactId>base-resources</artifactId>
     </dependency>
     <dependency>
+      <groupId>fr.simplex-software.workshop</groupId>
+      <artifactId>common-tests</artifactId>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>
       <scope>test</scope>
