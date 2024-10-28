@@ -10,9 +10,9 @@ public interface CurrentTimeResourceClient
 {
   @GET
   @Produces(MediaType.TEXT_PLAIN)
-  public String getCurrentDateAndTimeAtDefaultZone();
+  String getCurrentDateAndTimeAtDefaultZone();
   @GET
   @Path("{zoneId}")
   @Produces(MediaType.TEXT_PLAIN)
-  public String getCurrentDateAndTimeAtZone(@PathParam("zoneId") String zoneId);
+  String getCurrentDateAndTimeAtZone(@PathParam("zoneId") String zoneId);
 }

@@ -105,7 +105,219 @@ fastidious, this is also error-prone. This is where the unit testing becomes ver
 important.
 
 With Quarkus, unit testing has never been so easy. The `quarkus-junit5` extension
-is required, as well as annotating your test classes with `@QuarkusTest`.
+is required, as well as annotating your test classes with `@QuarkusTest`. All the
+more so Quarkus integrates with [RESTassured](https://github.com/rest-assured/rest-assured),
+a very well-known Java DSL (*Domain Specific Language*) for testing.
+
+Bur REST is vast field and, hence, other test packages and libraries are used
+since years. Accordingly, while testing Quarkus REST endpoints with RESTassured
+becomes a formality, we cannot limit ourselves to only these kind of tests, and
+we need to cover the full spectrum.
+
+Consequently, we provide the following test categories with the endpoints samples:
+
+  - RESTassured tests, as discussed above;
+  - Eclipse MP REST Client tests. We already mentioned that in one of the preceding paragraphs, Eclipse MP (MicroProfile) is a relatively new project of the Eclipse Foundation which aims at optimizing the enterprise grade microservices architecture. As such, it defines a number of standards, one of which most important is REST Client, that dramatically simplifies the REST clients architecture.
+  - Jakarta REST clients. Jakarta REST specifications, formerly JAX-RS, define a standard mechanism to invoke REST services. We're using it, among others, for tests purposes.
+  - Java 11 HTTP Client. In its 11th release back in 2023, Java offers a new HTTP client API that might equally be used for test purposes.
+
+All these test categories are integrated, of course, with JUnit 5. Let's have now a look at them all. 
+
+### The RESTassured tests
+
+This is probably the simplest and the most practical way to test REST endpoints.
+The listing below shows an example.
+
+    @QuarkusTest
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    public class TestCurrentTimeResource extends BaseRestAssured
+    {
+      @TestHTTPEndpoint(CurrentTimeResource.class)
+      @TestHTTPResource
+      URL timeSrvUrl;
+
+      @BeforeAll
+      public void beforeAll() throws URISyntaxException
+      {
+        timeSrvUri = timeSrvUrl.toURI();
+        assertThat(timeSrvUri).isNotNull();
+      }
+
+      @AfterAll
+      public void afterAll()
+      {
+        timeSrvUri = null;
+      }
+    }
+
+In order to factorize the common behaviour of the RESTassured based unit tests and
+to minimize the amount of the boilerplate code, we defined a based class called
+`BaseRestAssured` that contains recurrent in these tests. Hence, our test above 
+extends this class.
+
+The annotation `@QuarkusTest` which decorates this code is used to flag it as a
+Quarkus unit test. The other annotation at the class level, `@TestInstance`, is
+a JUnit 5 annotation, not a Quarkus one, and it aims at switching to the "class 
+mode", from the default "method mode" of running tests. In "class mode" the JUnit
+5 test executor is set such that to run all the test methods on the same class
+instance, as opposed to the default "method mode" where each test is executed on 
+its own class instance. The "class mode" has also the side effect of making 
+possible to declare the methods `@BeforeAll` and `@AfterAll` as non static.
+
+These methods are also JUnit 5 annotations, not Quarkus ones, and they are 
+executed once, before and, respectively, after all the tests were run. Here we need
+to handle the non static property `timeSrvUri` in the `@BeforeAll` method, meaning
+that this method should be non static as well, hence the use of the annotation.
+
+The couple of annotations `TestHTTPEndpoint` and `TestHTTPResource` are specific
+Quarkus annotations and their role here is to capture the base URL of the endpoint
+under the test. A Quarkus unit test will start a local HTTP server, running the
+REST service defined in the current project. But if the host on which this HTTP
+server runs will always be `localhost`, the TCP port on which the HTTP listener
+is listening, which default value is 8081, might be random. Hence, it's the role
+of this couple of annotations to capture this information.
+
+In our case, the `timeSrvUrl` property of type `URL` will have the value 
+`http://localhost:<port-number>/time`, where `<port-number>` is the TCP port
+number randomly allocated by Quarkus upon running the test HTTP server. This URL
+corresponds to the one of the REST service defined in this project, by the class
+`CurrentTimeResource`, passed as a parameter to the `TestHTTPEndpoint` annotation.
+
+Now, the code of the base class `BaseRestAssured` is shown below:
+
+    public class BaseRestAssured
+    {
+      private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
+      protected URI timeSrvUri;
+
+      @Test
+      public void testCurrentTime()
+      {
+        Response response = given().when().get(timeSrvUri);
+        assertThat(response.statusCode()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(LocalDateTime.parse(response.prettyPrint(), 
+          DateTimeFormatter.ofPattern(FMT)))
+            .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
+    }
+
+    @Test
+    public void testCurrentTimeWithZoneId()
+    {
+      Response response = given().baseUri(timeSrvUri.toString())
+       .pathParam("zoneId", URLEncoder.encode("Europe/Kaliningrad", StandardCharsets.UTF_8))
+       .when().get("{zoneId}");
+      assertThat(response.statusCode()).isEqualTo(HttpStatus.SC_OK);
+      assertThat(response.getBody()).isNotNull();
+      assertThat(LocalDateTime.parse(response.prettyPrint(), 
+        DateTimeFormatter.ofPattern(FMT)))
+        .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
+    }
+
+The RESTassured syntax, in the most authentic DSL style, is clear and explicit. 
+It leverages the "given-when" statements borrowed from the functional test notations
+and, for this reason, is easy understandable. For example `given().when().get(timeSrvUri)`
+sends a GET request to the endpoint which value is stored by the `timSrvUri` 
+property. When a path parameter is required, for example, this becomes:
+
+    given().baseUri(...).pathParam("zoneId", ...).when().get("{zoneId}")
+
+Easy, right ? A bit more complicated is the assertion:
+
+    assertThat(LocalDateTime.parse(response.prettyPrint(), 
+      DateTimeFormatter.ofPattern(FMT)))
+        .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
+
+We're using AssertJ, a library which complements JUnit 5 with more explicit 
+assertions. Here we assert that the date and time returned by our endpoint
+is less than 1 hour closed to the local date and time.
+
+### The MP REST Client tests
+
+MP REST Client is a specification which complements Jakarta REST 2.1 and provides
+a type-safe approach to invoke REST endpoints on HTTP. RESTeasy, as the
+REST engine used by Quarkus, implements this specification via the `quarkus-rest-client`
+extension. Also, a 2nd extension is required to provide support for JSON marshalling
+and unmarshalling operations and here we have the choice between using [Jackson](https://github.com/FasterXML/jackson),
+an open-source library supported by the community, or the standard Jakarta JSON Binding
+(formerly JSON-B). We choose the standard, of course, hence the 
+`quarkus-rest-client-jsonb` extension.
+
+This having been said, using MP REST Client with Quarkus is as simple as creating
+an interface matching the service's endpoints. If the service implements itself 
+an interface, which is generally the case, then this same interface should be 
+used for its clients. Let's see how things are working in our specific case.
+
+The following interface is located in the `classic` directory of the GitHub 
+project:
+
+    @RegisterRestClient(configKey = "base_uri")
+    @Path("time")
+    public interface CurrentTimeResourceClient
+    {
+      @GET
+      @Produces(MediaType.TEXT_PLAIN)
+      String getCurrentDateAndTimeAtDefaultZone();
+      @GET
+      @Path("{zoneId}")
+      @Produces(MediaType.TEXT_PLAIN)
+      String getCurrentDateAndTimeAtZone(@PathParam("zoneId") String zoneId);
+    }
+
+This is the interface that exposes the `CurrentTimeResource` REST service that 
+we've seen previously in this chapter. The only new element is the annotation
+`@RegisterRestClient` which signals to the Quarkus compile time that the given
+interface is meant for being injected as a CDI (*Context and Dependencies Injection*)
+component. The other annotations are the old good JAX-RS ones, renamed now as 
+Jakarta REST.
+
+And that's all ! At the compile time, the Quarkus REST processor performs a step
+named "augmentation", during which it will generate the byte-code associated to the
+REST client. Accordingly, in order to test a REST service, all that the unit test
+needs to do is to inject the generated REST client via its interface, and to call
+the endpoints. Look at the following listing:
+
+    @QuarkusTest
+    public class TestCurrentTimeResourceMpClient
+    {
+      @Inject
+      @RestClient
+      CurrentTimeResourceClient currentTimeResourceClient;
+      private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
+
+      @Test
+      public void testCurrentTime()
+      {
+        assertThat(LocalDateTime.parse(currentTimeResourceClient
+         .getCurrentDateAndTimeAtDefaultZone(), DateTimeFormatter.ofPattern(FMT)))
+           .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
+      }
+
+      @Test
+      public void testCurrentTimeWithZoneId()
+      {
+        assertThat(LocalDateTime.parse(currentTimeResourceClient
+         .getCurrentDateAndTimeAtDefaultZone(), DateTimeFormatter.ofPattern(FMT)))
+           .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
+      }
+    }
+
+As you can see, the annotation `@RestClient` injects the service's interface and
+all that remains to do is to call the associated endpoints against that interface.
+
+The sharp-eyed reader has probably observed that this unit test doesn't mention
+any URL. This is because the `application.properties` file located in the 
+`resources` directory contains the following property:
+
+    base_uri/mp-rest/url=http://localhost:8081
+
+It defines the default URL of the test HTTP server run by Quarkus. The name
+`base_uri` is the one used as the value of the argument `configKey` of the 
+`RegisterRestClient` annotation, as shown above.
+
+### Jakarta REST Client tests
+
+### Java 11 HTTP Server based tests
 
 The `classic` Maven project contains also two unit tests. They are decorated
 with the `@QuarkusTest` annotation and use the [RESTassured](https://github.com/rest-assured/rest-assured), a Java DSL 

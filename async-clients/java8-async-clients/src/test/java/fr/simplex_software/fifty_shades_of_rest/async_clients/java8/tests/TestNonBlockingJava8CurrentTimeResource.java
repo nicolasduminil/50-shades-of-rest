@@ -8,6 +8,9 @@ import org.junit.jupiter.api.*;
 
 import java.net.*;
 import java.nio.charset.*;
+import java.time.*;
+import java.time.format.*;
+import java.time.temporal.*;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.*;
@@ -21,6 +24,7 @@ public class TestNonBlockingJava8CurrentTimeResource
   @TestHTTPResource
   URL timeSrvUrl;
   private URI timeSrvUri;
+  private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
 
   @BeforeAll
   public void beforeAll() throws URISyntaxException
@@ -42,10 +46,22 @@ public class TestNonBlockingJava8CurrentTimeResource
     {
       Callback callback = new Callback();
       CompletableFuture.supplyAsync(() ->
-          client.target(timeSrvUri).request().async().get(callback))
+        {
+          client.target(timeSrvUri).request().async().get(callback);
+          try
+          {
+            return callback.getTime();
+          }
+          catch (InterruptedException e)
+          {
+            throw new RuntimeException(e);
+          }
+        })
+        .thenAccept(t -> assertThat(parseTime(t))
+          .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES)))
         .exceptionally(ex -> fail("""
-          ### NonBlockingJava8CurrentTimeResourceIT.testCurrentTime():\s"""
-          + ex.getMessage()));
+            ### NonBlockingJava8CurrentTimeResourceIT.testCurrentTime():""",
+          ex.getMessage()));
     }
   }
 
@@ -56,10 +72,28 @@ public class TestNonBlockingJava8CurrentTimeResource
     {
       Callback callback = new Callback();
       CompletableFuture.supplyAsync(() ->
-          client.target(timeSrvUri).path(ENCODED).request().async().get(callback))
+        {
+          client.target(timeSrvUri).path(ENCODED).request().async().get(callback);
+          try
+          {
+            return callback.getTime();
+          }
+          catch (InterruptedException e)
+          {
+            throw new RuntimeException(e);
+          }
+        })
+        .thenAccept(t -> assertThat(parseTime(t))
+          .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES)))
         .exceptionally(ex -> fail("""
-          ### NonBlockingJava8CurrentTimeResourceIT.testCurrentTimeWithZoneId():\s"""
-          + ex.getMessage()));
+            ### NonBlockingJava8CurrentTimeResourceIT.testCurrentTimeWithZoneId():""",
+          ex.getMessage()));
     }
+  }
+
+  private LocalDateTime parseTime(String time)
+  {
+    return OffsetDateTime.parse(time, DateTimeFormatter.ofPattern(FMT))
+      .atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
   }
 }
