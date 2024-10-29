@@ -50,7 +50,7 @@ public class TestBlockingAsyncCurrentTimeResource
     }
     catch (Exception ex)
     {
-      fail("### BlockingAsyncCurrentTimeResourceIT.testCurrentTime(): Unexpected exception %s", ex.getMessage());
+      fail("### TestBlockingAsyncCurrentTimeResource.testCurrentTime(): Unexpected exception %s", ex.getMessage());
     }
   }
 
@@ -66,7 +66,7 @@ public class TestBlockingAsyncCurrentTimeResource
     }
     catch (Exception ex)
     {
-      fail("### BlockingAsyncCurrentTimeResourceIT.testCurrentTimeWithZoneId(): Unexpected exception %s", ex.getMessage());
+      fail("### TestBlockingAsyncCurrentTimeResource.testCurrentTimeWithZoneId(): Unexpected exception %s", ex.getMessage());
     }
   }
 

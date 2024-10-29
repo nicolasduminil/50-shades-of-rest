@@ -317,62 +317,180 @@ It defines the default URL of the test HTTP server run by Quarkus. The name
 
 ### Jakarta REST Client tests
 
+The initial releases of the Jakarta REST specifications, named at that time 
+JAX-RS, didn't provide any provision for a specific API dedicated to clients and
+consumers. In order to invoke REST endpoints, the preferred way was to use the
+`java.net` package or the Apache HTTP Client library, which was quite difficult
+as none of these APIs weren't "REST aware", meaning that the marshalling and
+unmarshalling process was to be done manually.
+
+Starting with the 2.0 release of the specifications, this issue has been corrected
+as a new HTTP client API has been introduced. The different implementations of 
+the specifications were from the beginning proposing client APIs but they were 
+proprietary and using them would have the effect of the "vendor locked in"
+antipattern.
+
+The unit test class `TestCurrentTimeResouirceJakartaClient`, located in the `classic`
+directory of the GitHyb repository, illustrates the basics of this API:
+
+    @QuarkusTest
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    public class TestCurrentTimeResourceJakartaClient
+    {
+      ...
+      @Test
+      public void testTimeZoneResource()
+      {
+        try (Client client = ClientBuilder.newClient())
+        {
+          Response response = client.target(timeSrvUri).request().get();
+          assertThat(response).isNotNull();
+          assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+          assertThat(LocalDateTime.parse(response.readEntity(String.class), DateTimeFormatter.ofPattern(FMT)))
+           .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
+        }
+      }
+
+      @Test
+      public void testTimeZoneResourceWithTimeZone()
+      {
+        try (Client client = ClientBuilder.newClient())
+        {
+          Response response = client.target(timeSrvUri).path(URLEncoder.encode("Europe/Paris")).request().get();
+          assertThat(response).isNotNull();
+          assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+          assertThat(LocalDateTime.parse(response.readEntity(String.class), DateTimeFormatter.ofPattern(FMT)))
+           .isCloseTo(LocalDateTime.now(ZoneId.of("Europe/Paris")), byLessThan(1, ChronoUnit.HOURS));
+      }
+    }
+
+This unit test invokes GET requests on the two endpoints of our REST service. It
+uses the class `jakarta.ws.rs.Client` and it may do it in a try-with-resources 
+statement, as this class is an `AutoClosable`. The Jakarta REST Client API is
+designed too as a DSL. Hence, the `target()` verb allows to define the endpoint
+URL, while the `path()` one is used for path parameters. The result of the call
+is an instance of the class `jakarta.ws.rs.core.Response` and the verb `readEntity()`
+will extract from the response body the `String` instance containing the effective
+result.
+Please notice that the marshalling/unmarshalling operations are done automatically.
+Our REST service consumes and produces `TEXT_PLAIN` data which is the simplest 
+case of marshalling/unmarshalling, but would we have had endpoints consuming 
+XML or JSON data, this would have been highly facilitated by the automatic
+marshalling/unmarshalling provided by the API.
+
 ### Java 11 HTTP Server based tests
 
-The `classic` Maven project contains also two unit tests. They are decorated
-with the `@QuarkusTest` annotation and use the [RESTassured](https://github.com/rest-assured/rest-assured), a Java DSL 
-(*Domain Specific Language*) for testing. Running the Maven test phase will display the following result:
+Released in 2023, Java 11 LTS (*Long Term Support*) introduces the JEP 321 defining
+the new HTTP/2 API. Before that, the only way to invoke REST endpoints in a pure
+Java way, without external 3rd party libraries and APIs, was the use of the 
+`java.net.http.HttpClient` class. In addition to the HTTP/2 support, this new API
+brings also a WebSockets implementation and provides asynchronous processing via
+Java 8 `CompletableFuture` class hierarchy.
+
+The unit test class `TestCurrentTimeResouirceJava11Client`, located in the `classic`
+directory of the GitHyb repository, illustrates the basics of this API:
+
+    @QuarkusTest
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    public class TestCurrentTimeResourceJava11Client
+    {
+      ...
+
+      @Test
+      public void testTimeZoneResource() throws Exception
+      {
+        try (HttpClient httpClient = HttpClient.newHttpClient())
+        {
+          HttpRequest request = HttpRequest.newBuilder().uri(timeSrvUri).GET().build();
+          HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+          assertThat(response).isNotNull();
+          assertThat(response.statusCode()).isEqualTo(HttpStatus.SC_OK);
+          assertThat(LocalDateTime.parse(response.body(), DateTimeFormatter.ofPattern(FMT)))
+           .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
+        }
+      }
+
+    @Test
+    public void testTimeZoneResourceWithTimeZone() throws Exception
+    {
+      try (HttpClient httpClient = HttpClient.newHttpClient())
+      {
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(timeSrvUri + "/" + URLEncoder.encode("Europe/Paris"))).GET().build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        assertThat(response).isNotNull();
+        assertThat(response.statusCode()).isEqualTo(HttpStatus.SC_OK);
+        assertThat(LocalDateTime.parse(response.body(), DateTimeFormatter.ofPattern(FMT)))
+          .isCloseTo(LocalDateTime.now(ZoneId.of("Europe/Paris")), byLessThan(1, ChronoUnit.HOURS));
+      }
+    }
+
+This is a synchronous example, later in this text we will discuss several 
+asynchronous ones as well. The new HTTP Client API is based on the `HttpClient` 
+class, as you can see in the listing above. The class `HttpRequest` and its 
+`Builder` allows to construct specific HTTP requests, specifying headers, MIME
+types, etc. Then the `send()` method is used to perform the request, `GET()` in
+our case. The `HttpResponse.BodyHandlers.ofString()` statement in the example
+defines the type of the expected response, `String` a in our case.
+
+## Running the unit tests
+
+The `classic` Maven project contains 8 unit tests. Talking about testing, one
+final point is to consider the term of "unit test". Theoretically speaking, unit
+tests are tests performed in perfect isolation, without any interaction with other
+internal or external components or services. Mocking is the most common technique
+used in unit testing as placeholders for real actors.
+
+With Quarkus, we're speaking about a different kind of unit testing, something
+between unit and integration testing. Quarkus unit tests run a very light embedded
+Undertow web server on which the REST service under test is deployed. The readers
+coming from Spring Boot will recognize here a similar model, with some key 
+differences: 
+
+  1. Quarkus is built around a reactive core, which is fundamentally different from the traditional servlet-based model used by default in Spring Boot.
+  2. Quarkus's embedded Undertow server is more lightweight and optimized compared to Spring Boot's embedded Tomcat. 
+  3. Quarkus is designed to support compilation to native code using GraalVM, which can eliminate the need for an embedded Undertow.
+
+Nevertheless, running an embedded web server, be it a very light one, and deploying
+on it the REST service under test, is not exactly the definition of what a unit
+test does. Hence, the mention according to which Quarkus unit tests, like otherwise 
+Spring Boot tests or in-container Jakarta EE ones, are at the halfway between 
+unit and integration tests, makes sense. And they are neither full integration 
+tests, as Quarkus provides the annotation `@QuarkusIntegrationTest` for these 
+cases.
+
+Now, having clarified these theoretical points, running the Maven test phase will display the following result:
 
     [INFO] -------------------------------------------------------
     [INFO]  T E S T S
     [INFO] -------------------------------------------------------
-    [INFO] Running fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResourceIT
-    2024-10-13 01:38:24,185 INFO  [io.quarkus] (main) classic 1.0-SNAPSHOT on JVM (powered by Quarkus 3.15.1) started in 1.540s. Listening on: http://localhost:8081
-    2024-10-13 01:38:24,186 INFO  [io.quarkus] (main) Profile test activated.
-    2024-10-13 01:38:24,187 INFO  [io.quarkus] (main) Installed features: [cdi, rest, rest-client, rest-client-jsonb, rest-jsonb, smallrye-context-propagation, smallrye-openapi, swagger-ui, vertx]
-    13 Oct 2024, 01:38:24 +02:00 CEST
-    13 Oct 2024, 01:38:24 +02:00 EET
-    [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.811 s -- in fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResourceIT
-    2024-10-13 01:38:25,068 INFO  [io.quarkus] (main) classic stopped in 0.132s
+    [INFO] Running fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResource
+    2024-10-28 16:16:30,764 WARN  [io.qua.config] (main) Unrecognized configuration key "quarkus.rest-client-reactive.base_uri.url" was provided; it will be ignored; verify that the dependency extension for this configuration is set or that you did not make a typo
+    2024-10-28 16:16:31,215 INFO  [io.quarkus] (main) classic 1.0-SNAPSHOT on JVM (powered by Quarkus 3.15.1) started in 2.552s. Listening on: http://localhost:8081
+    2024-10-28 16:16:31,215 INFO  [io.quarkus] (main) Profile test activated.
+    2024-10-28 16:16:31,215 INFO  [io.quarkus] (main) Installed features: [cdi, reactive-routes, rest, rest-client, rest-client-jsonb, rest-jsonb, smallrye-context-propagation, smallrye-openapi, swagger-ui, vertx]
+    28 Oct 2024, 16:16:32 +01:00 CET
+    28 Oct 2024, 17:16:32 +02:00 EET
+    [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.075 s -- in fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResource
+    [INFO] Running fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResourceJakartaClient
+    [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.183 s -- in fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResourceJakartaClient
+    [INFO] Running fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResourceJava11Client
+    [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.172 s -- in fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResourceJava11Client
+    [INFO] Running fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResourceMpClient
+    [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.040 s -- in fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResourceMpClient
+    2024-10-28 16:16:33,012 INFO  [io.quarkus] (main) classic stopped in 0.181s
     [INFO]
     [INFO] Results:
     [INFO]
-    [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+    [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
     [INFO]
-    [INFO] ------------------------------------------------------------------------
-    [INFO] Reactor Summary for 50 Shades of REST :: The master POM 1.0-SNAPSHOT:
-    [INFO]
-    [INFO] 50 Shades of REST :: The master POM ................ SUCCESS [  0.002 s]
-    [INFO] 50 Shades of REST :: the classic module ............ SUCCESS [  5.475 s]
     [INFO] ------------------------------------------------------------------------
     [INFO] BUILD SUCCESS
     [INFO] ------------------------------------------------------------------------
-    [INFO] Total time:  6.201 s
-    [INFO] Finished at: 2024-10-13T01:38:25+02:00
+    [INFO] Total time:  12.485 s
+    [INFO] Finished at: 2024-10-28T16:16:33+01:00
     [INFO] ------------------------------------------------------------------------
 
-In addition, of these unit tests, a couple of integration tests are provided as 
-well. In order to demonstrate different test APIs available for REST services 
-testing, these integration tests use the Jakarta REST client instead of 
-RESTassured. The class `jakarta.ws.rs.client.ClientBuilder` is used here in order
-to instantiate the implementation of the `jakarta.ws.rs.client.Client` interface
-on the behalf of which the REST endpoints are called. Look carefully at the code 
-to see how `try-with-resource` statements are used.
-
-To run the integration tests, start first the Quarkus application by executing the
-*fast JAR* as you already did above, then run `mvn failsafe:integration-test`.
-A summary similar to the one for the unit tests will be shown, for example:
-
-    [INFO] -------------------------------------------------------
-    [INFO]  T E S T S
-    [INFO] -------------------------------------------------------
-    [INFO] Running fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResourceJakartaClient
-    2024-10-14 00:22:35,841 INFO  [io.quarkus] (main) classic 1.0-SNAPSHOT on JVM (powered by Quarkus 3.11.0) started in 1.579s. Listening on: http://localhost:8081
-    2024-10-14 00:22:35,843 INFO  [io.quarkus] (main) Profile test activated.
-    2024-10-14 00:22:35,843 INFO  [io.quarkus] (main) Installed features: [cdi, reactive-routes, rest, rest-client, rest-client-jsonb, rest-jsonb, smallrye-context-propagation, smallrye-openapi, swagger-ui, vertx]
-    [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.352 s -- in fr.simple_software.fifty_shades_of_rest.classic.tests.TestCurrentTimeResourceJakartaClient
-    2024-10-14 00:22:36,376 INFO  [io.quarkus] (main) classic stopped in 0.144s
-
+Here we can see that all the unit tests have been successfuly executed.
 
 ## The synchronous communication drawbacks
 

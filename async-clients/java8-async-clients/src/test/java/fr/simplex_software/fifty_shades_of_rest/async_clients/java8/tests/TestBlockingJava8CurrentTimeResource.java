@@ -47,8 +47,8 @@ public class TestBlockingJava8CurrentTimeResource extends BaseRestAssured
       CompletableFuture<String> timeFuture = CompletableFuture.supplyAsync(() ->
         client.target(timeSrvUri).request().get(String.class))
         .exceptionally(ex -> fail("""
-           ### BlockingJava8CurrentTimeResourceIT.testCurrentTime():\s"""
-          + ex.getMessage()));
+           ### TestBlockingJava8CurrentTimeResource.testCurrentTime():""",
+          ex.getMessage()));
       assertThat(parseTime(timeFuture.join())).isCloseTo(LocalDateTime.now(),
         byLessThan(1, ChronoUnit.MINUTES));
     }
@@ -62,8 +62,8 @@ public class TestBlockingJava8CurrentTimeResource extends BaseRestAssured
       CompletableFuture<String> timeFuture = CompletableFuture.supplyAsync(() ->
         client.target(timeSrvUri).path(ENCODED).request().get(String.class))
         .exceptionally(ex -> fail("""
-           ### BlockingJava8CurrentTimeResourceIT.testCurrentTimeWithZoneId():\s"""
-          + ex.getMessage()));
+           ### TestBlockingJava8CurrentTimeResource.testCurrentTimeWithZoneId():""",
+          ex.getMessage()));
       assertThat(parseTime(timeFuture.join())).isCloseTo(LocalDateTime.now(),
         byLessThan(1, ChronoUnit.MINUTES));
     }

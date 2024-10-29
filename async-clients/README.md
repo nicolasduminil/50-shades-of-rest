@@ -2,7 +2,7 @@
 
 There are two levels of asynchronous processing as far as REST services are concerned:
 
-  - the asynchronous client processing: in this scenario the consumer invokes an endpoint which returns immediately. Depending on the type of asynchronous invocation the return might be of type `Future`, `CompletionStage`, etc. But the operation didn't finish yet at the moment when the consumer call returns. Perhaps it did even start yet. In order to get the result, the consumer has different options, for example to do polling or to use callbacks and continuations.
+  - the asynchronous client processing: in this scenario the consumer invokes an endpoint and the invocation returns immediately. The endpoint itself might still be synchronous. Depending on the type of asynchronous invocation the return might be of type `Future`, `CompletionStage`, `CompletableFuture`, etc. But the operation didn't finish yet at the moment when the consumer call returns. Perhaps it did even start yet. In order to get the result, the consumer has different options, for example to do polling or to use callbacks and continuations.
   - the asynchronous server processing: in this scenario, the producer itself processes the request asynchronously.
 
 The two cases above may be combined such that to have asynchronous consumers 
@@ -57,13 +57,12 @@ service.
       }
       catch (Exception ex)
       {
-        fail("### BlockingAsyncCurrentTimeResourceIT.testCurrentTime(): Unexpected exception %s", ex.getMessage());
+        fail("### TestBlockingAsyncCurrentTimeResource.testCurrentTime(): Unexpected exception %s", ex.getMessage());
       }
     }
 
-This code may be found in the `/home/nicolas/50-shades-of-rest/async-clients
-/blocking-async-clients/` directory of the GitHub repository. Please notice the 
-`async()` verb in the request definition.
+This code may be found in the `async-clients/blocking-async-clients/` directory
+of the GitHub repository. Please notice the `async()` verb in the request definition.
 
 As you can see, this time the endpoint invocation doesn't return a `String`, 
 but a `Future<String>`, i.e a kind of promise that, once the operation completed,
@@ -152,9 +151,8 @@ So let's examine how to use these new classes in the Java 8 style.
 
 #### Blocking asynchronous consumers
 
-Have a look at the listing below, that you can found in the `/home/nicolas/
-50-shades-of-rest/async-clients/java8-async-clients/` directory of the GitHub 
-repository.
+Have a look at the listing below, that you can found in the `async-clients/java8
+-async-clients/` directory of the GitHub repository.
 
     @Test
     public void testCurrentTimeWithZoneId()
@@ -162,10 +160,10 @@ repository.
       try (Client client = ClientBuilder.newClient())
       {
         CompletableFuture<String> timeFuture = CompletableFuture.supplyAsync(() ->
-          client.target(TIME_SRV_URL).path(ENCODED).request().get(String.class))
+          client.target(timeSrvUrl).path(ENCODED).request().get(String.class))
           .exceptionally(ex -> fail("""
-             ### BlockingJava8CurrentTimeResourceIT.testCurrentTimeWithZoneId():\s"""
-             + ex.getMessage()));
+             ### TestBlockingJava8CurrentTimeResource.testCurrentTimeWithZoneId():""",
+             ex.getMessage()));
         assertThat(parseTime(timeFuture.join())).isCloseTo(LocalDateTime.now(),
           byLessThan(1, ChronoUnit.MINUTES));
       }
@@ -183,15 +181,16 @@ supplied task (the lambda function) will run on this separate thread. Since this
 is a blocking asynchronous endpoint invocation, we use the `join()` method in 
 order to wait for the task completion.
 
-To resume, this example is very similar to the one in `/home/nicolas/
-50-shades-of-rest/async-clients/jaxrs20-async-clients/`, with the only difference
-that it returns a `CompletableFuture` instead of a `Future`. Also, the `async()`
-method isn't anymore required when instantiating the JAX-RS client request.
+To resume, this example is very similar to the one in `async-clients/jaxrs20-
+async-clients/`, with the only difference that it returns a `CompletableFuture`
+instead of a `Future`. Also, the `async()` method isn't anymore required when 
+instantiating the JAX-RS client request.
 
 #### Non-Blocking asynchronous consumers
 
 The same similarities that we noticed above are also in effect as far as the 
-non-blocking asynchronous invocation are concerned. Here is a code fragment:
+non-blocking asynchronous invocation are concerned. Here is a code fragment from
+the class `TestNonBlockingAsyncTimeResource` found in the same directory:
 
     @Test
     public void testCurrentTimeWithZoneId()
@@ -200,10 +199,22 @@ non-blocking asynchronous invocation are concerned. Here is a code fragment:
       {
         Callback callback = new Callback();
         CompletableFuture.supplyAsync(() ->
-          client.target(TIME_SRV_URL).path(ENCODED).request().async().get(callback))
-          .exceptionally(ex -> fail("""
-            ### NonBlockingJava8CurrentTimeResourceIT.testCurrentTimeWithZoneId():
-            \s""" + ex.getMessage()));
+        {
+          client.target(timeSrvUri).path(ENCODED).request().async().get(callback);
+          try
+          {
+            return callback.getTime();
+          }
+          catch (InterruptedException e)
+          {
+            throw new RuntimeException(e);
+          }
+        })
+        .thenAccept(t -> assertThat(parseTime(t))
+        .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES)))
+        .exceptionally(ex -> fail("""
+          ### NonBlockingJava8CurrentTimeResourceIT.testCurrentTimeWithZoneId():""",
+           ex.getMessage()));
       }
     }
 
