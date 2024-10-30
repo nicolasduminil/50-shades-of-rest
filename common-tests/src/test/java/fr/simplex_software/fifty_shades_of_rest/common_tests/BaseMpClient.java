@@ -1,9 +1,5 @@
-package fr.simple_software.fifty_shades_of_rest.classic.tests;
+package fr.simplex_software.fifty_shades_of_rest.common_tests;
 
-import fr.simplex_software.fifty_shades_of_rest.classic.*;
-import io.quarkus.test.junit.*;
-import jakarta.inject.*;
-import org.eclipse.microprofile.rest.client.inject.*;
 import org.junit.jupiter.api.*;
 
 import java.time.*;
@@ -12,15 +8,11 @@ import java.time.temporal.*;
 
 import static org.assertj.core.api.Assertions.*;
 
-@QuarkusTest
-public class TestCurrentTimeResourceMpClient
+public abstract class BaseMpClient
 {
-  @Inject
-  @RestClient
-  CurrentTimeResourceClient currentTimeResourceClient;
-  private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
+  protected static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
 
-  @Test
+  /*@Test
   public void testCurrentTime()
   {
     assertThat(LocalDateTime.parse(currentTimeResourceClient
@@ -35,4 +27,6 @@ public class TestCurrentTimeResourceMpClient
       .getCurrentDateAndTimeAtZone("Europe/Paris"), DateTimeFormatter.ofPattern(FMT)))
       .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
   }
+
+  protected abstract CurrentTimeResourceClient currentTimeResourceClient();*/
 }

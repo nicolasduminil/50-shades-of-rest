@@ -1,6 +1,6 @@
-package fr.simple_software.fifty_shades_of_rest.classic.tests;
+package fr.simplex_software.fifty_shades_of_rest.async_sevices.jaxrs20.tests;
 
-import fr.simplex_software.fifty_shades_of_rest.classic.*;
+import fr.simplex_software.fifty_shades_of_rest.async_services.jaxrs20.*;
 import io.quarkus.test.junit.*;
 import jakarta.inject.*;
 import org.eclipse.microprofile.rest.client.inject.*;
@@ -13,25 +13,25 @@ import java.time.temporal.*;
 import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
-public class TestCurrentTimeResourceMpClient
+public class TestNtpResourceAsyncJaxrs20WithMpClient
 {
   @Inject
   @RestClient
-  CurrentTimeResourceClient currentTimeResourceClient;
+  NtpResourceClient ntpResourceClient;
   private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
 
   @Test
   public void testCurrentTime()
   {
-    assertThat(LocalDateTime.parse(currentTimeResourceClient
-      .getCurrentDateAndTimeAtDefaultZone(), DateTimeFormatter.ofPattern(FMT)))
+    assertThat(LocalDateTime.parse(ntpResourceClient.getCurrentDateAndTimeAtDefaultZone(),
+      DateTimeFormatter.ofPattern(FMT)))
       .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
   }
 
   @Test
   public void testCurrentTimeWithZoneId()
   {
-    assertThat(LocalDateTime.parse(currentTimeResourceClient
+    assertThat(LocalDateTime.parse(ntpResourceClient
       .getCurrentDateAndTimeAtZone("Europe/Paris"), DateTimeFormatter.ofPattern(FMT)))
       .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
   }
