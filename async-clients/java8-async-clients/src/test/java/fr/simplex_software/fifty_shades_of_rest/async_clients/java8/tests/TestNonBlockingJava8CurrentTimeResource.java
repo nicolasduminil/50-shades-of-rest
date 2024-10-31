@@ -1,13 +1,13 @@
 package fr.simplex_software.fifty_shades_of_rest.async_clients.java8.tests;
 
 import fr.simplex_software.fifty_shades_of_rest.async_clients.java8.*;
+import fr.simplex_software.fifty_shades_of_rest.common_tests.*;
 import io.quarkus.test.common.http.*;
 import io.quarkus.test.junit.*;
 import jakarta.ws.rs.client.*;
 import org.junit.jupiter.api.*;
 
 import java.net.*;
-import java.nio.charset.*;
 import java.time.*;
 import java.time.format.*;
 import java.time.temporal.*;
@@ -17,14 +17,11 @@ import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestNonBlockingJava8CurrentTimeResource
+public class TestNonBlockingJava8CurrentTimeResource extends BaseRestAssured
 {
-  private static final String ENCODED = URLEncoder.encode("Europe/Kaliningrad", StandardCharsets.UTF_8);
   @TestHTTPEndpoint(CurrentTimeResource.class)
   @TestHTTPResource
-  URL timeSrvUrl;
-  private URI timeSrvUri;
-  private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
+  private URL timeSrvUrl;
 
   @BeforeAll
   public void beforeAll() throws URISyntaxException
@@ -40,12 +37,13 @@ public class TestNonBlockingJava8CurrentTimeResource
   }
 
   @Test
+  @Override
   public void testCurrentTime()
   {
     try (Client client = ClientBuilder.newClient())
     {
       Callback callback = new Callback();
-      CompletableFuture.supplyAsync(() ->
+      assertThat(parseTime(CompletableFuture.supplyAsync(() ->
         {
           client.target(timeSrvUri).request().async().get(callback);
           try
@@ -56,38 +54,29 @@ public class TestNonBlockingJava8CurrentTimeResource
           {
             throw new RuntimeException(e);
           }
-        })
-        .thenAccept(t -> assertThat(parseTime(t))
-          .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES)))
-        .exceptionally(ex -> fail("""
-            ### NonBlockingJava8CurrentTimeResourceIT.testCurrentTime():""",
-          ex.getMessage()));
+        }).join())).isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES));
     }
   }
 
   @Test
+  @Override
   public void testCurrentTimeWithZoneId()
   {
     try (Client client = ClientBuilder.newClient())
     {
       Callback callback = new Callback();
-      CompletableFuture.supplyAsync(() ->
+      assertThat(parseTime(CompletableFuture.supplyAsync(() ->
+      {
+        client.target(timeSrvUri).path(ENCODED).request().async().get(callback);
+        try
         {
-          client.target(timeSrvUri).path(ENCODED).request().async().get(callback);
-          try
-          {
-            return callback.getTime();
-          }
-          catch (InterruptedException e)
-          {
-            throw new RuntimeException(e);
-          }
-        })
-        .thenAccept(t -> assertThat(parseTime(t))
-          .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES)))
-        .exceptionally(ex -> fail("""
-            ### NonBlockingJava8CurrentTimeResourceIT.testCurrentTimeWithZoneId():""",
-          ex.getMessage()));
+          return callback.getTime();
+        }
+        catch (InterruptedException e)
+        {
+          throw new RuntimeException(e);
+        }
+      }).join())).isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES));
     }
   }
 

@@ -1,13 +1,13 @@
 package fr.simplex_software.fifty_shades_of_rest.async_clients.jaxrs20.tests;
 
 import fr.simplex_software.fifty_shades_of_rest.async_clients.jaxrs20.*;
+import fr.simplex_software.fifty_shades_of_rest.common_tests.*;
 import io.quarkus.test.common.http.*;
 import io.quarkus.test.junit.*;
 import jakarta.ws.rs.client.*;
 import org.junit.jupiter.api.*;
 
 import java.net.*;
-import java.nio.charset.*;
 import java.time.*;
 import java.time.format.*;
 import java.time.temporal.*;
@@ -17,14 +17,11 @@ import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestBlockingAsyncCurrentTimeResource
+public class TestBlockingAsyncCurrentTimeResource extends BaseRestAssured
 {
-  private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
-  private static final String ENCODED = URLEncoder.encode("Europe/Kaliningrad", StandardCharsets.UTF_8);
   @TestHTTPEndpoint(CurrentTimeResource.class)
   @TestHTTPResource
   URL timeSrvUrl;
-  private URI timeSrvUri;
 
   @BeforeAll
   public void beforeAll() throws URISyntaxException
@@ -40,6 +37,7 @@ public class TestBlockingAsyncCurrentTimeResource
   }
 
   @Test
+  @Override
   public void testCurrentTime()
   {
     try (Client client = ClientBuilder.newClient())
@@ -55,6 +53,7 @@ public class TestBlockingAsyncCurrentTimeResource
   }
 
   @Test
+  @Override
   public void testCurrentTimeWithZoneId()
   {
     try (Client client = ClientBuilder.newClient())

@@ -17,11 +17,12 @@ import static org.assertj.core.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BaseRestAssured
 {
-  private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
+  protected static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
+  protected static final String ENCODED = URLEncoder.encode("Europe/Kaliningrad", StandardCharsets.UTF_8);
   protected URI timeSrvUri;
 
   @Test
-  public void testCurrentTime()
+  public void testCurrentTime() throws InterruptedException
   {
     Response response = given().when().get(timeSrvUri);
     assertThat(response.statusCode()).isEqualTo(HttpStatus.SC_OK);

@@ -8,7 +8,6 @@ import jakarta.ws.rs.client.*;
 import org.junit.jupiter.api.*;
 
 import java.net.*;
-import java.nio.charset.*;
 import java.time.*;
 import java.time.format.*;
 import java.time.temporal.*;
@@ -20,11 +19,9 @@ import static org.assertj.core.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TestBlockingJava8CurrentTimeResource extends BaseRestAssured
 {
-  private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
-  private static final String ENCODED = URLEncoder.encode("Europe/Kaliningrad", StandardCharsets.UTF_8);
   @TestHTTPEndpoint(CurrentTimeResource.class)
   @TestHTTPResource
-  URL timeSrvUrl;
+  private URL timeSrvUrl;
 
   @BeforeAll
   public void beforeAll() throws URISyntaxException
@@ -40,6 +37,7 @@ public class TestBlockingJava8CurrentTimeResource extends BaseRestAssured
   }
 
   @Test
+  @Override
   public void testCurrentTime()
   {
     try (Client client = ClientBuilder.newClient())
@@ -55,6 +53,7 @@ public class TestBlockingJava8CurrentTimeResource extends BaseRestAssured
   }
 
   @Test
+  @Override
   public void testCurrentTimeWithZoneId()
   {
     try (Client client = ClientBuilder.newClient())
