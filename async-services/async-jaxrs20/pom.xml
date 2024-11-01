@@ -10,6 +10,12 @@
   </parent>
   <artifactId>async-jaxrs20</artifactId>
   <name>50 Shades of REST :: the JAX-RS 2.0 async service module</name>
+  <dependencies>
+    <dependency>
+      <groupId>fr.simplex-software.workshop</groupId>
+      <artifactId>base-resources</artifactId>
+    </dependency>
+  </dependencies>
   <build>
     <plugins>
       <plugin>

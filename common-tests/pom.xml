@@ -26,6 +26,10 @@
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>fr.simplex-software.workshop</groupId>
+      <artifactId>base-resources</artifactId>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
