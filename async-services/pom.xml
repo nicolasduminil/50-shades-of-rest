@@ -13,6 +13,7 @@
   <name>50 Shades of REST :: the async services master POM module</name>
   <modules>
     <module>async-jaxrs20</module>
+    <module>async-jaxrs21</module>
   </modules>
   <dependencies>
     <dependency>

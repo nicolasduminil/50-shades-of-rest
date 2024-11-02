@@ -8,6 +8,6 @@ import jakarta.ws.rs.core.*;
 @ApplicationScoped
 @Path("ntp-async")
 @Produces(MediaType.TEXT_PLAIN)
-public class NtpResource extends BaseNtpResource
+public class NtpResource extends BaseNtpResourceAsync
 {
 }

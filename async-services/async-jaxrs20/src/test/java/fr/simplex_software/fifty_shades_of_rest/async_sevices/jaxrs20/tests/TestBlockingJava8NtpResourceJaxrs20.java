@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestNonBlockingJava8NtpResource extends BaseNonBlockingJava8
+public class TestBlockingJava8NtpResourceJaxrs20 extends BaseBlockingJava8
 {
   @TestHTTPEndpoint(NtpResource.class)
   @TestHTTPResource

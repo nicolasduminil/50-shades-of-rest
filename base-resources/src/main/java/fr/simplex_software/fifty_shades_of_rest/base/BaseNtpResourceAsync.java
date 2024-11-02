@@ -12,13 +12,13 @@ import java.nio.charset.*;
 import java.time.*;
 import java.time.format.*;
 
-public class BaseNtpResource
+public class BaseNtpResourceAsync
 {
   private static final String TIME_SERVER = "time.google.com";
   private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
   private final NTPUDPClient ntpClient = new NTPUDPClient();
   private static InetAddress inetAddress;
-  private static final Logger LOG = LoggerFactory.getLogger(BaseNtpResource.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BaseNtpResourceAsync.class);
 
   @PostConstruct
   public void postConstruct() throws Exception
