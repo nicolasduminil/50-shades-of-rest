@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestBlockingJava8CurrentTimeResource extends BaseRestAssured
+public class TestBlockingJava8CurrentTimeResource extends BaseBlockingJava8
 {
   @TestHTTPEndpoint(CurrentTimeResource.class)
   @TestHTTPResource
@@ -34,38 +34,6 @@ public class TestBlockingJava8CurrentTimeResource extends BaseRestAssured
   public void afterAll()
   {
     timeSrvUri = null;
-  }
-
-  @Test
-  @Override
-  public void testCurrentTime()
-  {
-    try (Client client = ClientBuilder.newClient())
-    {
-      CompletableFuture<String> timeFuture = CompletableFuture.supplyAsync(() ->
-        client.target(timeSrvUri).request().get(String.class))
-        .exceptionally(ex -> fail("""
-           ### TestBlockingJava8CurrentTimeResource.testCurrentTime():""",
-          ex.getMessage()));
-      assertThat(parseTime(timeFuture.join())).isCloseTo(LocalDateTime.now(),
-        byLessThan(1, ChronoUnit.MINUTES));
-    }
-  }
-
-  @Test
-  @Override
-  public void testCurrentTimeWithZoneId()
-  {
-    try (Client client = ClientBuilder.newClient())
-    {
-      CompletableFuture<String> timeFuture = CompletableFuture.supplyAsync(() ->
-        client.target(timeSrvUri).path(ENCODED).request().get(String.class))
-        .exceptionally(ex -> fail("""
-           ### TestBlockingJava8CurrentTimeResource.testCurrentTimeWithZoneId():""",
-          ex.getMessage()));
-      assertThat(parseTime(timeFuture.join())).isCloseTo(LocalDateTime.now(),
-        byLessThan(1, ChronoUnit.MINUTES));
-    }
   }
 
   private LocalDateTime parseTime(String time)

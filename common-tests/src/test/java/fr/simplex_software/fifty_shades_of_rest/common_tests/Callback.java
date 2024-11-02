@@ -1,7 +1,6 @@
-package fr.simplex_software.fifty_shades_of_rest.async_clients.java8.tests;
+package fr.simplex_software.fifty_shades_of_rest.common_tests;
 
 import jakarta.ws.rs.client.*;
-import jakarta.ws.rs.core.*;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;

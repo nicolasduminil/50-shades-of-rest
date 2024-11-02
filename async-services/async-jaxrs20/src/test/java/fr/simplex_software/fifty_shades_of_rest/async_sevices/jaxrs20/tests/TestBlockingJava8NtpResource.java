@@ -1,6 +1,6 @@
-package fr.simplex_software.fifty_shades_of_rest.async_clients.java8.tests;
+package fr.simplex_software.fifty_shades_of_rest.async_sevices.jaxrs20.tests;
 
-import fr.simplex_software.fifty_shades_of_rest.async_clients.java8.*;
+import fr.simplex_software.fifty_shades_of_rest.async_services.jaxrs20.*;
 import fr.simplex_software.fifty_shades_of_rest.common_tests.*;
 import io.quarkus.test.common.http.*;
 import io.quarkus.test.junit.*;
@@ -12,9 +12,9 @@ import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class TestNonBlockingJava8CurrentTimeResource extends BaseNonBlockingJava8
+public class TestBlockingJava8NtpResource extends BaseBlockingJava8
 {
-  @TestHTTPEndpoint(CurrentTimeResource.class)
+  @TestHTTPEndpoint(NtpResource.class)
   @TestHTTPResource
   private URL timeSrvUrl;
 
