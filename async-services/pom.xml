@@ -36,11 +36,6 @@
       <artifactId>quarkus-rest-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>commons-net</groupId>
-      <artifactId>commons-net</artifactId>
-      <version>3.9.0</version>
-    </dependency>
-    <dependency>
       <groupId>fr.simplex-software.workshop</groupId>
       <artifactId>common-tests</artifactId>
       <type>test-jar</type>

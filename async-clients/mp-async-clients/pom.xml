@@ -10,4 +10,12 @@
   </parent>
   <artifactId>mp-async-clients</artifactId>
   <name>50 Shades of REST :: the MP REST Client async module</name>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.quarkus.platform</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 </project>
