@@ -14,6 +14,7 @@
   <modules>
     <module>async-jaxrs20</module>
     <module>async-jaxrs21</module>
+    <module>async-reactive</module>
   </modules>
   <dependencies>
     <dependency>
