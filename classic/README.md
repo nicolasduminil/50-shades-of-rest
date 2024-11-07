@@ -36,7 +36,7 @@ determines the HTTP method (for example GET, POST, etc.) as well as the path and
 the request's body. If HTTP filters or interceptors are present, then they will 
 be executed, after which the endpoint aimed at processing the request will be 
 looked up. Once this endpoint found, it will be invoked, the request is processed
-and the result captured in a HTTP response that will be sent back to the consumer.
+and the result is captured in a HTTP response that will be sent back to the consumer.
 
 As we can see, the described process is eminently synchronous. It implies that 
 the same single thread is used for the entire request processing lifetime. This
@@ -45,7 +45,7 @@ REST service example which leverages this pattern.
 
 ## A simple REST service
 
-In the `/50-shades-of-rest/classic/` directory of the GitHub repository you'll
+In the `classic/` directory of the GitHub repository you'll
 find a simple Quarkus application which exposes a REST service having two endpoints,
 as follows:
 
@@ -76,10 +76,11 @@ follows:
     $ cd classic
     $ mvn clean package
     $ java -jar target/quarkus-app/quarkus-run.jar
+<p style="text-align: center;">Listing 2.2: Running a Quarkus application as a Fast JAR</p>
 
 Once that the Quarkus application has started, be it in dev mode or running the 
-*fast JAR*, you have to fire your preferred browser at the service's endpoints,
-as show below:
+*fast JAR*, you may either fire your preferred browser at one of the service's endpoints,
+or use the `curl` command, as show below:
 
     $ curl http://localhost:8080/time && echo
     13 Oct 2024, 00:33:49 +02:00 CEST
@@ -87,12 +88,14 @@ as show below:
     13 Oct 2024, 01:35:59 +03:00 MSK
     $ curl http://localhost:8080/time/America%2FNew_York && echo
     12 Oct 2024, 18:31:47 -04:00 EDT
+<p style="text-align: center;">Listing 2.3: Testing with curl</p>
 
 Another practical way to test this service is using Swagger UI. Just fire your
 browser at `http://localhost:8080/s/swagger-ui/` and you'll be presented with 
 the following screen:
 
 ![](swagger-ui.png)
+<p style="text-align: center;">Figure 2.1: Testing with Swagger UI</p>
 
 Here you can test the endpoints by clicking on the `GET` button and, then, 
 selecting `Try out`.
@@ -117,7 +120,7 @@ we need to cover the full spectrum.
 Consequently, we provide the following test categories with the endpoints samples:
 
   - RESTassured tests, as discussed above;
-  - Eclipse MP REST Client tests. We already mentioned that in one of the preceding paragraphs, Eclipse MP (MicroProfile) is a relatively new project of the Eclipse Foundation which aims at optimizing the enterprise grade microservices architecture. As such, it defines a number of standards, one of which most important is REST Client, that dramatically simplifies the REST clients architecture.
+  - Eclipse MP REST Client tests. Eclipse MP (MicroProfile) is a relatively new project of the Eclipse Foundation which aims at optimizing the enterprise grade microservices architecture. As such, it defines a number of standards, one of which most important is REST Client, that dramatically simplifies the REST clients architecture.
   - Jakarta REST clients. Jakarta REST specifications, formerly JAX-RS, define a standard mechanism to invoke REST services. We're using it, among others, for tests purposes.
   - Java 11 HTTP Client. In its 11th release back in 2023, Java offers a new HTTP client API that might equally be used for test purposes.
 
@@ -149,6 +152,7 @@ The listing below shows an example.
         timeSrvUri = null;
       }
     }
+<p style="text-align: center;">Listing 2.4: Testing with RESTassured</p>
 
 In order to factorize the common behaviour of the RESTassured based unit tests and
 to minimize the amount of the boilerplate code, we defined a based class called
@@ -171,17 +175,18 @@ that this method should be non static as well, hence the use of the annotation.
 
 The couple of annotations `TestHTTPEndpoint` and `TestHTTPResource` are specific
 Quarkus annotations and their role here is to capture the base URL of the endpoint
-under the test. A Quarkus unit test will start a local HTTP server, running the
+under the test. A web Quarkus application is, intrinsically, an HTTP server, running the
 REST service defined in the current project. But if the host on which this HTTP
 server runs will always be `localhost`, the TCP port on which the HTTP listener
-is listening, which default value is 8081, might be random. Hence, it's the role
+is listening, which default value is 8080 or 8081, might be random. Hence, it's the role
 of this couple of annotations to capture this information.
 
 In our case, the `timeSrvUrl` property of type `URL` will have the value 
 `http://localhost:<port-number>/time`, where `<port-number>` is the TCP port
-number randomly allocated by Quarkus upon running the test HTTP server. This URL
-corresponds to the one of the REST service defined in this project, by the class
-`CurrentTimeResource`, passed as a parameter to the `TestHTTPEndpoint` annotation.
+number allocated by Quarkus upon running the test HTTP server
+and which default value is 8081. This URL
+is the one of to the REST service which class is passed as a parameter of the 
+`@TestHTTPEndpoint` annotation, in this case `CurrentTimeResource`.
 
 Now, the code of the base class `BaseRestAssured` is shown below:
 
@@ -213,6 +218,7 @@ Now, the code of the base class `BaseRestAssured` is shown below:
         DateTimeFormatter.ofPattern(FMT)))
         .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
     }
+<p style="text-align: center;">Listing 2.5: The base class for RESTassured tests</p>
 
 The RESTassured syntax, in the most authentic DSL style, is clear and explicit. 
 It leverages the "given-when" statements borrowed from the functional test notations
@@ -221,12 +227,14 @@ sends a GET request to the endpoint which value is stored by the `timSrvUri`
 property. When a path parameter is required, for example, this becomes:
 
     given().baseUri(...).pathParam("zoneId", ...).when().get("{zoneId}")
+<p style="text-align: center;">Listing 2.6: Using the RESTassured DSL style to invoke endpoints</p>
 
 Easy, right ? A bit more complicated is the assertion:
 
     assertThat(LocalDateTime.parse(response.prettyPrint(), 
       DateTimeFormatter.ofPattern(FMT)))
         .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
+<p style="text-align: center;">Listing 2.7: Validation using AssertJ</p>
 
 We're using AssertJ, a library which complements JUnit 5 with more explicit 
 assertions. Here we assert that the date and time returned by our endpoint
@@ -234,12 +242,12 @@ is less than 1 hour closed to the local date and time.
 
 ### The MP REST Client tests
 
-MP REST Client is a specification which complements Jakarta REST 2.1 and provides
+MP REST Client is a specification which complements Jakarta REST and provides
 a type-safe approach to invoke REST endpoints on HTTP. RESTeasy, as the
 REST engine used by Quarkus, implements this specification via the `quarkus-rest-client`
 extension. Also, a 2nd extension is required to provide support for JSON marshalling
 and unmarshalling operations and here we have the choice between using [Jackson](https://github.com/FasterXML/jackson),
-an open-source library supported by the community, or the standard Jakarta JSON Binding
+an open-source library supported by the community, or the standard [Jakarta JSON Binding](https://jakarta.ee/specifications/jsonb/)
 (formerly JSON-B). We choose the standard, of course, hence the 
 `quarkus-rest-client-jsonb` extension.
 
@@ -263,10 +271,11 @@ project:
       @Produces(MediaType.TEXT_PLAIN)
       String getCurrentDateAndTimeAtZone(@PathParam("zoneId") String zoneId);
     }
+<p style="text-align: center;">Listing 2.8: The Eclipse MP REST Client interface</p>
 
 This is the interface that exposes the `CurrentTimeResource` REST service that 
 we've seen previously in this chapter. The only new element is the annotation
-`@RegisterRestClient` which signals to the Quarkus compile time that the given
+`@RegisterRestClient` which signals to Quarkus at compile time that the given
 interface is meant for being injected as a CDI (*Context and Dependencies Injection*)
 component. The other annotations are the old good JAX-RS ones, renamed now as 
 Jakarta REST.
@@ -301,6 +310,7 @@ the endpoints. Look at the following listing:
            .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS));
       }
     }
+<p style="text-align: center;">Listing 2.9: Using an Eclipse MP REST Client in JUnit tests</p>
 
 As you can see, the annotation `@RestClient` injects the service's interface and
 all that remains to do is to call the associated endpoints against that interface.
@@ -331,7 +341,7 @@ proprietary and using them would have the effect of the "vendor locked in"
 antipattern.
 
 The unit test class `TestCurrentTimeResouirceJakartaClient`, located in the `classic`
-directory of the GitHyb repository, illustrates the basics of this API:
+directory of the GitHub repository, illustrates the basics of this API:
 
     @QuarkusTest
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -363,6 +373,7 @@ directory of the GitHyb repository, illustrates the basics of this API:
            .isCloseTo(LocalDateTime.now(ZoneId.of("Europe/Paris")), byLessThan(1, ChronoUnit.HOURS));
       }
     }
+<p style="text-align: center;">Listing 2.9: Unit test with the JAX-RS 2.0 client</p>
 
 This unit test invokes GET requests on the two endpoints of our REST service. It
 uses the class `jakarta.ws.rs.Client` and it may do it in a try-with-resources 
@@ -383,7 +394,7 @@ marshalling/unmarshalling provided by the API.
 Released in 2023, Java 11 LTS (*Long Term Support*) introduces the JEP 321 defining
 the new HTTP/2 API. Before that, the only way to invoke REST endpoints in a pure
 Java way, without external 3rd party libraries and APIs, was the use of the 
-`java.net.http.HttpClient` class. In addition to the HTTP/2 support, this new API
+`java.net.http.HttpClient` class. In addition to the HTTP/2 support, the Java 11 new API
 brings also a WebSockets implementation and provides asynchronous processing via
 Java 8 `CompletableFuture` class hierarchy.
 
@@ -423,9 +434,9 @@ directory of the GitHyb repository, illustrates the basics of this API:
           .isCloseTo(LocalDateTime.now(ZoneId.of("Europe/Paris")), byLessThan(1, ChronoUnit.HOURS));
       }
     }
+<p style="text-align: center;">Listing 2.10: Unit test with Java 11 HTTP/2 API</p>
 
-This is a synchronous example, later in this text we will discuss several 
-asynchronous ones as well. The new HTTP Client API is based on the `HttpClient` 
+The new HTTP Client API is based on the `HttpClient` 
 class, as you can see in the listing above. The class `HttpRequest` and its 
 `Builder` allows to construct specific HTTP requests, specifying headers, MIME
 types, etc. Then the `send()` method is used to perform the request, `GET()` in
@@ -434,7 +445,7 @@ defines the type of the expected response, `String` a in our case.
 
 ## Running the unit tests
 
-The `classic` Maven project contains 8 unit tests. Talking about testing, one
+The `classic` Maven project contains several unit tests. Talking about testing, one
 final point is to consider the term of "unit test". Theoretically speaking, unit
 tests are tests performed in perfect isolation, without any interaction with other
 internal or external components or services. Mocking is the most common technique
@@ -489,6 +500,7 @@ Now, having clarified these theoretical points, running the Maven test phase wil
     [INFO] Total time:  12.485 s
     [INFO] Finished at: 2024-10-28T16:16:33+01:00
     [INFO] ------------------------------------------------------------------------
+<p style="text-align: center;">Listing 2.11: Running unit tests with Maven</p>
 
 Here we can see that all the unit tests have been successfuly executed.
 
@@ -515,7 +527,9 @@ and loses.
 ### A fault simulator
 
 The class `FaultSimulator` in the `failures` module of our Maven project performs
-the operations described above. Looking at the code, you can see the following
+the operations described above. It has been inspired by an example provided by 
+the book [Reactive Systems in Java](https://shorturl.at/CfQpq) by Clément Escoffier and Ken Finnigan.
+Looking at the code, you can see the following
 `enum` structure which defines all the failure types that can happen:
 
     private enum Fault
@@ -525,6 +539,7 @@ the operations described above. Looking at the code, you can see the following
       SERVICE_FAILURE,
       OUTBOUND_RESPONSE_LOSS
     }
+<p style="text-align: center;">Listing 2.12: The class Fault used to simulate HTTP failures</p>
 
 Here we have the following categories:
 
@@ -546,12 +561,14 @@ Quarkus application, in either dev mode or as a *fast JAR*, for example:
     $ cd classic
     $ mvn clean package
     $ java -jar target/quarkus-app/quarkus-run.jar
+<p style="text-align: center;">Listing 2.13: Runnin the Quarkus application as a Fast JAR</p>
 
 Then, use the `curl` command below in order to configure the `FaultSimulator` to 
 lose 50% of the incoming requests:
 
     curl http://localhost:8080/fail?failure=INBOUND_REQUEST_LOSS && echo
     Faults are enabled: fault = INBOUND_REQUEST_LOSS, failure rate = 0.5
+<p style="text-align: center;">Listing 2.14: Configuring FaultSimulator to lose 50% of trafic</p>
 
 Now let's test again our service endpoints `/time` and `/time/{zoneId}` as we 
 did previously:
@@ -560,6 +577,7 @@ did previously:
     13 Oct 2024, 17:27:00 +02:00 CEST
     $ curl --max-time 5 http://localhost:8080/time && echo
     curl: (28) Operation timed out after 5001 milliseconds with 0 bytes received
+<p style="text-align: center;">Listing 2.15: Producing INBOUND_REQUEST_LOSS failure</p>
 
 We've been lucky, in only two trials we managed to get a timeout after 5 
 seconds (the `--max-time` parameter) as if the HTTP request has never attended 
@@ -569,6 +587,7 @@ the producer. Now, let's try the 2nd type of failure:
     Faults are enabled: fault = SERVICE_FAILURE, failure rate = 0.5
     $ curl http://localhost:8080/time && echo
     FAULTY RESPONSE!
+<p style="text-align: center;">Listing 2.16: Producing SERVICE_FAILURE</p>
 
 Here again we've been lucky as we managed to get from the first try the faulty 
 response, showing that, this time, the request has successfully been received 
@@ -580,6 +599,7 @@ Last but not least:
     Faults are enabled: fault = OUTBOUND_RESPONSE_LOSS, failure rate = 0.5
     $ curl http://localhost:8080/time && echo
     curl: (52) Empty reply from server
+<p style="text-align: center;">Listing 2.17: Producing OUTBOUND_RESPONSE_LOSS failure</p>
 
 Now the network connection has been abruptly closed before the response reaches 
 the consumer.
@@ -600,6 +620,7 @@ outs, retries, etc. For example, the following `curl` command:
     Warning: Problem (retrying all errors). Will retry in 1 seconds. 100 retries
     Warning: left.
     13 Oct 2024, 18:01:32 +02:00 CEST
+<p style="text-align: center;">Listing 2.18: Gracefully handling synchronous communication</p>
 
 This command waits during maximum 5 seconds for a result and, failing that, it 
 exits on time-out. It will retry 100 times, every second or until success. And as

@@ -13,9 +13,9 @@ with the help of some examples.
 ## Asynchronously invoking REST services
 
 Asynchronous REST services consumers have been introduced with the 2.0 release
-of the JAX-RS specifications, back in 2011. The idea is simple: once the consumer
-has invoked a service endpoint, it doesn't wait for completion, instead it returns
-control immediately. But now the question is: how does the consumer get the 
+of the JAX-RS specifications, back in 2011. The idea is simple: the consumer
+invokes a service endpoint using a call statement that doesn't wait for completion, 
+instead it returns immediately. But now the question is: how does the consumer get the 
 response to its request ? And here purists classify the asynchronous invocation
 process in two categories:
 
@@ -57,11 +57,12 @@ service.
       }
       catch (Exception ex)
       {
-        fail("### TestBlockingAsyncCurrentTimeResource.testCurrentTime(): Unexpected exception %s", ex.getMessage());
+        fail("### TestBlockingAsyncCurrentTimeResource.testCurrentTime(): ...);
       }
     }
+<p style="text-align: center;">Listing 3.1: Using the JAX-RS 2.0 blocking client to asynchronously invoke endpoints</p>
 
-This code may be found in the `async-clients/blocking-async-clients/` directory
+This code may be found in the `async-clients/jaxrs20-async-clients/` directory
 of the GitHub repository. Please notice the `async()` verb in the request definition.
 
 As you can see, this time the endpoint invocation doesn't return a `String`, 
@@ -111,6 +112,7 @@ non-blocking way.
           Unexpected exception %s""", ex.getMessage());
       }
     }
+<p style="text-align: center;">Listing 3.2: Using the JAX-RS 2.0 non-blocking client to asynchronously invoke endpoints</p>
 
 We're still using the `async()` method to invoke our endpoint but, this time,
 the `get()` method won't take anymore the type of the expected result as its
@@ -168,6 +170,7 @@ Have a look at the listing below, that you can found in the `async-clients/java8
           byLessThan(1, ChronoUnit.MINUTES));
       }
     }
+<p style="text-align: center;">Listing 3.3: Using the Java 8 blocking client to asynchronously invoke endpoints</p>
 
 What you see here is that the endpoint invocation is done now using 
 `CompletableFuture.supplyAsync()` to which we provide the JAX-RS client request
@@ -217,6 +220,7 @@ the class `TestNonBlockingAsyncTimeResource` found in the same directory:
            ex.getMessage()));
       }
     }
+<p style="text-align: center;">Listing 3.4: Using the Java 8 non-blocking client to asynchronously invoke endpoints</p>
 
 If we didn't need to use the `async()` method in the previous example, here we 
 do as, otherwise, we cannot pass a `Callback` instance to our `get()` method.
@@ -258,6 +262,7 @@ its reuse. Here's the listing:
         return strTime;
       }
     }
+<p style="text-align: center;">Listing 3.5: The class Callback</p>
 
 Very few things have changed here, if any, compared to the preceding version.
 
@@ -298,6 +303,7 @@ on the same thread.
         .toCompletableFuture().join();
       }
     }
+<p style="text-align: center;">Listing 3.6 Using the JAX-RS 2.1 blocking client to asynchronously invoke endpoints</p>
 
 Here, the call to `join()` will block the current thread until the operation 
 completes.
@@ -325,6 +331,7 @@ Let's have a look now at the non-blocking asynchronous consumer:
           });
       }
     }
+<p style="text-align: center;">Listing 3.7 Using the JAX-RS 2.1 non-blocking client to asynchronously invoke endpoints</p>
 
 We have replaced the call to `thenAccept(...)` by `thenApply(...)`. Doing that,
 we don't wait anymore the task completion, as we did previously by calling 
