@@ -189,6 +189,12 @@ async-clients/`, with the only difference that it returns a `CompletableFuture`
 instead of a `Future`. Also, the `async()` method isn't anymore required when 
 instantiating the JAX-RS client request.
 
+> ** _NOTE:_ In order to reuse the same unit test scenarii in different subprojects 
+while avoiding the code duplication, a shared subproject named `common-tests` 
+has been provided. The class `BaseBlockingJava8` captures the code shown in the 
+Listing 3.3 above and becomes the base class of all the ones implementing the 
+same test strategy.
+
 #### Non-Blocking asynchronous consumers
 
 The same similarities that we noticed above are also in effect as far as the 
@@ -265,6 +271,13 @@ its reuse. Here's the listing:
 <p style="text-align: center;">Listing 3.5: The class Callback</p>
 
 Very few things have changed here, if any, compared to the preceding version.
+
+> ** _NOTE:_ In order to reuse the same unit test scenarii in different subprojects
+while avoiding the code duplication, a shared subproject named `common-tests`
+has been provided. The class `BaseNonBlockingJava8` captures the code shown in the
+Listing 3.4 above and becomes the base class of all the ones implementing the
+same test strategy.
+
 
 ### JAX-RS 2.1: Asynchronously invoking REST services
 
@@ -353,3 +366,177 @@ otherwise an `AssertionError` would have been raised. Accordingly, while non-blo
 calls are still possible with the JAX-RS 2.1 `rx()` flavour, they are more suitable
 for being integrated in larger asynchronous flows than in tests, where a terminal
 `join()` is at some point required.
+
+### Eclipse MicroProfile REST Client asynchronous consumers
+
+In the previous chapter we've already discussed the Eclipse MicroProfile specs 
+and, especially, the REST Client ones which facilitates the communication between
+REST producers and consumers, on HTTP. We've demonstrated how this communication
+works when synchrounous producers and consumers are used. Let's look now at how
+this same communication works with synchronous producers and asynchronous consumers.
+
+As you probably remember from the `classic` project, our MP REST Client was the
+interface `CurrentTimeResourceClient`, shown below:
+
+    ...
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    String getCurrentDateAndTimeAtDefaultZone();
+    @GET
+    @Path("{zoneId}")
+    @Produces(MediaType.TEXT_PLAIN)
+    String getCurrentDateAndTimeAtZone(@PathParam("zoneId") String zoneId);
+    ...
+<p style="text-align: center;">Listing 3.8 The synchronous MP REST Client interface</p>
+
+Now we're demonstrating how to use the same producer as before, but with an async
+consumer. Hence, our MP REST Client inteface becomes `TimeResourceMpClientAsync`
+in the `async-clients/mp-async-clients` project of the GitHub repository.
+
+    @RegisterRestClient(configKey = "base_uri")
+    @Path("time2")
+    public interface TimeResourceMpClientAsync
+    {
+      @GET
+      @Produces(MediaType.TEXT_PLAIN)
+      CompletionStage<String> getCurrentDateAndTimeAtDefaultZone();
+      @GET
+      @Path("{zoneId}")
+      @Produces(MediaType.TEXT_PLAIN)
+      CompletionStage<String> getCurrentDateAndTimeAtZone(@PathParam("zoneId") String zoneId);
+    }
+<p style="text-align: center;">Listing 3.9 The asynchronous MP REST Client interface</p>
+
+As you can see, our new MP REST Client interface doesn't return anymore directly
+the result, but a promise to this result as an instance of `CompletionStage<String>`.
+This new interface will be used by the Quarkus augmentation process, as explained
+previously, in order to generate a new asynchronous consumer for the same old 
+synchronous producer (only the base URL has been changed, from `time` to `time2`).
+And everything works like before, as you can notice by executing the command:
+
+    $ mvn -pl async-clients/mp-async-clients/ test
+<p style="text-align: center;">Listing 3.9 Running unit tests with Maven</p>
+
+Here above the `-pl` Maven option will first move to the project `mp-async-clients`
+project before execute the Maven test lifecycle. This is a convenient way to run
+only partially unit tests, in separate subprojects, avoiding this way to run all
+of them, which might be time-consuming.
+
+## Asynchronous REST producers
+
+In the preceding chapter we examined how to asynchronously invoke synchronous 
+REST services and we presented several examples to illustrate this process. Let's 
+now look at how these REST services could themselves asynchronously process the 
+incoming requests and produce responses. 
+
+Most of the requests processed by the most common REST services are short-lived 
+and, hence, the synchronous processing mode is very convenient in this case, 
+as a few hundreds users could call them, while getting relatively decent response
+times. Each incomming request is processed by a dedicated thread, meaning that a 
+few hundreds users will require a few hundreds threads. This model is known as 
+"one thread per connection".
+
+However, in more special cases, in FinTech applications, for example, 
+where each consumer request might result in a long-running operation, the associated
+threads and sockets would block indefinetly, doing nothing other than idling. 
+Then, having a few hundreds threads which don't do anything else than idling 
+means consuming a lots of the OS resources. This kind of application is very
+hard to scale.
+
+The "one thread by connection" processing model that we described here was imposed
+by the Servlet API specs on which the REST ones, like JAX-RS and now Jakarta REST,
+are based. But in 2009, the Servlet 3.0 specs introduced an asynchronous API that 
+allow for suspending on the server side the current request and handling it by 
+a separate thread, other than the calling one. For the long-running applications
+described above, this meant that a small handfull of threads could manage to send 
+responses back to consumers, who can poll for results or be waked up by callbacks,
+avoiding this way all the overhead of the "one thread per connection" model.
+
+JAS-RS 2.0, released in 2013, was the first release of the specs supporting server
+side asynchronous processing.
+
+### JAX-RS 2.0 asynchronous producers
+
+To use REST JAX-RS 2.0 asynchronous producers requires to interact with the 
+`AsynResponse` inteface introduced by the version of the specs.
+
+    public interface AsyncResponse
+    {
+      boolean resume(Object response);
+      boolean resume(Throwable response);
+    }
+<p style="text-align: center;">Listing 4.1 The interface AsyncResponse introduced by JAX-RS 2.0</p>
+
+The subproject `async-jaxrs20` in the `async-services` folder of the GitHub repository
+shows an example to illustrate the use of the `AsyncResponse` interface. Here is
+an extract:
+
+    ...
+    private static final String TIME_SERVER = "time.google.com";
+    private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
+    private final NTPUDPClient ntpClient = new NTPUDPClient();
+    private static InetAddress inetAddress;
+    private static final Logger LOG = LoggerFactory.getLogger(BaseNtpResourceAsync.class);
+
+    @PostConstruct
+    public void postConstruct() throws Exception
+    {
+      inetAddress = InetAddress.getByName(TIME_SERVER);
+      ntpClient.setDefaultTimeout(5000);
+      ntpClient.open();
+      ...
+    }
+
+    @GET
+    public void currentTime(@Suspended AsyncResponse ar) throws IOException
+    {
+      long time = ntpClient.getTime(inetAddress).getMessage().getTransmitTimeStamp().getTime();
+      ar.resume(Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault())
+        .format(DateTimeFormatter.ofPattern(FMT)));
+    }
+
+    @GET
+    @Path("{zoneId}")
+    public void zonedTime(@PathParam("zoneId") String zoneId, @Suspended AsyncResponse ar) throws IOException
+    {
+      long time = ntpClient.getTime(inetAddress).getMessage().getTransmitTimeStamp().getTime();
+      ar.resume(Instant.ofEpochMilli(time).atZone(ZoneId.of(URLDecoder.decode(zoneId, StandardCharsets.UTF_8))).format(DateTimeFormatter.ofPattern(FMT)));
+    }
+    ...
+<p style="text-align: center;">Listing 4.2 Using the interface AsyncResponse introduced by JAX-RS 2.0</p>
+
+The first thing to notice is that our textbook REST service business case has 
+changed. Since we implement now an asynchronous processing, we needed an endpoint 
+which doesn't return instantly, as it was the case of the preceding one, that 
+sent back the current date and time in different time zones. Now, we're invoking 
+the Google's time-server, at `time.google.com`, to request date and time and this
+operation, consisting in calling and external service, is supposed to take longer.
+
+The other thing we need to notice is that, this time, our endpoints don't 
+return anymore a `String` instance formatted as a date and time, but a `void`.
+That's a surprise as one could legimately wonder what could be the point of a 
+REST endpoint returning a `void` ?
+
+And last but not least, the 3rd thing to notice is the `@Suspended` annotated 
+instance of the `AsyncResponse` input parameter passed to each endpoint.
+
+Here is what things work: injecting an instance of `AsyncResponse` as an input 
+parameter of our endpoints, using the `@Suspended` annotation, has the effect of
+suspending, from the current thread of execution, the HTTP request which will 
+be handled by a new background thread spawned on this purpose. Once that this thread
+did its work, in our case getting the date and time from the Google service, 
+it sends a response back to the consumer by calling `AsyncResponse.resume()...`.
+This means a successfull response and, hence, a status code 200 is sent back to 
+the consumer. Also, the `resume()` method will automatically marshall the formatted
+date and time into the HTTP request body.
+
+We can use a variety of synchronous or asynchronous, blocking or non-blocking 
+consumers with such a REST service. For example, the Quarkus test class 
+`TestNtpResourceAsyncJaxrs20` demonstrates a RESTassured synchronous consumer, 
+while `TestBlockingJava8NtpResourceJaxrs20` and `TestNonBlockingJava8NtpResourceJaxrs20`
+show the same test in an asynchronous blocking and, respectivelly, unblocking way.
+We have already discussed the blocking and unblocking asynchronous clients during
+the preceding chapter.
+
+## JAX-RS 2.1 asynchronous producers
+

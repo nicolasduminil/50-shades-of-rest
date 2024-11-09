@@ -13,18 +13,18 @@ import java.time.temporal.*;
 import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
-public class TestNtpResourceWithMpClientAsync
+public class TestTimeResourceWithMpClientAsync
 {
   protected static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
 
   @Inject
   @RestClient
-  NtpResourceMpClientAsync mpClientAsync;
+  TimeResourceMpClientAsync mpClientAsync;
 
   @Test
   public void testCurrentTime()
   {
-    mpClientAsync.currentTime().thenAccept(t ->
+    mpClientAsync.getCurrentDateAndTimeAtDefaultZone().thenAccept(t ->
       assertThat(LocalDateTime.parse(t, DateTimeFormatter.ofPattern(FMT)))
       .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS)))
       .toCompletableFuture().join();
@@ -33,7 +33,7 @@ public class TestNtpResourceWithMpClientAsync
   @Test
   public void testZoneTime()
   {
-    mpClientAsync.zonedTime("Europe/Paris").thenAccept(t ->
+    mpClientAsync.getCurrentDateAndTimeAtZone("Europe/Paris").thenAccept(t ->
       assertThat(LocalDateTime.parse(t, DateTimeFormatter.ofPattern(FMT)))
       .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.HOURS)))
       .toCompletableFuture().join();

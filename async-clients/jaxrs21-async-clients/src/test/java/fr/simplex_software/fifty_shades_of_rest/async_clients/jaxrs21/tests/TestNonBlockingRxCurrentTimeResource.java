@@ -4,6 +4,7 @@ import fr.simplex_software.fifty_shades_of_rest.async_clients.jaxrs21.*;
 import io.quarkus.test.common.http.*;
 import io.quarkus.test.junit.*;
 import jakarta.ws.rs.client.*;
+import jakarta.ws.rs.container.*;
 import org.junit.jupiter.api.*;
 
 import java.net.*;
