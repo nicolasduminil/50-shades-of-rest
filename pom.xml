@@ -15,6 +15,7 @@
     <module>base-resources</module>
     <module>common-tests</module>
     <module>async-services</module>
+    <module>orders</module>
   </modules>
   <properties>
     <maven.compiler.source>21</maven.compiler.source>

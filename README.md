@@ -286,6 +286,167 @@ and Quarkus are listed below:
 | `@Produces`, `@Consumes` | Defines the produced or consumed media types |
 | `@Context` | Inject the context information |
 
+In order to use RESTeasy in your Quarkus application you need to include the 
+`quarkus-resteasy` extension in your Maven dependencies, as follows:
+
+    ...
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-resteasy</artifactId>
+    </dependency>
+    ...
+
+# Your first Quarkus RESTful service
+
+The RESTeasy documentation, as well as the Jakarta RESTful Web Services specifications,
+are at your disposal for more details about the use of the classes, interfaces 
+and annotations summarized in the tables above. However, a more empiric approach,
+for unatients, is to look at an example.
+
+Throughout this booklet, in order to illustrate the presented material, we'll be
+using a real world use case consisting in a simplified order management system.
+This use case is implemented as a Maven multi-module project and the code source
+can be found at https://github.com/nicolasduminil/50-shades-of-rest.git.
+
+In order to get the code source, to build and test it, proceed as follows:
+
+    $ git clone https://github.com/nicolasduminil/50-shades-of-rest.git
+    $ cd 50-shades-of-rest
+    $ mvn install
+
+The last command will compile the source code, package it in a Quarkus *fast JAR*,
+execute the unit and integration tests and deploy the Maven artifacts in the 
+local repository. Please notice that, as a multi-module project, the `install` 
+command is mandatory. If you only run `package` or `test`, you might experience
+exceptions due to the fact that common shared artrifacts aren't deployed in the
+local Maven repository.
+
+Once that you did a first Maven build and successfuly executed the tests, you 
+can look at each Maven submodule. They are presented below.
+
+## The domain module
+
+The Maven subproject `orders-domain` in our GitHub repository shows the classes
+which are parts of the orders management business model. They are divided in 
+two packages: 
+
+  - the package `dto` containing the *data transfer object* classes `CustomerDto` and `OrderDto`;
+  - the package `jpa` containing the JPA (*Java Persistence API*) classes `Customer` and `Order`;
+
+The figure below shows the class diagram of the domain layer.
+
+<img src="orders.png" width="300" height="300" />
+
+As you can see, our simplified model consists in only two entities: order and 
+customer, each one being represented by a DTO and a JPA class. The DTO class is
+purely functional, defining the properties and methods required from a strict 
+business point of view, while the JPA class includes, in addition, persistence 
+logic. 
+
+Looking at the DTO classes, you'll see that they are, in fact, records. And you'll
+notice also that the `OrderDTO` is in an association relationship with `CustomerDTO` 
+as it contains the `customerId` as one of its properties.
+
+The JPA `Customer` and `Order` classes are in a relationship of one-to-many 
+bidirectional shown below:
+
+    @Entity
+    @Table(name = "CUSTOMERS")
+    @Cacheable
+    public class Customer
+    {
+      @Id
+      @GeneratedValue
+      private Long id;
+      @Column(name = "FIRST_NAME", nullable = false, length = 40)
+      private String firstName;
+      @Column(name ="LAST_NAME", nullable = false, length = 40)
+      private String lastName;
+      @Column(name = "EMAIL", nullable = false, length = 40)
+      private String email;
+      @Column(name = "PHONE", nullable = false, length = 40)
+      private String phone;
+      @OneToMany(mappedBy = "customer")
+      private List<Order> orders;
+      ...
+    }
+
+Here a `Customer` maintains the list of its associated `Order` instances, i.e. 
+the orders passed by the given customer.
+
+    @Entity
+    @Table(name = "ORDERS")
+    public class Order
+    {
+      @Id
+      @GeneratedValue
+      private Long id;
+      @Column(name = "ITEM", nullable = false, length = 40)
+      private String item;
+      @Column(name = "PRICE", nullable = false)
+      private BigDecimal price;
+      @ManyToOne
+      @JoinColumn(name = "CUSTOMER_ID", nullable = false)
+      @MapsId
+      private Customer customer;
+      ...
+    }
+
+As you can see, an `Order`is in a relationship of *many-to-one* with its associated
+`Customer`, i.e. the customer having passed the given order. While an order is 
+associated to one and only one customer, a customer is associated to one or more
+orders. Please notice also the use of the `@MapsId` annotation which allows the 
+two JPA entities, `Customer` and `Order`, to share the same database primary key.
+
+The idea is that a *one-to-many* or a *many-to-one* relationship is implemented by 
+using a parent-child hierarchy at the database level. In this case the table 
+associated to the `Customer` entity would be the parent, while the one associated
+to the `Order` entity would be the child. This parent-child relationship is defined
+via a foreign key on the child side, referring to the parent. Hence, the child 
+database table will have a primary key, to uniquely identify an order, and a 
+foreign key, to identify the customer to which it belongs. By sharing the primary
+key between these two database table, no foreign key is required and, consequently,
+our data model is simpler.
+
+## The repository module
+
+Once we defined our business case domain model, we need to implement the persistence
+logic responsible for mapping JPA entities to database tables and conversely. 
+Quarkus provides support for JPA through its [Hibernate](https://hibernate.org/) ORM (*Object Relational
+Mapping*) implementation, which makes possible complex mappings and queries. But
+in order to facilitate even more these operations, Quarkus provides [Panache](https://quarkus.io/guides/hibernate-orm-panache).
+To use it, the Quarkus extension `quarkus-hibernate-orm-panache` is required, as shown bellow:
+
+    ...
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-orm-panache</artifactId>
+    </dependency>
+    ...
+
+Panache provides the following two persistance design patterns:
+
+  - *Active Record*. In this case the entity has to extend the `PanacheEntity` class and, this way, it encapsulates both database access and domain logic.
+  - *Data Access Object Repository*. In this case the entities are purely POJOs (*Plain Old Java Objetct*) and, as such, don't need  to extend any class. They handle only the domain logic while the database access is handled by the repository implementation.
+
+In our example we're using the 2nd approach, the Repository pattern, as it seems
+more suitable, thanks to the concern separation that it provides.
+
+The repository module can be found in the `orders-repository` subproject on GitHub.
+Let's look quickly at the class `CustomerRespository`:
+
+    @ApplicationScoped
+    public class CustomerRepository implements PanacheRepository<Customer> {}
+
+That's all. The UML diagram below shows the class hierarchy of our `CustomerRepository`.
+
+<img src="CustomerRepository.png" width="300" height="300" />
+
+As you can see, the `CustomerRepository` class implements `PanacheRepository` interface
+which, in turn, extends the `PanacheRepositoryBase` one. This way our class 
+benefits already of the most common CRUD operations, like `persist(...)`, `flush()`,
+`find(...)`, `list(...)` or `stream(...)`, as well as a few queries.
+
 # Asynchronous processing with REST services
 
 There are two levels of asynchronous processing as far as REST services are concerned:
