@@ -110,29 +110,86 @@ public class TestCustomerRepository
   @Test
   void testCustomerRepositoryListAllWithOrder() {
     List<Customer> expectedCustomers = getCustomers();
-    when(customerRepository.listAll(Sort.by("id"))).thenReturn(expectedCustomers);
+    when(customerRepository.listAll(any(Sort.class))).thenReturn(expectedCustomers);
     List<Customer> actualCustomers = customerRepository.listAll(Sort.by("id"));
     assertThat(actualCustomers).isNotNull();
     assertThat(actualCustomers).hasSize(expectedCustomers.size());
     assertThat(actualCustomers).isEqualTo(expectedCustomers);
-    Mockito.verify(customerRepository).listAll(Sort.by("id"));
+    Mockito.verify(customerRepository).listAll(any(Sort.class));
   }
 
   @Test
   void testCustomerRepositoryFindAllWithOrderAndPage() {
     List<Customer> expectedCustomers = getCustomers();
     PanacheQuery<Customer> mockQuery = mock(PanacheQuery.class);
-    Sort mockSort = mock(Sort.class);
-    when(customerRepository.findAll()).thenReturn(mockQuery);
-    when(mockSort.by()).thenReturn(mockSort);
-    //when(customerRepository.findAll(Sort.by("id"))).thenReturn(mockQuery);
-    when(customerRepository.findAll(Sort.by("id")).page(Page.of(0, 10))).thenReturn(mockQuery);
-    //when(customerRepository.findAll(Sort.by("id")).page(Page.of(0, 10)).list()).thenReturn(expectedCustomers);
+    when(customerRepository.findAll(any(Sort.class))).thenReturn(mockQuery);
+    when(mockQuery.page(any(Page.class))).thenReturn(mockQuery);
+    when(mockQuery.list()).thenReturn(expectedCustomers);
     List<Customer> actualCustomers = customerRepository.findAll(Sort.by("id")).page(Page.of(0, 10)).list();
     assertThat(actualCustomers).isNotNull();
     assertThat(actualCustomers).hasSize(expectedCustomers.size());
     assertThat(actualCustomers).isEqualTo(expectedCustomers);
-    Mockito.verify(customerRepository).findAll(Sort.by("id")).page(Page.of(0, 10)).list();
+    verify(customerRepository).findAll(any(Sort.class));
+    verify(mockQuery).page(any(Page.class));
+    verify(mockQuery).list();
+  }
+
+  @Test
+  public void testCustomerRepositoryFindByLastName() {
+    List<Customer> expectedCustomers = getCustomers();
+    when(customerRepository.findByLastName("John")).thenReturn(expectedCustomers);
+    List<Customer> actualCustomers = customerRepository.findByLastName("John");
+    assertThat(actualCustomers).isNotNull();
+    assertThat(actualCustomers).isEqualTo(expectedCustomers);
+    Mockito.verify(customerRepository).findByLastName("John");
+  }
+
+  @Test
+  public void testFindByEmail() {
+    Customer expectedCustomer = getCustomers().getFirst();
+    when(customerRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.ofNullable(expectedCustomer));
+    Optional<Customer> actualCustomer = customerRepository.findByEmail("john.doe@example.com");
+    assertThat(actualCustomer).isNotNull();
+    assertThat(actualCustomer.orElseThrow()).isEqualTo(expectedCustomer);
+    Mockito.verify(customerRepository).findByEmail("john.doe@example.com");
+  }
+
+  @Test
+  public void testFindByEmailNotFound() {
+    when(customerRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.empty());
+    Optional<Customer> actualCustomer = customerRepository.findByEmail("john.doe@example.com");
+    assertThat(actualCustomer).isNotNull();
+    assertThat(actualCustomer).isEmpty();
+    Mockito.verify(customerRepository).findByEmail("john.doe@example.com");
+  }
+
+  @Test
+  public void testListCustomersWithOrders() {
+    List<Customer> expectedCustomers = getCustomers();
+    when(customerRepository.listCustomersWithOrders()).thenReturn(expectedCustomers);
+    List<Customer> actualCustomers = customerRepository.listCustomersWithOrders();
+    assertThat(actualCustomers).isNotNull();
+    assertThat(actualCustomers).isEqualTo(expectedCustomers);
+    Mockito.verify(customerRepository).listCustomersWithOrders();
+  }
+
+  @Test
+  public void testListCustomersWithOrdersNotFound() {
+    when(customerRepository.listCustomersWithOrders()).thenReturn(Collections.emptyList());
+    List<Customer> actualCustomers = customerRepository.listCustomersWithOrders();
+    assertThat(actualCustomers).isNotNull();
+    assertThat(actualCustomers).isEmpty();
+    Mockito.verify(customerRepository).listCustomersWithOrders();
+  }
+
+  @Test
+  public void testListCustomersByLastName() {
+    List<Customer> expectedCustomers = getCustomers();
+    when(customerRepository.listCustomersByLastName("John")).thenReturn(expectedCustomers);
+    List<Customer> actualCustomers = customerRepository.listCustomersByLastName("John");
+    assertThat(actualCustomers).isNotNull();
+    assertThat(actualCustomers).isEqualTo(expectedCustomers);
+    Mockito.verify(customerRepository).listCustomersByLastName("John");
   }
 
   private List<Customer> getCustomers()
