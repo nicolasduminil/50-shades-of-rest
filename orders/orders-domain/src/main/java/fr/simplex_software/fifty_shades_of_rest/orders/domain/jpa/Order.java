@@ -10,6 +10,7 @@ public class Order
 {
   @Id
   @GeneratedValue
+  @Column(name = "ID", nullable = false)
   private Long id;
   @Column(name = "ITEM", nullable = false, length = 40)
   private String item;

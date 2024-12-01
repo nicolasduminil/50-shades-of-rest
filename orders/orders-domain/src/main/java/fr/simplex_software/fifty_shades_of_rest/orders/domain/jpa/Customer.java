@@ -12,6 +12,7 @@ public class Customer
 {
   @Id
   @GeneratedValue
+  @Column(name = "ID", nullable = false)
   private Long id;
   @Column(name = "FIRST_NAME", nullable = false, length = 40)
   private String firstName;
@@ -21,7 +22,7 @@ public class Customer
   private String email;
   @Column(name = "PHONE", nullable = false, length = 40)
   private String phone;
-  @OneToMany(mappedBy = "customer")
+  @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Order> orders = new ArrayList<>();
 
   public Customer()

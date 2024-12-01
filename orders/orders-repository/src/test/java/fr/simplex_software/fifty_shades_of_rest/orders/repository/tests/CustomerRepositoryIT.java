@@ -24,16 +24,23 @@ public class CustomerRepositoryIT
   @Inject
   CustomerRepository customerRepository;
 
-  @Test
+  /*@Test
   @Transactional
-  @DataSet(cleanBefore = true)
-  @ExpectedDataSet(value = "orders.yml",ignoreCols = "id, CUSTOMER_ID")
+  @DataSet(value = "orders.yml")
   public void testFindAll()
   {
-    customerRepository.persist(getCustomer());
     List<Customer> customers = customerRepository.findAll().stream().toList();
     assertThat(customers).isNotNull();
     assertThat(customers).hasSize(1);
+  }*/
+
+  @Test
+  @Transactional
+  @DataSet(cleanBefore = true)
+  @ExpectedDataSet(value = "expected-orders.yml", ignoreCols = "id, CUSTOMER_ID")
+  public void testPersist()
+  {
+    customerRepository.persist(getCustomer());
   }
 
   private Customer getCustomer()

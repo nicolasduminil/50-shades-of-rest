@@ -21,10 +21,6 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-flyway</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>
       <scope>test</scope>
     </dependency>
@@ -39,18 +35,9 @@
     </dependency>
     <dependency>
       <groupId>com.github.database-rider</groupId>
-      <artifactId>rider-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.github.database-rider</groupId>
       <artifactId>rider-cdi</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.github.database-rider</groupId>
-      <artifactId>rider-junit5</artifactId>
-      <scope>test</scope>
+      <classifier>jakarta</classifier>
     </dependency>
   </dependencies>
 </project>
