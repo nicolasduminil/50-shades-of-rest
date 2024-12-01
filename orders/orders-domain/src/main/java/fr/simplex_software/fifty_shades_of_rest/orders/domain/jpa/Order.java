@@ -18,26 +18,28 @@ public class Order
   private BigDecimal price;
   @ManyToOne
   @JoinColumn(name = "CUSTOMER_ID", nullable = false)
-  @MapsId
   private Customer customer;
 
   public Order()
   {
   }
 
-  public Order(String item, BigDecimal price, Customer customer)
+  public Order(String item, BigDecimal price)
   {
     this.item = item;
     this.price = price;
+  }
+
+  public Order(String item, BigDecimal price, Customer customer)
+  {
+    this(item, price);
     this.customer = customer;
   }
 
   public Order(Long id, String item, BigDecimal price, Customer customer)
   {
+    this (item, price, customer);
     this.id = id;
-    this.item = item;
-    this.price = price;
-    this.customer = customer;
   }
 
   public Long getId()
@@ -78,5 +80,7 @@ public class Order
   public void setCustomer(Customer customer)
   {
     this.customer = customer;
+    if (customer != null && !customer.getOrders().contains(this))
+      customer.addOrder(this);
   }
 }

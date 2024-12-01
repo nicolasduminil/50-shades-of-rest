@@ -15,7 +15,7 @@ orders:
     item: "myItem1"
     price: 100.00
   - id: 2
-  - customer_id: 1
+    customer_id: 1
     item: "myItem2"
     price: 200.0
   - id: 3

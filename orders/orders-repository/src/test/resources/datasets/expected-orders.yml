@@ -1,11 +1,10 @@
 customers:
-  - id: 1
-    first_name: "John"
+  - first_name: "John"
     last_name: "Doe"
     email: "john.doe@email.com"
     phone: "555-1234"
 orders:
-  - id: 1
-    customer_id: 1
-    item: "myItem1"
+  - item: "myItem1"
     price: 100.25
+  - item: "myItem2"
+    price: 200.25

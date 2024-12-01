@@ -24,20 +24,21 @@ public class CustomerRepositoryIT
   @Inject
   CustomerRepository customerRepository;
 
-  /*@Test
+  @Test
   @Transactional
-  @DataSet(value = "orders.yml")
+  @DataSet(value = "orders.yml", cleanBefore = true)
   public void testFindAll()
   {
     List<Customer> customers = customerRepository.findAll().stream().toList();
     assertThat(customers).isNotNull();
-    assertThat(customers).hasSize(1);
-  }*/
+    assertThat(customers).hasSize(2);
+    //assertThat(customers.getFirst().getOrders()).hasSize(2);
+  }
 
   @Test
   @Transactional
   @DataSet(cleanBefore = true)
-  @ExpectedDataSet(value = "expected-orders.yml", ignoreCols = "id, CUSTOMER_ID")
+  @ExpectedDataSet(value = "expected-orders.yml")
   public void testPersist()
   {
     customerRepository.persist(getCustomer());
@@ -45,10 +46,10 @@ public class CustomerRepositoryIT
 
   private Customer getCustomer()
   {
-    Order order = new Order(1L, "myItem1", new BigDecimal("100.25"), null);
     Customer customer = new Customer( "John", "Doe",
-      "john.doe@email.com", "555-1234", List.of(order));
-    order.setCustomer(customer);
+      "john.doe@email.com", "555-1234");
+    customer.addOrder(new Order( "myItem1", new BigDecimal("100.25"), customer));
+    customer.addOrder(new Order( "myItem2", new BigDecimal("200.25"), customer));
     return customer;
   }
 }

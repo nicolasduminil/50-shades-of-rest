@@ -16,7 +16,7 @@ public class Customer
   private Long id;
   @Column(name = "FIRST_NAME", nullable = false, length = 40)
   private String firstName;
-  @Column(name ="LAST_NAME", nullable = false, length = 40)
+  @Column(name = "LAST_NAME", nullable = false, length = 40)
   private String lastName;
   @Column(name = "EMAIL", nullable = false, length = 40)
   private String email;
@@ -41,18 +41,18 @@ public class Customer
 
   public Customer(Long id, String firstName, String lastName, String email, String phone, List<Order> orders)
   {
-    this (id, firstName, lastName, email, phone);
+    this(id, firstName, lastName, email, phone);
     this.orders = orders;
   }
 
   public Customer(String firstName, String lastName, String email, String phone)
   {
-    this (null, firstName, lastName, email, phone);
+    this(null, firstName, lastName, email, phone);
   }
 
   public Customer(String firstName, String lastName, String email, String phone, List<Order> orders)
   {
-    this (null, firstName, lastName, email, phone);
+    this(null, firstName, lastName, email, phone);
     this.orders = orders;
   }
 
@@ -114,5 +114,11 @@ public class Customer
   public void setOrders(List<Order> orders)
   {
     this.orders = orders;
+  }
+
+  public void addOrder(Order order)
+  {
+    orders.add(order);
+    order.setCustomer(this);
   }
 }
