@@ -24,4 +24,9 @@ public class OrderRepository implements PanacheRepository<Order>
   {
     return list("item", item);
   }
+
+  public List<Order> listOrdersByItem(String item)
+  {
+    return list("item", item);
+  }
 }

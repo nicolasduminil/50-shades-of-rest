@@ -3,6 +3,7 @@ package fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa;
 import jakarta.persistence.*;
 
 import java.util.*;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "CUSTOMERS")
@@ -21,19 +22,36 @@ public class Customer
   @Column(name = "PHONE", nullable = false, length = 40)
   private String phone;
   @OneToMany(mappedBy = "customer")
-  private List<Order> orders;
+  private List<Order> orders = new ArrayList<>();
 
   public Customer()
   {
   }
 
-  public Customer(Long id, String firstName, String lastName, String email, String phone, List<Order> orders)
+  public Customer(Long id, String firstName, String lastName, String email, String phone)
   {
     this.id = id;
     this.firstName = firstName;
     this.lastName = lastName;
     this.email = email;
     this.phone = phone;
+    this.orders = new ArrayList<>();
+  }
+
+  public Customer(Long id, String firstName, String lastName, String email, String phone, List<Order> orders)
+  {
+    this (id, firstName, lastName, email, phone);
+    this.orders = orders;
+  }
+
+  public Customer(String firstName, String lastName, String email, String phone)
+  {
+    this (null, firstName, lastName, email, phone);
+  }
+
+  public Customer(String firstName, String lastName, String email, String phone, List<Order> orders)
+  {
+    this (null, firstName, lastName, email, phone);
     this.orders = orders;
   }
 

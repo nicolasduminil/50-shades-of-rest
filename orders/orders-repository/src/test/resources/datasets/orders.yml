@@ -1,0 +1,10 @@
+CUSTOMERS:
+  - id: 1
+    FIRST_NAME: "John"
+    LAST_NAME: "Doe"
+    EMAIL: "john.doe@example.com"
+    PHONE: "555-1234"
+ORDERS:
+  - CUSTOMER_ID: 1
+    ITEM: "myItem1"
+    PRICE: 100.25

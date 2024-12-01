@@ -146,32 +146,13 @@ public class TestOrderRepository
   }
 
   @Test
-  public void testListOrdersWithOrders() {
-    List<Order> expectedOrders = getOrders();
-    when(orderRepository.listOrdersWithOrders()).thenReturn(expectedOrders);
-    List<Order> actualOrders = orderRepository.listOrdersWithOrders();
-    assertThat(actualOrders).isNotNull();
-    assertThat(actualOrders).isEqualTo(expectedOrders);
-    Mockito.verify(orderRepository).listOrdersWithOrders();
-  }
-
-  @Test
-  public void testListOrdersWithOrdersNotFound() {
-    when(orderRepository.listOrdersWithOrders()).thenReturn(Collections.emptyList());
-    List<Order> actualOrders = orderRepository.listOrdersWithOrders();
-    assertThat(actualOrders).isNotNull();
-    assertThat(actualOrders).isEmpty();
-    Mockito.verify(orderRepository).listOrdersWithOrders();
-  }
-
-  @Test
   public void testListOrdersByLastName() {
     List<Order> expectedOrders = getOrders();
-    when(orderRepository.listOrdersByLastName("John")).thenReturn(expectedOrders);
-    List<Order> actualOrders = orderRepository.listOrdersByLastName("John");
+    when(orderRepository.listOrdersByItem("myItem1")).thenReturn(expectedOrders);
+    List<Order> actualOrders = orderRepository.listOrdersByItem("myItem1");
     assertThat(actualOrders).isNotNull();
     assertThat(actualOrders).isEqualTo(expectedOrders);
-    Mockito.verify(orderRepository).listOrdersByLastName("John");
+    Mockito.verify(orderRepository).listOrdersByItem("myItem1");
   }
 
   private List<Order> getOrders()

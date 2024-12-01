@@ -24,6 +24,13 @@ public class Order
   {
   }
 
+  public Order(String item, BigDecimal price, Customer customer)
+  {
+    this.item = item;
+    this.price = price;
+    this.customer = customer;
+  }
+
   public Order(Long id, String item, BigDecimal price, Customer customer)
   {
     this.id = id;
