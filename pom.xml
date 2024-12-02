@@ -100,7 +100,11 @@
           <version>${surefire-plugin.version}</version>
           <configuration>
             <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+            <argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
             <systemPropertyVariables>
+              <quarkus.hibernate-orm.enabled>false</quarkus.hibernate-orm.enabled>
+              <quarkus.arc.exclude-types>io.agroal.**</quarkus.arc.exclude-types>
+              <quarkus.datasource.devservices.enabled>false</quarkus.datasource.devservices.enabled>
               <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             </systemPropertyVariables>
           </configuration>
@@ -111,6 +115,7 @@
           <configuration>
             <argLine>-XX:+EnableDynamicAgentLoading</argLine>
             <systemPropertyVariables>
+              <quarkus.datasource.devservices.enabled>true</quarkus.datasource.devservices.enabled>
               <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             </systemPropertyVariables>
           </configuration>
@@ -142,5 +147,19 @@
         </plugin>
       </plugins>
     </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.8.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>properties</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 </project>

@@ -38,7 +38,12 @@ public class CustomerRepository implements PanacheRepository<Customer>
 
   public int updateById(Long id, Customer customer)
   {
-    return update("firstName = ?1 lastName = ?2 where id = ?3",
+    return update("firstName = ?1, lastName = ?2 where id = ?3",
       customer.getFirstName(), customer.getLastName(), id);
+  }
+
+  public Long deleteByLastName(String lastName)
+  {
+    return delete("lastName", lastName);
   }
 }

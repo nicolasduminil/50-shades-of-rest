@@ -1,8 +1,9 @@
-package fr.simplex_software.fifty_shades_of_rest.orders.repository.tests;
+package fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.unit;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.Order;
 import fr.simplex_software.fifty_shades_of_rest.orders.repository.*;
+import fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.*;
 import io.quarkus.hibernate.orm.panache.*;
 import io.quarkus.panache.common.*;
 import io.quarkus.test.*;
@@ -19,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
+//@TestProfile(UnitTestProfile.class)
 public class TestOrderRepository
 {
   @InjectMock
@@ -158,9 +160,9 @@ public class TestOrderRepository
   private List<Order> getOrders()
   {
     Order order = new Order(1L, "myItem1", new BigDecimal("100.25"), null);
-    Customer customer = new Customer(1L, "John", "Doe", "john.doe@email.com", "1234567890", null);
+    Customer customer = new Customer(1L, "John", "Doe", "john.doe@email.com", "1234567890", new ArrayList<>());
     order.setCustomer(customer);
-    customer.setOrders(List.of(order));
+    customer.addOrder(order);
     return List.of(order);
   }
 }

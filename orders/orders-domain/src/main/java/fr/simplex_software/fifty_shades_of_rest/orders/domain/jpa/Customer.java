@@ -1,6 +1,9 @@
 package fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa;
 
 import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.*;
 
 import java.util.*;
 import java.util.ArrayList;
@@ -23,6 +26,7 @@ public class Customer
   @Column(name = "PHONE", nullable = false, length = 40)
   private String phone;
   @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OnDelete(action = OnDeleteAction.CASCADE)
   private List<Order> orders = new ArrayList<>();
 
   public Customer()
