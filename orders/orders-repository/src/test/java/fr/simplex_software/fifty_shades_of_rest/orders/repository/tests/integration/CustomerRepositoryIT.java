@@ -18,7 +18,6 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
-//@TestProfile(IntegrationTestProfile.class)
 @DBRider
 @DBUnit(schema = "public", caseSensitiveTableNames = true, cacheConnection = false)
 public class CustomerRepositoryIT

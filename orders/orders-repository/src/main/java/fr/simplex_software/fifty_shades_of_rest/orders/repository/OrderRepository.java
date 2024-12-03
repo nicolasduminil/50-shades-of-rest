@@ -17,7 +17,7 @@ public class OrderRepository implements PanacheRepository<Order>
 
   public int updateById(Long id, Order order)
   {
-    return update("orderNumber = ?1 where id = ?2", order.getId(), id);
+    return update("item = ?1, price = ?2 where id = ?3", order.getItem(), order.getPrice(), id);
   }
 
   public List<Order> findByItem(String item)
@@ -28,5 +28,15 @@ public class OrderRepository implements PanacheRepository<Order>
   public List<Order> listOrdersByItem(String item)
   {
     return list("item", item);
+  }
+
+  public List<Order> findByCustomer(Customer customer)
+  {
+    return list("customer", customer);
+  }
+
+  public void deleteByCustomer(Customer customer)
+  {
+    delete("customer", customer);
   }
 }

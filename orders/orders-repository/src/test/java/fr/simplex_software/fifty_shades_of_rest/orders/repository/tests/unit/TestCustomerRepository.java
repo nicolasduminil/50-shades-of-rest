@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
-//@TestProfile(UnitTestProfile.class)
 public class TestCustomerRepository
 {
   @InjectMock

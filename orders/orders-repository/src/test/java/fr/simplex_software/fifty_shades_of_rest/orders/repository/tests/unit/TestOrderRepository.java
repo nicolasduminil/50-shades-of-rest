@@ -20,7 +20,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
-//@TestProfile(UnitTestProfile.class)
 public class TestOrderRepository
 {
   @InjectMock
