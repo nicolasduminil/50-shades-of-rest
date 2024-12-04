@@ -1,4 +1,4 @@
-package fr.simplex_software.fifty_shades_ofrest.orders.domain.dto;
+package fr.simplex_software.fifty_shades_of_rest.orders.domain.dto;
 
 public record CustomerDTO(Long id, String firstName, String lastName, String email, String phone)
 {

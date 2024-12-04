@@ -3,10 +3,9 @@ package fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integra
 import com.github.database.rider.cdi.api.*;
 import com.github.database.rider.core.api.configuration.*;
 import com.github.database.rider.core.api.dataset.*;
-import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.Order;
+import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.repository.*;
-import fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.*;
 import io.quarkus.test.junit.*;
 import jakarta.inject.*;
 import jakarta.transaction.*;

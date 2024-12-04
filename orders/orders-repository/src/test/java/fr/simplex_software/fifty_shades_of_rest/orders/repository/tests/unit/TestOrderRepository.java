@@ -1,9 +1,8 @@
 package fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.unit;
 
-import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.Order;
+import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.repository.*;
-import fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.*;
 import io.quarkus.hibernate.orm.panache.*;
 import io.quarkus.panache.common.*;
 import io.quarkus.test.*;
@@ -16,7 +15,7 @@ import java.util.*;
 import java.util.stream.*;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest

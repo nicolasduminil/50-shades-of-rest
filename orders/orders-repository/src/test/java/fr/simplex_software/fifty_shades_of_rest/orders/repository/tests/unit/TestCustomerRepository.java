@@ -3,7 +3,6 @@ package fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.unit;
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.Order;
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.repository.*;
-import fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.*;
 import io.quarkus.hibernate.orm.panache.*;
 import io.quarkus.panache.common.*;
 import io.quarkus.test.*;
@@ -13,7 +12,6 @@ import org.mockito.*;
 
 import java.math.*;
 import java.util.*;
-import java.util.ArrayList;
 import java.util.stream.*;
 
 import static org.assertj.core.api.Assertions.*;
@@ -34,7 +32,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  void testCustomerRepositoryFindAll() {
+  public void testCustomerRepositoryFindAll()
+  {
     List<Customer> expectedCustomers = getCustomers();
     PanacheQuery<Customer> mockQuery = mock(PanacheQuery.class);
     when(customerRepository.findAll()).thenReturn(mockQuery);
@@ -47,7 +46,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  void testCustomerRepositoryFindById() {
+  public void testCustomerRepositoryFindById()
+  {
     Customer expectedCustomer = getCustomers().getFirst();
     when(customerRepository.findById(1L)).thenReturn(expectedCustomer);
     Customer actualCustomer = customerRepository.findById(1L);
@@ -57,7 +57,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  void testCustomerRepositorySave() {
+  public void testCustomerRepositorySave()
+  {
     Customer expectedCustomer = getCustomers().getFirst();
     when(customerRepository.save(expectedCustomer)).thenReturn(expectedCustomer);
     Customer actualCustomer = customerRepository.save(expectedCustomer);
@@ -67,7 +68,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  void testCustomerRepositoryDelete() {
+  public void testCustomerRepositoryDelete()
+  {
     Customer expectedCustomer = getCustomers().getFirst();
     when(customerRepository.findById(1L)).thenReturn(expectedCustomer);
     customerRepository.delete(expectedCustomer);
@@ -75,7 +77,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  void testCustomerRepositoryDeleteById() {
+  public void testCustomerRepositoryDeleteById()
+  {
     Customer expectedCustomer = getCustomers().getFirst();
     when(customerRepository.findById(1L)).thenReturn(expectedCustomer);
     customerRepository.deleteById(1L);
@@ -83,7 +86,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  void testCustomerRepositoryUpdate() {
+  public void testCustomerRepositoryUpdate()
+  {
     Customer expectedCustomer = getCustomers().getFirst();
     when(customerRepository.update("query", expectedCustomer)).thenReturn(1);
     assertThat(customerRepository.update("query", expectedCustomer)).isEqualTo(1);
@@ -91,7 +95,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  void testCustomerRepositoryUpdateById() {
+  public void testCustomerRepositoryUpdateById()
+  {
     Customer expectedCustomer = getCustomers().getFirst();
     when(customerRepository.updateById(1L, expectedCustomer)).thenReturn(1);
     assertThat(customerRepository.updateById(1L, expectedCustomer)).isEqualTo(1);
@@ -99,7 +104,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  void testCustomerRepositoryListAll() {
+  public void testCustomerRepositoryListAll()
+  {
     List<Customer> expectedCustomers = getCustomers();
     when(customerRepository.listAll()).thenReturn(expectedCustomers);
     List<Customer> actualCustomers = customerRepository.listAll();
@@ -110,7 +116,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  void testCustomerRepositoryListAllWithOrder() {
+  public void testCustomerRepositoryListAllWithOrder()
+  {
     List<Customer> expectedCustomers = getCustomers();
     when(customerRepository.listAll(any(Sort.class))).thenReturn(expectedCustomers);
     List<Customer> actualCustomers = customerRepository.listAll(Sort.by("id"));
@@ -121,7 +128,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  void testCustomerRepositoryFindAllWithOrderAndPage() {
+  public void testCustomerRepositoryFindAllWithOrderAndPage()
+  {
     List<Customer> expectedCustomers = getCustomers();
     PanacheQuery<Customer> mockQuery = mock(PanacheQuery.class);
     when(customerRepository.findAll(any(Sort.class))).thenReturn(mockQuery);
@@ -137,7 +145,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  public void testCustomerRepositoryFindByLastName() {
+  public void testCustomerRepositoryFindByLastName()
+  {
     List<Customer> expectedCustomers = getCustomers();
     when(customerRepository.findByLastName("John")).thenReturn(expectedCustomers);
     List<Customer> actualCustomers = customerRepository.findByLastName("John");
@@ -147,7 +156,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  public void testFindByEmail() {
+  public void testFindByEmail()
+  {
     Customer expectedCustomer = getCustomers().getFirst();
     when(customerRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.ofNullable(expectedCustomer));
     Optional<Customer> actualCustomer = customerRepository.findByEmail("john.doe@example.com");
@@ -157,7 +167,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  public void testFindByEmailNotFound() {
+  public void testFindByEmailNotFound()
+  {
     when(customerRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.empty());
     Optional<Customer> actualCustomer = customerRepository.findByEmail("john.doe@example.com");
     assertThat(actualCustomer).isNotNull();
@@ -166,7 +177,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  public void testListCustomersWithOrders() {
+  public void testListCustomersWithOrders()
+  {
     List<Customer> expectedCustomers = getCustomers();
     when(customerRepository.listCustomersWithOrders()).thenReturn(expectedCustomers);
     List<Customer> actualCustomers = customerRepository.listCustomersWithOrders();
@@ -176,7 +188,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  public void testListCustomersWithOrdersNotFound() {
+  public void testListCustomersWithOrdersNotFound()
+  {
     when(customerRepository.listCustomersWithOrders()).thenReturn(Collections.emptyList());
     List<Customer> actualCustomers = customerRepository.listCustomersWithOrders();
     assertThat(actualCustomers).isNotNull();
@@ -185,7 +198,8 @@ public class TestCustomerRepository
   }
 
   @Test
-  public void testListCustomersByLastName() {
+  public void testListCustomersByLastName()
+  {
     List<Customer> expectedCustomers = getCustomers();
     when(customerRepository.listCustomersByLastName("John")).thenReturn(expectedCustomers);
     List<Customer> actualCustomers = customerRepository.listCustomersByLastName("John");

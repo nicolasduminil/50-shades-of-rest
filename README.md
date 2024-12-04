@@ -312,7 +312,7 @@ In order to get the code source, to build and test it, proceed as follows:
 
     $ git clone https://github.com/nicolasduminil/50-shades-of-rest.git
     $ cd 50-shades-of-rest
-    $ mvn install
+    $ mvn install failsafe:integration-test
 
 The last command will compile the source code, package it in a Quarkus *fast JAR*,
 execute the unit and integration tests and deploy the Maven artifacts in the 
@@ -387,7 +387,6 @@ the orders passed by the given customer.
       private BigDecimal price;
       @ManyToOne
       @JoinColumn(name = "CUSTOMER_ID", nullable = false)
-      @MapsId
       private Customer customer;
       ...
     }
@@ -395,8 +394,7 @@ the orders passed by the given customer.
 As you can see, an `Order`is in a relationship of *many-to-one* with its associated
 `Customer`, i.e. the customer having passed the given order. While an order is 
 associated to one and only one customer, a customer is associated to one or more
-orders. Please notice also the use of the `@MapsId` annotation which allows the 
-two JPA entities, `Customer` and `Order`, to share the same database primary key.
+orders.
 
 The idea is that a *one-to-many* or a *many-to-one* relationship is implemented by 
 using a parent-child hierarchy at the database level. In this case the table 
@@ -404,9 +402,7 @@ associated to the `Customer` entity would be the parent, while the one associate
 to the `Order` entity would be the child. This parent-child relationship is defined
 via a foreign key on the child side, referring to the parent. Hence, the child 
 database table will have a primary key, to uniquely identify an order, and a 
-foreign key, to identify the customer to which it belongs. By sharing the primary
-key between these two database table, no foreign key is required and, consequently,
-our data model is simpler.
+foreign key, to identify the customer to which it belongs. 
 
 ## The repository module
 
@@ -436,16 +432,296 @@ The repository module can be found in the `orders-repository` subproject on GitH
 Let's look quickly at the class `CustomerRespository`:
 
     @ApplicationScoped
-    public class CustomerRepository implements PanacheRepository<Customer> {}
+    public class CustomerRepository implements PanacheRepository<Customer> 
+    {
+      public Customer save(Customer customer)
+      {
+        persist(customer);
+        return customer;
+      }
 
-That's all. The UML diagram below shows the class hierarchy of our `CustomerRepository`.
+      public List<Customer> findByLastName(String lastName)
+      {
+        return list("lastName", lastName);
+      }
+
+      public Optional<Customer> findByEmail(String email)
+      {
+        return find("email", email).firstResultOptional();
+      }
+
+      public List<Customer> listCustomersWithOrders()
+      {
+        return list("""
+          select distinct c from Customer c 
+            left join fetch c.orders 
+             where c.id is not null 
+             order by c.lastName
+        """);
+      }
+
+      public List<Customer> listCustomersByLastName(String lastName)
+      {
+        return list("lastName", lastName);
+      }
+
+      public int updateById(Long id, Customer customer)
+      {
+        return update("firstName = ?1, lastName = ?2 where id = ?3",
+          customer.getFirstName(), customer.getLastName(), id);
+      }
+
+      public Long deleteByLastName(String lastName)
+      {
+        return delete("lastName", lastName);
+      }
+    }
+
+The UML diagram below shows the class hierarchy of our `CustomerRepository`.
 
 <img src="CustomerRepository.png" width="300" height="300" />
 
 As you can see, the `CustomerRepository` class implements `PanacheRepository` interface
 which, in turn, extends the `PanacheRepositoryBase` one. This way our class 
 benefits already of the most common CRUD operations, like `persist(...)`, `flush()`,
-`find(...)`, `list(...)` or `stream(...)`, as well as a few queries.
+`find(...)`, `list(...)` or `stream(...)`, as well as a few queries. To these 
+*standard*, already provided methods, we need to add our customized ones like, 
+for example, `deleteByLastName(...)`, `updateById(...)`, etc.
+
+All the entry points provided *out-of-the-box* by the `PanacheRepository` and 
+`PanacheRepositoryBase` classes, except the `persist(...)` one and perhaps a few 
+others, take a `String` parameter representing a very simplified SQL query. For 
+example, please notice the method below:
+
+    public int updateById(Long id, Customer customer)
+    {
+      return update("firstName = ?1, lastName = ?2 where id = ?3",
+        customer.getFirstName(), customer.getLastName(), id);
+    }
+
+Here, it's stunning in its simplicity how the string `"firstName = ?1, 
+lastName = ?2 where id = ?3"` becomes a full JPQL query like `"UPDATE CUSTOMERS 
+SET LAST_NAME = :1, LAST_NAME = :2 WHERE ID = :3"`. Or even simpler: 
+
+    public Long deleteByLastName(String lastName)
+    {
+      return delete("lastName", lastName);
+    }
+
+where the string `delete ("lastName", lastName)` becomes `DELETE FROM CUSTOMERS 
+WHERE LAST_NAME = :1`.
+
+The other repository class, `OrderRepository` is similar. Following this model,
+we need to have a repository class for each JPA entity. Explaining all the Quarkus
+Panache subtleties is largely outside the scope of this booklet and the readers 
+are invited to consult its documentation without moderation.
+
+The `orders-repository` module provides unit and integration tests for the two 
+Panache repositories implemented here. The unit tests is using Mockito to 
+mock the database access layer, for example:
+
+    ...
+    @InjectMock
+    CustomerRepository customerRepository;
+    ...
+    @Test
+    public void testCustomerRepositoryFindAll() 
+    {
+      List<Customer> expectedCustomers = getCustomers();
+      PanacheQuery<Customer> mockQuery = mock(PanacheQuery.class);
+      when(customerRepository.findAll()).thenReturn(mockQuery);
+      when(mockQuery.stream()).thenReturn(expectedCustomers.stream());
+      List<Customer> actualCustomers = customerRepository.findAll().stream().collect(Collectors.toList());
+      assertThat(actualCustomers).isNotNull();
+      assertThat(actualCustomers).hasSize(expectedCustomers.size());
+      assertThat(actualCustomers).isEqualTo(expectedCustomers);
+      Mockito.verify(customerRepository).findAll();
+    }
+    ...
+
+The code above not only mocks the `CustomerRepository` class, responsible for 
+the data access layer, but also, given an invocation chain like 
+`customerRepository.findAll().stream().collect(Collectors.toList())`, it needs to 
+stub each element of the chain, as shown below:
+
+    ...
+    PanacheQuery<Customer> mockQuery = mock(PanacheQuery.class);
+    when(customerRepository.findAll()).thenReturn(mockQuery);
+    when(mockQuery.stream()).thenReturn(expectedCustomers.stream());
+    ...
+
+which makes the unit test counter-intuitive and more complex than
+expected. This is one of the reason why, personally, I was never a fan of mocking.
+
+As opposed to the unit tests, the integration ones rely on the Quarkus [Dev 
+Services](https://quarkus.io/guides/dev-services) which automatically provision
+our tests with the required resources. For example, we're using here a PostgreSQL
+database and the simple occurrence of the following Maven dependency in the 
+`pom.xml` file:
+
+    ...
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jdbc-postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    ...
+
+automatically provisions a PostgreSQL image and runs it on the behalf of 
+`testcontainers`, in order to execute against it our integration tests. We only
+need to provide a couple of properties in the `application.properties` file, as
+shown below:
+
+    ...
+    quarkus.datasource.db-kind=postgresql
+    quarkus.datasource.jdbc.driver=org.postgresql.Driver
+    quarkus.datasource.username=orders
+    quarkus.datasource.password=orders
+    quarkus.hibernate-orm.database.generation=drop-and-create
+    ...
+
+With these elements in place, the integration tests simply inject the repositories
+under test, invoke the entry points and check the results. Here is an excerpt:
+
+    @QuarkusTest
+    @DBRider
+    @DBUnit(schema = "public", caseSensitiveTableNames = true, cacheConnection = false)
+    public class CustomerRepositoryIT
+    {
+      @Inject
+      CustomerRepository customerRepository;
+
+      @Test
+      @DataSet(value = "orders.yml", cleanAfter = true)
+      public void testFindAll()
+      {
+        List<Customer> customers = customerRepository.findAll().stream().toList();
+        assertThat(customers).isNotNull();
+        assertThat(customers).hasSize(2);
+        assertThat(customers.getFirst().getOrders()).hasSize(2);
+      }
+
+      @Test
+      @Transactional
+      @DataSet(cleanAfter = true)
+      @ExpectedDataSet(value = "expected-orders.yml")
+      public void testPersist()
+      {
+        customerRepository.persist(getCustomer());
+      }
+      ...
+    }
+
+You're probably familiar by now with annotations like `@QuarkusTest`, `@Test` 
+and `@Inject`. Just in case you aren't:
+
+  - the 1st one is a Quarkus specific annotation declaring the issuing class as a [Quarkus test](https://quarkus.io/guides/getting-started-testing);
+  - the 2nd one is a [JUnit](https://junit.org/junit5/) specific annotations declaring a method as being a test one;
+  - the 3rd one is a specific [Jakarta CDI](https://jakarta.ee/specifications/cdi/) (*Context and Dependency Injection*) annotation and its role is to instantiate and make available the annotated class.
+
+Please don't hesitate to consult the associated documentation if you need. In 
+any case, you can appreciate how simple and readable the integration tests are.
+
+You probably noticed some more annotations that you might be less familiar with,
+like `@DBUnit` and `@DBRider`. These are two very useful database specific test
+packages allowing to check the test results, while avoiding a lot of boilerplate
+code. [DBUunit](https://www.dbunit.org/) is a JUnit extension which allows the 
+tester to declare a known and predictable status for the database tables and 
+views under test. Used in conjunction with [DBRider](https://database-rider.github.io/database-rider/latest/documentation.html?theme=foundation),
+writing integration tests was never easier as, this way, developers benefit of
+DBUnit to Jakarta CDI integration.
+
+For example, by using the annotation `@DataSet(value = "orders.yml", cleanAfter = true)`, the test method `testFindAll()` above, will initialize the database
+`CUSTOMERS` and `ORDERS` tables with the content of the `orders.yml` file, located by default 
+in `src/test/resources/datasets`. This file is listed below:
+
+    customers:
+      - id: 1
+        first_name: "John"
+        last_name: "Doe"
+        email: "john.doe@email.com"
+        phone: "555-1234"
+      - id: 2
+        first_name: "Jane"
+        last_name: "Doe"
+        email: "john.doe@email.com"
+        phone: "777-1234"
+    orders:
+      - id: 1
+        customer_id: 1
+        item: "myItem1"
+        price: 100.00
+      - id: 2
+        customer_id: 1
+        item: "myItem2"
+        price: 200.0
+      - id: 3
+        customer_id: 2
+        item: "myItem3"
+        price: 300.00
+      - id: 4
+        customer_id: 2
+        item: "myItem4"
+        price: 400.00
+
+This simple YAML notation describes the operations that should be performed on 
+database tables before running the test method `testFinadAl()`. As you can see,
+two records are created in the table `CUSTOMERS` and 4 other in the table `ORDERS`.
+The orders are related to the customers via the field `customer_id.` The YAML 
+file uses the database table and column names, not the JPA ones. They are lower
+case here because of the `caseSensitiveTableNames` parameter of the `@DBUnit` 
+annotation, which has in this case the value of `false`. It might not be very 
+intuitive but, this annotation with the value of `false`, means that the letter 
+case will be applied depending on the value of another parameter: 
+`caseInsensitiveStrategy`. And since this parameter doesn't appear in our `DBUnit`
+annotation, its `UPPERCASE` default value is applied. In conclusion, in order to
+reference our database tables and columns which are all uppercase, we need to have
+them all in lowercase in the YAML file.
+
+To come back to our `testFindAll()` method, it starts by inserting the records 
+as per `orders.yml` file in the `CUSTOMERS` and `ORDERS` database tables, after
+which invokes the `findAll()` entrypoint on the `CustomerRepository` class, in 
+order to get the list of all the existent customers. Then it checks that there 
+are 2 defined customers, which the first one has two associated orders, as defined
+by the `orders.yml` file. Simple, right ?
+
+Another type of checking is demonstrated by the test method `testPersist()`. 
+Here, the `@ExpectedDataSet` annotation defines the final status of the database tables after
+the test execution. In our case, we insert a new record into the `CUSTOMERS` and
+`ORDERS` database tables and expect that their final status be the one defined in
+the file `expected-orders.yml`, as shown below:
+
+    customers:
+      - first_name: "John"
+        last_name: "Doe"
+        email: "john.doe@email.com"
+        phone: "555-1234"
+    orders:
+      - item: "myItem1"
+        price: 100.25
+      - item: "myItem2"
+        price: 200.25
+
+Before running each test, the database tables are deleted, as the result of the
+`@DataSet(cleanAfter = true)` annotation. Hence, after inserting the new customer
+and order records, the database should be in the status described by `expected-orders.yml`
+file.
+
+Now, in order to run our unit and integration tests described above, proceed 
+as follows:
+
+    $ cd 50-shades-of-rest/orders/orders-repository
+    $ mvn clean install faisafe:integration-test
+
+A test report showing something like successfully running 30 unit tests and 20 
+integration ones should be displayed.
+
+All right, we have seen what everything is about the `orders-repository`,
+together with the `orders-domain` one. Let's go now further to our RESTful service
+implementation.
+
+## The service module
+
 
 # Asynchronous processing with REST services
 

@@ -15,6 +15,8 @@
     <module>orders-classic</module>
     <module>orders-domain</module>
     <module>orders-repository</module>
+    <module>orders-service</module>
+    <module>orders-api</module>
     <!--module>orders-test-resources</module-->
   </modules>
   <dependencyManagement>
@@ -32,6 +34,11 @@
       <dependency>
         <groupId>fr.simplex-software.workshop</groupId>
         <artifactId>orders-repository</artifactId>
+        <version>1.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>fr.simplex-software.workshop</groupId>
+        <artifactId>orders-api</artifactId>
         <version>1.0-SNAPSHOT</version>
       </dependency>
     </dependencies>

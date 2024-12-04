@@ -28,7 +28,11 @@ public class CustomerRepository implements PanacheRepository<Customer>
 
   public List<Customer> listCustomersWithOrders()
   {
-    return list("select distinct c from Customer c left join fetch c.orders where c.id is not null order by c.lastName");
+    return list("""
+       select distinct c from Customer c
+       left join fetch c.orders 
+       where c.id is not null 
+       order by c.lastName""");
   }
 
   public List<Customer> listCustomersByLastName(String lastName)
