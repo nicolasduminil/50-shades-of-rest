@@ -20,41 +20,41 @@ public class OrderServiceImpl implements OrderService
   @Inject
   OrderRepository orderRepository;
   @Inject
-  CustomerService customerService;
+  OrderMapper orderMapper;
 
   @Override
   @Transactional
   public OrderDTO createOrder(OrderDTO orderDTO)
   {
-    Order order = OrderMapper.INSTANCE.toEntity(orderDTO, customerService);
+    Order order = orderMapper.toEntity(orderDTO);
     orderRepository.persistAndFlush(order);
-    return OrderMapper.INSTANCE.fromEntity(order);
+    return orderMapper.fromEntity(order);
   }
 
   @Override
   public List<OrderDTO> getOrdersForCustomer(Long customerId)
   {
     List<Order> orders = orderRepository.find("customer.id", customerId).list();
-    return orders.stream().map(OrderMapper.INSTANCE::fromEntity).collect(Collectors.toList());
+    return orders.stream().map(orderMapper::fromEntity).collect(Collectors.toList());
   }
 
   @Override
   public List<OrderDTO> getAllOrders()
   {
-    return orderRepository.streamAll().map(OrderMapper.INSTANCE::fromEntity).toList();
+    return orderRepository.streamAll().map(orderMapper::fromEntity).toList();
   }
 
   @Override
   public Optional<OrderDTO> getOrder(Long id)
   {
-    return orderRepository.findByIdOptional(id).map(OrderMapper.INSTANCE::fromEntity);
+    return orderRepository.findByIdOptional(id).map(orderMapper::fromEntity);
   }
 
   @Override
   @Transactional
   public void deleteOrder(OrderDTO orderDTO)
   {
-    orderRepository.delete(OrderMapper.INSTANCE.toEntity(orderDTO, customerService));
+    orderRepository.delete(orderMapper.toEntity(orderDTO));
   }
 
   @Transactional
@@ -71,9 +71,9 @@ public class OrderServiceImpl implements OrderService
     Optional<Order> optionalOrder = orderRepository.findByIdOptional(orderDTO.id());
     return optionalOrder.map(existingOrder ->
     {
-      OrderMapper.INSTANCE.updateEntityFromDTO(orderDTO, existingOrder);
+      orderMapper.updateEntityFromDTO(orderDTO, existingOrder);
       orderRepository.persist(existingOrder);
-      return OrderMapper.INSTANCE.fromEntity(existingOrder);
+      return orderMapper.fromEntity(existingOrder);
     }).orElseThrow(() -> new OrderNotFoundException("### OrderServiceImpl.updateOrder(): Order not found for id: " + orderDTO.id()));
   }
 
@@ -89,5 +89,11 @@ public class OrderServiceImpl implements OrderService
   public void deleteAllOrders()
   {
     orderRepository.deleteAll();
+  }
+
+  @Override
+  public Order findOrderById(Long id)
+  {
+    return orderRepository.findById(id);
   }
 }

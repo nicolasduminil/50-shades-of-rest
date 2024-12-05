@@ -76,6 +76,13 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5-mockito</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
   <build>
     <finalName>${project.artifactId}</finalName>
     <pluginManagement>
@@ -114,6 +121,7 @@
           <version>${surefire-plugin.version}</version>
           <configuration>
             <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+            <!--argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine-->
             <systemPropertyVariables>
               <quarkus.datasource.devservices.enabled>true</quarkus.datasource.devservices.enabled>
               <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>

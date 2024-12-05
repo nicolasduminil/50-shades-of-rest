@@ -1,4 +1,4 @@
-package fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests;
+package fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests.unit;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
@@ -28,5 +28,6 @@ public class TestCustomerMapper
     Customer customer = CustomerMapper.INSTANCE.toEntity(customerDTO);
     assertThat(customer).isNotNull();
     assertThat(customer.getFirstName()).isEqualTo(customerDTO.firstName());
+    assertThat(customer.getLastName()).isEqualTo(customerDTO.lastName());
   }
 }

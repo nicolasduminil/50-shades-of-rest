@@ -1,6 +1,7 @@
 package fr.simplex_software.fifty_shades_of_rest.orders.service;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
+import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
 
 import java.util.*;
 
@@ -15,4 +16,5 @@ public interface OrderService
   OrderDTO updateOrder(OrderDTO orderDTO);
   void deleteAllOrdersForCustomer(Long customerId);
   void deleteAllOrders();
+  Order findOrderById(Long id);
 }

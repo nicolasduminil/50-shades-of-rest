@@ -71,6 +71,7 @@ public class CustomerServiceImpl implements CustomerService
   }
 
   @Override
+  @Transactional
   public Customer findCustomerById(Long id)
   {
     return customerRepository.findById(id);
