@@ -13,4 +13,9 @@ public record OrderDTO(Long id, String item, BigDecimal price, Long customerId)
   {
     this(null, item, price, null);
   }
+
+  public OrderDTO(Long id, String item, BigDecimal price)
+  {
+    this(id, item, price, null);
+  }
 }

@@ -44,8 +44,10 @@ public class CustomerServiceImpl implements CustomerService
   public CustomerDTO createCustomer(CustomerDTO customerDTO)
   {
     Customer customer = CustomerMapper.INSTANCE.toEntity(customerDTO);
-    customer.setId(null);
+    //customer.setId(null);
+    System.out.println (">>> CustomerService.createCustomer(): ID before save " + customer.getId());
     customerRepository.persistAndFlush(customer);
+    System.out.println (">>> CustomerService.createCustomer(): ID after save " + customer.getId());
     return CustomerMapper.INSTANCE.fromEntity(customer);
   }
 

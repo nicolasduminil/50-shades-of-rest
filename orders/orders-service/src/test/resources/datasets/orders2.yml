@@ -1,0 +1,11 @@
+customers:
+  - id: 2
+    first_name: "Jane"
+    last_name: "Doe"
+    email: "jane.doe@email.com"
+    phone: "777-1234"
+orders:
+  - id: 3
+    customer_id: 2
+    item: "myItem3"
+    price: 300.00

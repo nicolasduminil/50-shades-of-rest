@@ -14,7 +14,8 @@ import java.util.ArrayList;
 public class Customer
 {
   @Id
-  @GeneratedValue
+  @SequenceGenerator(name="CUSTOMERS_SEQ_GEN", sequenceName="CUSTOMERS_SEQ", allocationSize=1)
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="CUSTOMERS_SEQ_GEN")
   @Column(name = "ID", nullable = false)
   private Long id;
   @Column(name = "FIRST_NAME", nullable = false, length = 40)
