@@ -404,6 +404,128 @@ via a foreign key on the child side, referring to the parent. Hence, the child
 database table will have a primary key, to uniquely identify an order, and a 
 foreign key, to identify the customer to which it belongs. 
 
+Now that our object model is defined, we need to test it such that to make sure 
+that it works and is aligned with our RESTful services requirements. There is not
+much to test as far as the DTOs are concerned. Of course, we could write unit 
+tests for them using setters and getters but this would be too trivial. However,
+it would make sense to test the JPA entities which present more complexities, 
+especially from the point ogf view of their *one-to-many* and *many-to-one*
+relationships. Let's have a look at the class `JpaHibernateIT`:
+
+    @QuarkusTest
+    public class JpaHibernateIT
+    {
+      @Inject
+      EntityManager em;
+
+      @Test
+      @Transactional
+      public void testCustomer()
+      {
+        Customer customer = new Customer("John", "Doe",
+          "john.doe@email.com", "222-786453");
+        em.persist(customer);
+        em.flush();
+        em.clear();
+        Customer found = em.find(Customer.class, customer.getId());
+        assertThat(found).isNotNull();
+        assertThat(found.getId()).isNotNull();
+        assertThat(customer.getFirstName()).isEqualTo(found.getFirstName());
+        assertThat(customer.getLastName()).isEqualTo(found.getLastName());
+      }
+
+      @Test
+      @Transactional
+      public void testOrder()
+      {
+        Customer customer = new Customer("John", "Doe",
+          "john.doe@email.com", "222-786453");
+        Order order = new Order("miItem1", new BigDecimal("210.76"), customer);
+        customer.addOrder(order);
+        em.persist(customer);
+        em.flush();
+        em.clear();
+        Order found = em.find(Order.class, order.getId());
+        assertThat(found).isNotNull();
+        assertThat(found.getId()).isNotNull();
+        assertThat(found.getItem()).isEqualTo(order.getItem());
+        assertThat(found.getPrice()).isEqualTo(order.getPrice());
+      }
+      ...
+    }
+
+The first thing to notice in the listing above is that our test is a Quarkus one,
+as declared by the annotation `@QuarkusTest`. This allows us, amongst others, to
+inject the JPA `EntityManager`, which wouldn't have been possible in a simple 
+JUnit test. All the JPA annotations are available, as demonstrated by `@Transactional`.
+It is only needed in test methods which persist data, of course. Once the 
+`EntityManager` injected, we can probe all its operations to CRUD our entities
+and to test that the results are the expected ones. This is the moment where we
+need to be imaginative and provide tests that combine different scenarios,
+such that to cover as much as possible use cases. Finding issues at this stage
+would avoid us to waste time with debugging later.
+
+Rather than an unit test, our test is an integration one and its name reflects 
+that. As a matter of fact, the `maven-falsafe-plugin` used to execute it requires
+a naming convention according to which its name needs to prefixed or suffixed 
+by "IT". 
+
+And like any integration test, ours uses a real database to test against. In order
+to minimize its footprint, we chose an in-memory database and rely on Quarkus Dev
+Services to automatically provision it. To configure the JDBC (*Java DataBase 
+Connection*) details, we could either define the associated properties in the 
+`application.properties` file or use the `persistence.xml` file. While Quarkus 
+recommends the first alternative, in this case we'll apply the last one because, 
+our test is directly handling JPA, which advocates the use of `persistence.xml` as
+part of the standard. 
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <persistence version="3.0" xmlns="https://jakarta.ee/xml/ns/persistence"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence 
+      https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+      <persistence-unit name="orders" transaction-type="JTA">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+        <class>fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.Customer</class>
+        <class>fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.Order</class>
+        <properties>
+          <property name="javax.persistence.jdbc.url" value="jdbc:h2:mem:orders"/>
+          <property name="javax.persistence.jdbc.driver" value="org.h2.Driver"/>
+          <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
+          <property name="hibernate.hbm2ddl.auto" value="create"/>
+          <property name="hibernate.format_sql" value="true"/>
+          <property name="hibernate.show_sql" value="true"/>
+        </properties>
+      </persistence-unit>
+    </persistence>
+
+As you can see, we're using here a JTA (*Java Transaction API*) compliant 
+datasource with the H2 database. The JPA provider is defined as being 
+`HibernatePersistenceProvider`. The other properties define the JDBC connection
+string, the JDBC driver, the SQL dialect as well as the create-drop strategy, which
+automatically creates the database schema when the application starts and drops 
+it when it stops. Also, the properties `hibernate.format_sql` and `hibernate_show
+_sql` allows to log the SQL queries and, respectively, to format them.
+
+We don't need to configure any other details and executing the integration test
+
+    $ cd orders-model
+    $ mvn test-compile failsafe:integation-test
+
+we should see Quarkus Dev Services starting the in-memory H2 database and a 
+successful test report. For example:
+
+    [INFO] -------------------------------------------------------
+    [INFO]  T E S T S
+    [INFO] -------------------------------------------------------
+    [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.domain.tests.CustomerIT
+    ...
+    2024-12-07 13:40:59,690 INFO  [io.qua.dev.h2.dep.H2DevServicesProcessor] (build-10) 
+      Dev Services for H2 started.
+    2024-12-07 13:40:59,695 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] (build-10) 
+      Dev Services for default datasource (h2) started
+    ...
+
 ## The repository module
 
 Once we defined our business case domain model, we need to implement the persistence
