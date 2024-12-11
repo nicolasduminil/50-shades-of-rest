@@ -844,6 +844,254 @@ implementation.
 
 ## The service module
 
+The service module, as its name implies, consists in components belonging to the
+service layer, i.e. this intermediate layer located between the web and the persistence one. In enterprise
+grade applications, the web layer deals with RESTful controllers, URLs mappings,
+HTTP headers and requests handling, etc., while the service layer is more 
+specialized in operating on business logic and encapsulating the data access layer.
+
+Of course, nothing prevent the web layer to directly handle persistence and 
+business logic in general but, in order to respect the "separation of concerns"
+principle, the software design best practices recommend to dedicate these operations
+to the service layer.
+
+Additionally, in our case, one of the responsibilities of the service layer is the
+conversion of the DTOs to JPA entities and the reverse. As a matter of fact, 
+as we will see soon, our RESTful API is designed such that to accept and return
+DTOs as input
+parameters and as results. In order to perform CRUD operations, these DTOs need
+to be converted into JPA entities. Conversely, the API requests retrieving data are
+designed such that to return DTOs as well, so they have to be converted from their
+JPA entity form, as returned by the repository layer, to DTOs.
+This double conversion process is under the responsibility of the service layer.
+
+Again, we could have directly called the repository layer from the web one but, in
+this case, in addition of non observing the "separation of concerns" principle,
+we would have to either design the RESTful API such that to handle JPA entities
+input parameters and results, or to implement the associated conversions in the
+web layer. But this would have been a poor design as it would have obliged
+us to either make the web layer dependent of the JPA classes, and there is no 
+reason to that, or to pollute it with unrelated business logic.
+
+Our service layer is structured is four pieces:
+
+  - the services interface;
+  - the services implementations;
+  - the DTOs to JPA entities and reverse mapping;
+  - the exceptions definitions.
+
+### The service interfaces.
+
+The interfaces represent our services contract. The code below shows the `CustomerService` interface:
+
+    public interface CustomerService
+    {
+      List<CustomerDTO> getCustomers();
+      CustomerDTO getCustomer(Long id);
+      CustomerDTO getCustomerByEmail(String email);
+      CustomerDTO createCustomer(CustomerDTO customerDTO);
+      CustomerDTO updateCustomer(CustomerDTO customerDTO);
+      void deleteCustomer(Long id);
+      Customer findCustomerById(Long id);
+    }
+
+This interface exposes 2 categories of services, read-only and read-write or
+write-only ones. One of the points that we could suggest, looking at this interface,
+is to have `Optional<?>` instances returned the read-only entry points. But again,
+this would be a poor design as it would lead us to check for null the optional 
+objects in the web layer. And we prefer to do that as early as possible, i.e. 
+here, in the service layer.
+
+### The mapping
+
+The service layer accepts input parameters and returns results as DTOs. It maps
+them to JPA entities before calling the data access (repository) layer. While 
+these mapping operations are generally quite simple and could be implemented 
+explicitly in a couple of lines of code, the most recent professional practice 
+recommends the use of *mappers*: class libraries providing a more descriptive 
+and functional way to perform mapping operations.
+
+In our project we're using [mapstruct](https://mapstruct.org/) which is one of the most well known mappers.
+The listing below shows the `CustomerMapper`:
+
+    @Mapper(componentModel = "cdi", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+    public interface CustomerMapper
+    {
+      CustomerMapper INSTANCE = Mappers.getMapper(CustomerMapper.class);
+      Customer toEntity(CustomerDTO dto);
+      CustomerDTO fromEntity(Customer entity);
+      @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+      void updateEntityFromDTO(CustomerDTO customerDTO, @MappingTarget Customer customer);
+    }
+
+The first thing to notice is that a `mapstruct` mapper doesn't require to 
+explicitly define an implementation class, but can generate it from an interface.
+This is what happens here. 
+
+The `@Mapper` annotation declares this interface as being a `mapstruct` mapper 
+and by using `cdi` as a component model we tailor the generation process to use
+Jakarta CDI annotations. The `ReportingPolicy.ignore` defines a mapping strategy
+where target fields unrelated to source ones are ignored, as opposed to raising
+exceptions.
+
+The interface exposes two entry points:
+
+  - `toEntity(...)` which converts a DTO to its associated JPA entity;
+  - `fromEntity(...)` which converts a JPA entity to its associated DTO;
+
+Here we're relying on the default mapping rule, based on using the properties 
+names in order to define the mapping sources and the targets. Accordingly, each
+property in the source is mapped to the one having the same name, in the target
+one.
+
+The `updateEntityFromDTO(...)` entry point defines how to update only specific 
+fields of the target entity from the source DTO. The `NullValuePropertyMappingStrategy.IGNORE`
+value tells `mapstruct` to ignore null values during the mapping process.
+
+Sometimes, the mapping definition is more complicated, as seen below:
+
+    @Mapper(componentModel = "cdi", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+    public abstract class OrderMapper
+    {
+      @Inject
+      OrderService orderService;
+      @Inject
+      CustomerService customerService;
+
+      @Mapping(source = "customer.id", target = "customerId")
+      public abstract OrderDTO fromEntity(Order order);
+
+      public Order toEntity(OrderDTO orderDTO) 
+      {
+        if (orderDTO.id() != null) 
+        {
+          Order existingOrder = orderService.findOrderById(orderDTO.id());
+          if (existingOrder != null) 
+          {
+            updateEntityFromDTO(orderDTO, existingOrder);
+            return existingOrder;
+          }
+        }
+        Customer customer = customerService.
+          findCustomerById(orderDTO.customerId());
+        Order order = new Order(orderDTO.item(), orderDTO.price(), customer);
+        return order;
+    }
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    public abstract void updateEntityFromDTO(OrderDTO customerDTO, @MappingTarget Order order);
+    ...
+
+In this case, the default mapping of `OrderDTO` instances to `Order` ones isn't 
+suitable and  it requires more than 
+just moving values from the source's properties to the target's ones having the
+same name. As a matter of fact, we need to customize it because, in order to 
+satisfy the *many-to-one* relationship between `Order` and `Customer`, we need 
+to read the database tables.
+
+Accordingly, since we need to customize out `toEntity(...)` operation, the mapper
+implementation cannot be generated from an interface. Here we need to define an 
+abstract class which customized operation has to be provided, while the standard
+one will still be generated, like in the interface case, from an abstract method.
+
+Our customized `toEntity(...)` method checks if the source `OrderDTO` has already
+been persisted, i.e. its associated ID isn't null. In this case it searches the
+database for the order having the given ID and, if found, it uses it as a source
+for the mapping. If the `OrderDTO` doesn't have an initialized ID, or if no `Order`
+having the given ID has been found in the database, then the `Customer` to which
+the `OrderDTO` belongs, via its `customerID` property, is retrieved from the 
+database and a new `Order` associated with this same `Customer` is instantiated.
+
+The described process uses the `CustomerService` and the `OderService` implementations
+in order to access to teh database. For this reason these services are injected 
+into the mapper.
+
+### The service implementations
+
+The service implemenations is quite simple, as shown below:
+
+    @ApplicationScoped
+    public class CustomerServiceImpl implements CustomerService
+    {
+      @Inject
+      CustomerRepository customerRepository;
+
+      @Override
+      public List<CustomerDTO> getCustomers()
+      {
+        return customerRepository.findAll().stream().map(CustomerMapper.INSTANCE::fromEntity).toList();
+      }
+
+      @Override
+      public CustomerDTO getCustomer(Long id)
+      {
+        return CustomerMapper.INSTANCE.fromEntity(customerRepository.findByIdOptional(id)
+          .orElseThrow(() -> new CustomerNotFoundException("### CustomerServiceImpl.getCustomer(): Customer not found for ID: " + id)));
+      }
+
+      @Override
+      public CustomerDTO getCustomerByEmail(String email)
+      {
+        return CustomerMapper.INSTANCE.fromEntity(customerRepository.find("email", email).singleResultOptional()
+         .orElseThrow(() -> new CustomerNotFoundException("### CustomerServiceImpl.getCustomerByEmail(): Customer not found for email: " + email)));
+      }
+
+      @Override
+      @Transactional
+      public CustomerDTO createCustomer(CustomerDTO customerDTO)
+      {
+        Customer customer = CustomerMapper.INSTANCE.toEntity(customerDTO);
+        customerRepository.persistAndFlush(customer);
+        return CustomerMapper.INSTANCE.fromEntity(customer);
+      }
+
+      @Override
+      @Transactional
+      public CustomerDTO updateCustomer(CustomerDTO customerDTO)
+      {
+        Optional<Customer> optionalCustomer = customerRepository.findByIdOptional(customerDTO.id());
+        return optionalCustomer.map(existingCustomer ->
+        {
+          CustomerMapper.INSTANCE.updateEntityFromDTO(customerDTO, existingCustomer);
+          customerRepository.persist(existingCustomer);
+          return CustomerMapper.INSTANCE.fromEntity(existingCustomer);
+        }).orElseThrow(() -> 
+          new CustomerNotFoundException("""
+            ### CustomerServiceImpl.updateCustomer(): 
+            Customer not found for id: """
+            + customerDTO.id()));
+      }
+
+      @Override
+      @Transactional
+      public void deleteCustomer(Long id)
+      {
+        customerRepository.deleteById(id);
+      }
+
+      @Override
+      @Transactional
+      public Customer findCustomerById(Long id)
+      {
+        return customerRepository.findById(id);
+      }
+    }
+
+We can resume the service implementation above by saying that it injects the 
+`CustomerRepository` and, for each service operation, it calls the repository 
+equivalent one. To be noticed the use of the `@Transactional` annotation on the
+methods that modifies the database.
+
+## The orders-classic module
+
+We have managed to look in details at the different layers required by our first
+RESTful service. Now is the time to examine the RESTful service itself. 
+
+The implementation presented in the `order-classic` module of our project is, 
+as its name implies, the most "classic" one, i.e. a synchronous one. The HTTP 
+protocol is inherently a request-response based, synchronous protocol and, while
+the RESTful services aren't mandatory tied to it, the most common and, hence, 
+classical implementations use it and are synchronous.
 
 # Asynchronous processing with REST services
 

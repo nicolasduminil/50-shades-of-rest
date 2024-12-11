@@ -13,7 +13,6 @@ import jakarta.transaction.*;
 import java.util.*;
 
 @ApplicationScoped
-@Transactional
 public class CustomerServiceImpl implements CustomerService
 {
   @Inject
@@ -44,6 +43,7 @@ public class CustomerServiceImpl implements CustomerService
   public CustomerDTO createCustomer(CustomerDTO customerDTO)
   {
     Customer customer = CustomerMapper.INSTANCE.toEntity(customerDTO);
+    customer.setId(null);
     customerRepository.persistAndFlush(customer);
     return CustomerMapper.INSTANCE.fromEntity(customer);
   }

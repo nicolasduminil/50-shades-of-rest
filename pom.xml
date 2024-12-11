@@ -16,6 +16,7 @@
     <module>common-tests</module>
     <module>async-services</module>
     <module>orders</module>
+    <module>orders/orders-infrastructure</module>
   </modules>
   <properties>
     <maven.compiler.source>21</maven.compiler.source>
@@ -121,7 +122,6 @@
           <version>${surefire-plugin.version}</version>
           <configuration>
             <argLine>-XX:+EnableDynamicAgentLoading</argLine>
-            <!--argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine-->
             <systemPropertyVariables>
               <quarkus.datasource.devservices.enabled>true</quarkus.datasource.devservices.enabled>
               <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
