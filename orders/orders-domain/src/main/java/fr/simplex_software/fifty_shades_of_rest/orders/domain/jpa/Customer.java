@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 @Entity
 @Table(name = "CUSTOMERS")
-@Cacheable
 public class Customer
 {
   @Id

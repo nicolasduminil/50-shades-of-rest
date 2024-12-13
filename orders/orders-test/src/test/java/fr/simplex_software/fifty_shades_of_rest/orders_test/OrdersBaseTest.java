@@ -15,8 +15,10 @@ import static org.assertj.core.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public abstract class OrdersBaseTest
 {
-  private static final String JOHN_EMAIL = URLEncoder.encode("john.doe@email.com", StandardCharsets.UTF_8);
-  private static final String JANE_EMAIL = URLEncoder.encode("jane.doe@email.com", StandardCharsets.UTF_8);
+  private static final String JOHN_EMAIL =
+    URLEncoder.encode("john.doe@email.com", StandardCharsets.UTF_8);
+  private static final String JANE_EMAIL =
+    URLEncoder.encode("jane.doe@email.com", StandardCharsets.UTF_8);
   protected static String customersUrl;
   protected static String ordersUrl;
 
@@ -24,8 +26,10 @@ public abstract class OrdersBaseTest
   @Order(10)
   public void testCreateCustomer()
   {
-    CustomerDTO customer = new CustomerDTO("John", "Doe", "john.doe@email.com", "1234567890");
-    given().body(customer).contentType(ContentType.JSON).when().contentType(ContentType.JSON).accept(ContentType.JSON).post(customersUrl).then().statusCode(HttpStatus.SC_CREATED);
+    CustomerDTO customer = new CustomerDTO("John", "Doe",
+      "john.doe@email.com", "1234567890");
+    given().body(customer).contentType(ContentType.JSON)
+      .when().post(customersUrl).then().statusCode(HttpStatus.SC_CREATED);
   }
 
   @Test
@@ -35,7 +39,8 @@ public abstract class OrdersBaseTest
     CustomerDTO customerDTO = given().basePath(customersUrl).when().pathParam("email", JOHN_EMAIL)
       .get("/email/{email}").then().statusCode(HttpStatus.SC_OK).extract().body().as(CustomerDTO.class);
     OrderDTO order = new OrderDTO("myItem01", new BigDecimal("100.25"), customerDTO.id());
-    given().body(order).contentType(ContentType.JSON).when().post(ordersUrl).then().statusCode(HttpStatus.SC_CREATED);
+    given().body(order).contentType(ContentType.JSON).when()
+      .post(ordersUrl).then().statusCode(HttpStatus.SC_CREATED);
   }
 
   @Test
@@ -50,7 +55,8 @@ public abstract class OrdersBaseTest
   @Order(40)
   public void testGetCustomers()
   {
-    assertThat(given().when().get(customersUrl).then().statusCode(HttpStatus.SC_OK).extract().body()
+    assertThat(given().when().get(customersUrl).then()
+      .statusCode(HttpStatus.SC_OK).extract().body()
       .as(CustomerDTO[].class)).hasSize(1);
   }
 
@@ -58,12 +64,14 @@ public abstract class OrdersBaseTest
   @Order(50)
   public void testUpdateCustomer()
   {
-    CustomerDTO customerDTO = given().basePath(customersUrl).pathParam("email", JOHN_EMAIL).when()
-      .get("/email/{email}").then().statusCode(HttpStatus.SC_OK).extract().body().as(CustomerDTO.class);
+    CustomerDTO customerDTO = given().basePath(customersUrl).pathParam("email", JOHN_EMAIL)
+      .when().get("/email/{email}").then().statusCode(HttpStatus.SC_OK)
+      .extract().body().as(CustomerDTO.class);
     assertThat(customerDTO).isNotNull();
     CustomerDTO updatedCustomer = new CustomerDTO(customerDTO.id(), "Jane", "Doe",
       "jane.doe@email.com", "0987654321");
-    assertThat(given().body(updatedCustomer).contentType(ContentType.JSON).when().put(customersUrl).then()
+    assertThat(given().body(updatedCustomer).contentType(ContentType.JSON).when()
+      .put(customersUrl).then()
       .statusCode(HttpStatus.SC_ACCEPTED).extract().body()
       .as(CustomerDTO.class).firstName()).isEqualTo("Jane");
   }
@@ -72,18 +80,22 @@ public abstract class OrdersBaseTest
   @Order(60)
   public void testGetCustomer()
   {
-    assertThat(given().basePath(customersUrl).pathParam("email", JANE_EMAIL).when().get("/email/{email}").then()
-      .statusCode(HttpStatus.SC_OK).extract().body().as(CustomerDTO.class).firstName()).isEqualTo("Jane");
+    assertThat(given().basePath(customersUrl).pathParam("email", JANE_EMAIL).when()
+      .get("/email/{email}").then()
+      .statusCode(HttpStatus.SC_OK).extract().body()
+      .as(CustomerDTO.class).firstName()).isEqualTo("Jane");
   }
 
   @Test
   @Order(70)
   public void testGetOrderByCustomer()
   {
-    CustomerDTO customerDTO = given().basePath(customersUrl).pathParam("email", JANE_EMAIL).when().get("/email/{email}")
+    CustomerDTO customerDTO = given().basePath(customersUrl).pathParam("email", JANE_EMAIL)
+      .when().get("/email/{email}")
       .then().statusCode(HttpStatus.SC_OK).extract().body().as(CustomerDTO.class);
     assertThat(customerDTO.firstName()).isEqualTo("Jane");
-    OrderDTO orderDTO = given().basePath(ordersUrl).pathParam("id", customerDTO.id()).when().get("/customer/{id}")
+    OrderDTO orderDTO = given().basePath(ordersUrl).pathParam("id", customerDTO.id()).when()
+      .get("/customer/{id}")
       .then().statusCode(HttpStatus.SC_OK).extract().body().as(OrderDTO[].class)[0];
     assertThat(orderDTO.item()).isEqualTo("myItem01");
   }
@@ -92,18 +104,22 @@ public abstract class OrdersBaseTest
   @Order(90)
   public void testDeleteCustomer()
   {
-    CustomerDTO customerDTO = given().basePath(customersUrl).pathParam("email", JANE_EMAIL).when().get("/email/{email}")
+    CustomerDTO customerDTO = given().basePath(customersUrl).pathParam("email", JANE_EMAIL)
+      .when().get("/email/{email}")
       .then().statusCode(HttpStatus.SC_OK).extract().body().as(CustomerDTO.class);
-    given().body(customerDTO).contentType(ContentType.JSON).when().delete(customersUrl).then().statusCode(HttpStatus.SC_NO_CONTENT);
+    given().body(customerDTO).contentType(ContentType.JSON).when()
+      .delete(customersUrl).then().statusCode(HttpStatus.SC_NO_CONTENT);
   }
 
   @Test
   @Order(80)
   public void testDeleteOrder()
   {
-    OrderDTO[] orders = given().get(ordersUrl).then().statusCode(HttpStatus.SC_OK).extract().body().as(OrderDTO[].class);
+    OrderDTO[] orders = given().get(ordersUrl).then().statusCode(HttpStatus.SC_OK)
+      .extract().body().as(OrderDTO[].class);
     assertThat(orders).hasSize(1);
     OrderDTO orderDTO = orders[0];
-    given().body(orderDTO).when().contentType(ContentType.JSON).delete(ordersUrl).then().statusCode(HttpStatus.SC_NO_CONTENT);
+    given().body(orderDTO).when().contentType(ContentType.JSON).delete(ordersUrl)
+      .then().statusCode(HttpStatus.SC_NO_CONTENT);
   }
 }

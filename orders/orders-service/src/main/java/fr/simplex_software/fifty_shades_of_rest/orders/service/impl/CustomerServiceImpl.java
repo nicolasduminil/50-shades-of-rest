@@ -28,14 +28,18 @@ public class CustomerServiceImpl implements CustomerService
   public CustomerDTO getCustomer(Long id)
   {
     return CustomerMapper.INSTANCE.fromEntity(customerRepository.findByIdOptional(id)
-      .orElseThrow(() -> new CustomerNotFoundException("### CustomerServiceImpl.getCustomer(): Customer not found for ID: " + id)));
+      .orElseThrow(() -> new CustomerNotFoundException("""
+        ### CustomerServiceImpl.getCustomer():
+          Customer not found for ID:""" + id)));
   }
 
   @Override
   public CustomerDTO getCustomerByEmail(String email)
   {
     return CustomerMapper.INSTANCE.fromEntity(customerRepository.find("email", email).singleResultOptional()
-      .orElseThrow(() -> new CustomerNotFoundException("### CustomerServiceImpl.getCustomerByEmail(): Customer not found for email: " + email)));
+      .orElseThrow(() -> new CustomerNotFoundException("""
+        ### CustomerServiceImpl.getCustomerByEmail():
+        Customer not found for email:""" + email)));
   }
 
   @Override
@@ -52,13 +56,18 @@ public class CustomerServiceImpl implements CustomerService
   @Transactional
   public CustomerDTO updateCustomer(CustomerDTO customerDTO)
   {
-    Optional<Customer> optionalCustomer = customerRepository.findByIdOptional(customerDTO.id());
+    Optional<Customer> optionalCustomer =
+      customerRepository.findByIdOptional(customerDTO.id());
     return optionalCustomer.map(existingCustomer ->
     {
       CustomerMapper.INSTANCE.updateEntityFromDTO(customerDTO, existingCustomer);
       customerRepository.persist(existingCustomer);
       return CustomerMapper.INSTANCE.fromEntity(existingCustomer);
-    }).orElseThrow(() -> new CustomerNotFoundException("### CustomerServiceImpl.updateCustomer(): Customer not found for id: " + customerDTO.id()));
+    }).orElseThrow(() ->
+      new CustomerNotFoundException("""
+        ### CustomerServiceImpl.updateCustomer():
+          Customer not found for id:"""
+        + customerDTO.id()));
 
   }
 
@@ -66,7 +75,10 @@ public class CustomerServiceImpl implements CustomerService
   @Transactional
   public void deleteCustomer(Long id)
   {
-    customerRepository.deleteById(id);
+    if (!customerRepository.deleteById(id))
+      throw new CustomerNotFoundException("""
+        ### CustomerServiceImpl.deleteCustomer():
+          Could not delete customer with id:""" + id);
   }
 
   @Override

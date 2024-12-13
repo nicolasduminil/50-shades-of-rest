@@ -17,14 +17,14 @@ import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
 @DBRider
-@DBUnit(schema = "public", caseSensitiveTableNames = true, cacheConnection = false)
-@DataSet(value = "orders.yml", cleanAfter = true)
+@DBUnit(schema = "public", cacheConnection = false)
 public class CustomerServiceIT
 {
   @Inject
   CustomerService customerService;
 
   @Test
+  @DataSet(value = "orders.yml", cleanAfter = true)
   public void testGetCustomers()
   {
     List<CustomerDTO> customerDTOs = customerService.getCustomers();
@@ -34,6 +34,7 @@ public class CustomerServiceIT
   }
 
   @Test
+  @DataSet(value = "orders.yml", cleanAfter = true)
   public void testGetCustomer()
   {
     CustomerDTO customerDTO = customerService.getCustomer(1L);
@@ -49,6 +50,7 @@ public class CustomerServiceIT
   }
 
   @Test
+  @DataSet(value = "orders.yml", cleanAfter = true)
   public void testGetCustomerByEmail()
   {
     CustomerDTO customerDTOs =
@@ -58,6 +60,7 @@ public class CustomerServiceIT
   }
 
   @Test
+  @DataSet(value = "orders.yml", cleanAfter = true)
   public void testGetCustomerByEmailNotFound()
   {
     assertThatThrownBy(() -> customerService.getCustomerByEmail("johnny.doe@email.com"))
@@ -79,6 +82,7 @@ public class CustomerServiceIT
   }
 
   @Test
+  @DataSet(value = "orders.yml", cleanAfter = true)
   public void testUpdateCustomer()
   {
     CustomerDTO customerDTO =
@@ -92,28 +96,64 @@ public class CustomerServiceIT
    }
 
    @Test
+   @DataSet(value = "orders.yml", cleanAfter = true)
    public void testUpdateCustomerNotFound()
    {
      CustomerDTO customerDTO = new CustomerDTO(3L, "Mike", "Doe",
-       "XXXXXXXXXXXXXXXXXX", "222-3456");
+       "mike.doe@email.com", "222-3456");
      assertThatThrownBy(() -> customerService.updateCustomer(customerDTO))
        .isInstanceOf(CustomerNotFoundException.class);
    }
 
    @Test
-   public void testDeleteCustomer()
+   @DataSet(value = "orders.yml", cleanAfter = true)
+   public void testDeleteCustomer() throws InterruptedException
    {
-     CustomerDTO customerDTO = customerService.getCustomer(1L);
-     customerService.deleteCustomer(customerDTO.id());
+     customerService.deleteCustomer(1L);
      assertThatThrownBy(() -> customerService.getCustomer(1L))
        .isInstanceOf(CustomerNotFoundException.class);
    }
 
    @Test
+   @DataSet(value = "orders.yml", cleanAfter = true)
    public void testFindCustomerById()
    {
      Customer customer = customerService.findCustomerById(1L);
      assertThat(customer).isNotNull();
      assertThat(customer.getFirstName()).isEqualTo("John");
+   }
+
+   private void printCustomer(CustomerDTO customerDTO)
+   {
+     System.out.println ("### CustomerDTO: " + customerDTO.id() + " "
+       + customerDTO.firstName() + " "
+       + customerDTO.lastName() + " "
+       + customerDTO.email() + " "
+       + customerDTO.phone());
+   }
+
+   private void printCustomer(Customer customer)
+   {
+     System.out.println ("### Customer: " + customer.getId() + " "
+       + customer.getFirstName() + " "
+       + customer.getLastName() + " "
+       + customer.getEmail() + " "
+       + customer.getPhone());
+   }
+
+   private void printCustomers (List<Customer> customers)
+   {
+     for (Customer customer : customers)
+     {
+       printCustomer(customer);
+     }
+   }
+
+   private void printCustomersDTO (List<CustomerDTO> customers)
+   {
+     for (CustomerDTO customer : customers)
+     {
+       printCustomer(customer);
+     }
    }
 }

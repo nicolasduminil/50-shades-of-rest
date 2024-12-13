@@ -1006,9 +1006,9 @@ The described process uses the `CustomerService` and the `OderService` implement
 in order to access to teh database. For this reason these services are injected 
 into the mapper.
 
-### The service implementations
+### The service implementation
 
-The service implemenations is quite simple, as shown below:
+The service implementation is quite simple, as shown below:
 
     @ApplicationScoped
     public class CustomerServiceImpl implements CustomerService
@@ -1092,6 +1092,365 @@ as its name implies, the most "classic" one, i.e. a synchronous one. The HTTP
 protocol is inherently a request-response based, synchronous protocol and, while
 the RESTful services aren't mandatory tied to it, the most common and, hence, 
 classical implementations use it and are synchronous.
+
+Lets' have a look at the `CustomerResource` RESTfull service:
+
+    @ApplicationScoped
+    @Path("customers")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public class CustomerResource implements CustomerApi
+    {
+      @Inject
+      CustomerService customerService;
+
+      @Override
+      @GET
+      public Response getCustomers()
+      {
+        return Response.ok().entity(customerService.getCustomers()).build();
+      }
+
+      @Override
+      @GET
+      @Path("/{id}")
+      public Response getCustomer(@PathParam("id") Long id)
+      {
+        return Response.ok().entity(customerService.getCustomer(id)).build();
+      }
+
+      @Override
+      @GET
+      @Path("/email/{email}")
+      public Response getCustomerByEmail(@PathParam("email") String email)
+      {
+        return Response.ok()
+          .entity(customerService.getCustomerByEmail(URLDecoder.decode(email, StandardCharsets.UTF_8)))
+          .build();
+      }
+
+      @Override
+      @POST
+      public Response createCustomer(CustomerDTO customerDTO)
+      {
+        return Response.created(URI.create("/customers/" + customerDTO.id())).entity(customerService.createCustomer(customerDTO)).build();
+      }
+
+      @Override
+      @PUT
+      public Response updateCustomer(CustomerDTO customerDTO)
+      {
+        return Response.accepted().entity(customerService.updateCustomer(customerDTO)).build();
+      }
+
+      @Override
+      @DELETE
+      public Response deleteCustomer(CustomerDTO customerDTO)
+      {
+        customerService.deleteCustomer(customerDTO.id());
+        return Response.noContent().build();
+      }
+    }
+
+The first thing you'll notice looking at the `CustomerResource` RESTful service,
+reproduced above, is that it os a CDI bean, having an application scope. As you 
+certainly know, CDI beans have one of the following scopes:
+
+  - application;
+  - session;
+  - request;
+
+Having an application scope, i.e. an application level visibility, means in this
+case that our RESTful service is a singleton. As matter of fact, it wouldn't 
+make sense to instantiate it per-session or per-request as it isn't supposed
+to maintain any session or request conversational status.
+
+Its URI is `/customer`, as defined by the `@Path` annotation and it consumes and
+produces JSON payloads. It implements the `CustomerAPI` interface and provides 
+support for creating, updating, querying and removing `Customer` JPA instances
+into/from the database, by delegating each CRUD operation to the `CustomerService`.
+
+This is all what we can say about this service and the associated one,
+`OrderConsumer`, is very similar.
+
+In oder to test our RESTful services, our project provides the `OrdersIT` class
+which, as its name implies, is an integration test using [RESTassured](https://rest-assured.io/) library.
+This is an open source library that offers a light and very practical DSL 
+(*Domain Specific Language*) like test framework. It supports all the HTTP 
+requests and has lots of options to validate the responses to them.
+
+Let's have a look at the listing below:
+
+    ...
+    @Test
+    @Order(10)
+    public void testCreateCustomer()
+    {
+      CustomerDTO customer = new CustomerDTO("John", "Doe",
+        "john.doe@email.com", "1234567890");
+      given().body(customer).contentType(ContentType.JSON)
+        .when().post(customersUrl).then().statusCode(HttpStatus.SC_CREATED);
+    }
+    ...
+
+This code is a fragment extracted for the `OrderBaseTest` class in the `orders-test`
+module of our project. Given that all the RESTassured tests of the different 
+RESTfull services implementations in this project are very similar, it's a good
+design decision to factor them in a common abstract class and to make them extend 
+it. Hence, the listing above is a snipet taken from this class which shows how 
+RESTassured allows to execute an HTTP POST requests on the `CustomerResource`,
+in order to create a new customer. As you can see, RESTassured suports a *given-
+when-then* syntax borrowed from the acceptance tests scenarios. Please notice how
+the status return code is checked such that to make sure that the request has 
+been successfully executed.
+
+Another example, below, shows how to get all the orders passed by a given customer:
+
+    ...
+    @Test
+    @Order(70)
+    public void testGetOrderByCustomer()
+    {
+      CustomerDTO customerDTO = given().basePath(customersUrl).pathParam("email", JANE_EMAIL)
+        .when().get("/email/{email}")
+        .then().statusCode(HttpStatus.SC_OK).extract().body().as(CustomerDTO.class);
+      assertThat(customerDTO.firstName()).isEqualTo("Jane");
+      OrderDTO orderDTO = given().basePath(ordersUrl).pathParam("id", customerDTO.id()).when()
+        .get("/customer/{id}")
+        .then().statusCode(HttpStatus.SC_OK).extract().body().as(OrderDTO[].class)[0];
+      assertThat(orderDTO.item()).isEqualTo("myItem01");
+    }
+    ...
+
+In this example, the `basePath(...)` and `pathParam(...)` methods are used to 
+define the endpoint URI. The response is checked for success and its payload is
+extracted as an instance of the `CustomerDTO` class.
+
+A more complicated case is shown below:
+
+    ...
+    @Test
+    @Order(50)
+    public void testUpdateCustomer()
+    {
+      CustomerDTO customerDTO = given().basePath(customersUrl)
+        .pathParam("email", JOHN_EMAIL)
+        .when().get("/email/{email}").then().statusCode(HttpStatus.SC_OK)
+        .extract().body().as(CustomerDTO.class);
+      assertThat(customerDTO).isNotNull();
+      CustomerDTO updatedCustomer = new CustomerDTO(customerDTO.id(), "Jane", "Doe",
+        "jane.doe@email.com", "0987654321");
+      assertThat(given().body(updatedCustomer).contentType(ContentType.JSON).when()
+        .put(customersUrl).then()
+        .statusCode(HttpStatus.SC_ACCEPTED).extract().body()
+        .as(CustomerDTO.class).firstName()).isEqualTo("Jane");
+    }
+    ...
+
+This test performs an HTTP GET request against the `CustomerResource` service 
+and, then, it updates the retrieved customer by executing a 2nd HTTP PUT request.
+
+You probably have noticed the `@Order` annotations used here to define the tests 
+execution sequence. It is generally considered a bad practice to force the
+integration tests execution order but, in this case, for simplicity’s sake, we
+allowed ourselves a slight infringement of this principle.
+
+Okay, so this was our base abstract class that all the RESTassured based integration
+tests are supposed to extend. Let's see now the concrete class:
+
+    @QuarkusTest
+    public class OrdersIT extends OrdersBaseTest
+    {
+      @BeforeAll
+      public static void beforeAll()
+      {
+        customersUrl = "/customers";
+        ordersUrl = "/orders";
+      }
+
+      @AfterAll
+      public static void afterAll()
+      {
+        customersUrl = null;
+        ordersUrl = null;
+      }
+    }
+
+That's all. We need only to define the RESTfull services URI as they might be 
+different depending on their implementation. For example, we might decide to 
+provide different URIs for the synchronous and asynchronous implementations, while
+the tests body are identical.
+
+In order to run the integration tests, proceed as follows:
+
+    $ cd orders-classic
+    $ mvn clean install failsafe:integration-test
+
+You'll see an output report stating that all the unit and integration tests have succeeded.
+
+Now, once you made sure that your unit and integration tests work as expected, you 
+might want to run them *production like*, i.e. to perform end-to-end tests. In 
+order to do that, you need to start your application in *production mode*. Then,
+you won't take advantage anymore of the Quarkus DevServices feature which, as its
+name implies, is only available in development and test mode. Consequently, your
+database and other infrastructure elements, if any, won't be automatically 
+provisioned and started, as it was the case when running in test mode. You need
+to do it yourself.
+
+One of the most practical ways to make sure that all your required infrastructure
+pieces are started when you run your application, is to use a combination of 
+`docker` and `docker-compose` utilities. If you look in the `src/main/docker` 
+directory of our `orders-classic` module, you'll see two files: `Dockerfile.jvm`
+and `Dockerfile.native`. These files contain the instructions required to build
+two `docker` images: for running in JVM and, respectively, in native mode.
+
+The `pom.xml` file, on the other part, uses the following Quarkus extension:
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-container-image-docker</artifactId>
+    </dependency>
+
+When executing the Maven build process with the environment variable `quarkus.container-image.build`
+having the value of `true`, this Quarkus extension will run a `docker build` 
+command against one of these files, depending on whether you want to build a JVM
+or a native image. In order to check that you can run the following sequence:
+
+    $ cd orders
+    $ mvn -Dquarkus.container-image.build clean install
+    $ docker images
+    ...
+    nicolas/orders-classic 1.0-SNAPSHOT 0549f3bbd68d 38 minutes ago 480MB
+    ...
+
+The `docker` image `nicolas/orders-classic:1.0-SNAPSHOT` is the one corresponding
+to our Quarkus `orders-classic` application. You can customize, of course, the 
+name of this image as documented [here](https://quarkus.io/guides/container-image).
+
+So, we already have the `docker` image for our Quarkus application. What we need
+now is to execute it, but first, we need to start another PostgreSQL image, for
+our database. In order to orchestrate this process, `docker-compose` is one of 
+the most suitable solutions. 
+
+## The orders-infrastructure module
+
+If you go in the `orders-infrastructure` module of the GitHub repository, you'll
+find the file `docker-compose.yml` in the `src/main/resource` directory. This 
+file orchestrates the startand the stop of the `docker` images required to run
+the `orders-classic` Quarkus application.
+
+    version: "2.4"
+    services:
+      database:
+        image: postgres:latest
+        hostname: postgresql
+        container_name: postgresql
+      ports:
+        - "5432:5432"
+      environment:
+        POSTGRES_USER: "postgres"
+        POSTGRES_PASSWORD: "postgres"
+        POSTGRES_DB: "orders"
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+      command: postgres -c "max_prepared_transactions=100"
+    adminer:
+      image: adminer
+      depends_on:
+        database:
+          condition: service_healthy
+      hostname: adminer
+      container_name: adminer
+      ports:
+        - "8081:8080"
+    orders:
+      image: nicolas/orders-classic:1.0-SNAPSHOT
+      depends_on:
+        database:
+          condition: service_healthy
+      hostname: orders
+      container_name: orders
+      ports:
+        - "8080:8080"
+      environment:
+        QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgresql:5432/orders
+        QUARKUS_DATASOURCE_USERNAME: postgres
+        QUARKUS_DATASOURCE_PASSWORD: postgres
+
+This `docker-compose.yml` file contains the instructions required to orchestrate
+3 containers:
+
+  - A container running a `postgres:latest` image, on the TCP port number 5432, with the user name and password defined by the environment variable `POSTGRES_USER` and, respectively, `POSTGRES_PASSWORD`. The container name is `postgresql`, as wellas the host name on which it runs. A health-check is defined for the database and it consists in successfuly running the `pg_isready -U postgres` command, every 10 seconds, with 5 reties and a timeout of 5 seconds.
+  - A container running an `adminer` image. This is an open source database administration console, supporting PostgreSQL, MySQL, H2 and others. It runs on the host TCP port 8081 mapped to the 8080 target one, on a host named `adminer`, which is also the container name.
+  - A container running our Quarkus application image `nicolas/orders-classic`. Its name is `orders` and runs on a host named `orders` and on the TCP port number 8080. It depends on the `database` service which has to be in a healthy status.
+
+The full details of the `docker-compose` commands and syntax may be found [here](https://docs.docker.com/compose/).
+
+In order to run in production mode, `docker-compose`, as well as `docker`, should
+be installed locally, as pre-requisites. Then, we can use either the CLI 
+(*Command Line Interpreter*) or the Maven plugin to handle it.
+
+If you look in the project's `pom.xml` file, you'll se that:
+
+      <plugin>
+        <groupId>com.dkanejs.maven.plugins</groupId>
+        <artifactId>docker-compose-maven-plugin</artifactId>
+        <version>4.0.0</version>
+        <inherited>false</inherited>
+        <configuration>
+          <detachedMode>true</detachedMode>
+          <removeVolumes>true</removeVolumes>
+          <removeOrphans>true</removeOrphans>
+        </configuration>
+      </plugin>
+
+This is the `docker-compose` Maven plugin configuration. It states that it will
+start the containers in detached mode and will remove all the mounted volumes and
+orphan images when the containers stop.
+
+Now, to run our `orders-classic` Quarkus application in production mode, proceed
+as follows:
+
+    $ cd orders/orders-infrastructure
+    $ mvn docker-compose:up
+    $ docker ps
+    CONTAINER ID   IMAGE                                 COMMAND CREATED STATUS PORTS                                                 NAMES
+      ...          nicolas/orders-classic:1.0-SNAPSHOT     ...      ...    ...   0.0.0.0:8080->8080/tcp
+      ...          adminer                                 ...      ...    ...   0.0.0.0:8081->8080/tcp
+      ...          postgres:latest                         ...      ...    ...   0.0.0.0:5432->5432/tcp
+
+Here we can check that, after having executed the Maven command, all our three 
+containers are up and running. We can test our application using different REST
+clients, one of the most commons being [Postman](https://www.postman.com/). But
+Quarkus provides an out-of-the-box and ready-to-use integration with [Swagger UI](https://swagger.io/tools/swagger-ui/)
+and this is what we''l be using here.
+
+In order to use Swagger UI the `pom.xml` file of the `orders-classic` project 
+needs to include the following Quarkus extension:
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-openapi</artifactId>
+    </dependency>
+
+and the `application.properties` file has to define the following property:
+
+    quarkus.swagger-ui.always-include=true
+
+With these elements in place, fire your prefered browser to http://localhost:8080/q/swagger-ui/ 
+and you'll be presented with the Swager UI main window, as shown below:
+
+![Swagger orders](swagger-orders.png)
+
+Using this graphical interface you can now fully exercise your API and test it 
+by combining all the possible scenarios.
+
+# Eclipse MicroProfileHealth
+
+
 
 # Asynchronous processing with REST services
 
