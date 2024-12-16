@@ -1448,16 +1448,180 @@ and you'll be presented with the Swager UI main window, as shown below:
 Using this graphical interface you can now fully exercise your API and test it 
 by combining all the possible scenarios.
 
-# Eclipse MicroProfileHealth
+# Eclipse MicroProfile Health
 
+As mentioned earlier, Quarkus, as an implementation of the [Eclipse MicroProfile](https://microprofile.io/) 
+specifications, supports the [MicroProfile Health](https://microprofile.io/specifications/health/) specifications.
+This API provides information about the applications status such that to determine
+whether they are ready to serve requests and work properly. Quarkus implements 
+the Eclipse MicroProfile Health specifications through its SmallRye Health extension
+which Maven dependencies are shown below:
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-health</artifactId>
+    </dependency>
+
+In order to provide information concerning its own health, a service performs 
+self-checks. The specifications define two categories of such self-checks:
+
+  - *Liveness checks*: provide information concerning the service availability, for example, whether it is ready to accept requests, etc.
+  - *Readiness checks*: provide information concerning the service's infrastructure dependencies like, for example, databases, message brokers, etc.
+
+This information is reported and published on well-defined endpoints, as follows:
+
+  - `/health/live`: here are published all the liveness checks that determine whether a service is up and running;
+  - `/health/ready`: here are published all the readiness checks that determine whether a service is ready to process requests;
+  - `/health`: this endpoint collects the result of both liveness and readiness checks.
+
+With Quarkus, these endpoints are configurable, of course, by using 
+`quarkus.smallrye-health.*` properties, as described [here](https://quarkus.io/guides/smallrye-health).
+
+## Liveness Checks
+
+Let's see a simple example of liveness check. The listing below shows the class 
+`ServiceHealthCheck` located in the `orders-classic` module of our GitHub repository.
+
+    @ApplicationScoped
+    @Liveness
+    public class ServiceHealthCheck implements HealthCheck
+    {
+      @Override
+      public HealthCheckResponse call()
+      {
+        return HealthCheckResponse
+         .named("Liveness health check for the Orders Management service")
+         .up()
+         .withData("Type","Liveness")
+         .withData("Status", "Services are up and running !")
+         .build();
+      }
+    }
+
+As you can see, in order to perform liveness checks, a class needs to:
+
+  - be a CDI bean, in this case and `@ApplicationScoped` one;
+  - be annotated with `@Liveness`;
+  - implement the `HealthCheck` interface.
+
+The `HealthCheckResponse` class is used here, as its name implies, to construct
+a response, further to a health request. `HealthCheck` is a functional interface
+defining the `call()` method, which returns a service status. In our example, we
+call the `named(...)` method to name the liveness check, then the `up()` method
+to say that the service is up and running, and the `withdata(...)` method to 
+customize the returned liveness status by adding some descriptive text to it.
+
+Let's see if it works:
+
+    $ cd orders
+    $ mvn -pl orders-infrastructure docker-compose:down
+    $ mvn -Dquarkus.container-image.build clean install 
+    $ mvn -pl orders-infrastructure docker-compose:up
+
+The `mvn` commands above clean the project's `target` directory, build a Docker
+image as specified by the `Dockerfile.jvm`, move to the `orders-infrastructure`
+module and runs the `docker-compose up` command against the `docker-compose.yml`
+file. To probe the liveness check do:
+
+    $ curl http://localhost:8080/q/health/live
+    {
+      "status": "UP",
+      "checks": 
+      [
+        {
+          "name": "Liveness health check for the Orders Management service",
+          "status": "UP",
+          "data": 
+          {
+            "Type": "Liveness",
+            "Status": "Services are up and running !"
+          }
+        }
+      ]
+    }
+
+or fire your preferred browser.
+
+## Readiness Checks
+
+We just probed that our services are up and running, let's now try to write some
+readiness checks. Look at the class `DbHealthCheck` below:
+
+    @ApplicationScoped
+    @Readiness
+    public class DbHealthCheck implements HealthCheck
+    {
+      @ConfigProperty(name = "POSTGRES_HOST", defaultValue = "localhost")
+      String host;
+      @ConfigProperty(name = "POSTGRES_PORT", defaultValue = "5432")
+      Integer port;
+
+      @Override
+      public HealthCheckResponse call()
+      {
+        HealthCheckResponseBuilder responseBuilder =
+        HealthCheckResponse.named(String.format("Database connection health check on %s %d", host, port));
+        try
+        {
+          serverListening(host, port);
+          responseBuilder.up();
+        }
+        catch (Exception ex)
+        {
+          responseBuilder.down()
+          .withData("reason", ex.getMessage());
+        }
+        return responseBuilder.build();
+      }
+
+      private void serverListening (String host, Integer port) throws IOException
+      {
+        new Socket(host, port).close();
+      }
+    }
+
+This class is similar to the previous one, except that, instead of checking for
+liveness, it checks for readiness. In fact, it checks whether the PostgreSQL 
+database is started and able to serve queries, otherwise our services, although
+up and running, won't be able to work. The strategy adopted here is simple: we
+try to open a new socket connection to our database server and to close it 
+immediately. If it doesn't throw any exception, then it means that the database
+is fine.
+
+Please notice the use of the [Eclipse Microprofile Config](https://microprofile.io/specifications/config/3-1/) annotations, 
+defining the DNS name and the TCP port number of the database server. They are 
+based on the environment variables `POSTGRES_HOST` and `POSTGRES_PORT`, defined
+in the `docker-compose.yml` file.
+
+You can test the readiness checks as follows:
+
+    $ curl http://localhost:8080/q/health/ready
+      {
+        "status": "UP",
+        "checks": 
+        [
+          {
+            "name": "Database connections health check",
+            "status": "UP",
+            "data": 
+            {
+              "<default>": "UP"
+            }
+          },
+          {
+            "name": "Database connection health check on postgresql 5432",
+            "status": "UP"
+          }
+        ]
+      }
 
 
 # Asynchronous processing with REST services
 
 There are two levels of asynchronous processing as far as REST services are concerned:
 
-- the asynchronous client processing: in this scenario the consumer invokes an endpoint and the invocation returns immediately. The endpoint itself might still be synchronous. Depending on the type of asynchronous invocation the return might be of type `Future`, `CompletionStage`, `CompletableFuture`, etc. But the operation didn't finish yet at the moment when the consumer call returns. Perhaps it did even start yet. In order to get the result, the consumer has different options, for example to do polling or to use callbacks and continuations.
-- the asynchronous server processing: in this scenario, the producer itself processes the request asynchronously.
+  - the asynchronous client processing: in this scenario the consumer invokes an endpoint and the invocation returns immediately. The endpoint itself might still be synchronous. Depending on the type of asynchronous invocation the return might be of type `Future`, `CompletionStage`, `CompletableFuture`, etc. But the operation didn't finish yet at the moment when the consumer call returns. Perhaps it did even start yet. In order to get the result, the consumer has different options, for example to do polling or to use callbacks and continuations.
+  - the asynchronous server processing: in this scenario, the producer itself processes the request asynchronously.
 
 The two cases above may be combined such that to have asynchronous consumers
 with synchronous producers, asynchronous consumers with asynchronous producers

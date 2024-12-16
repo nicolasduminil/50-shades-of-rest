@@ -18,6 +18,7 @@
     <module>orders-service</module>
     <module>orders-api</module>
     <module>orders-test</module>
+    <module>orders-infrastructure</module>
   </modules>
   <dependencyManagement>
     <dependencies>

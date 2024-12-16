@@ -1,11 +1,8 @@
 package fr.simplex_software.fifty_shades_of_rest.orders.provider.health;
 
-import com.github.dockerjava.api.model.*;
-
 import jakarta.enterprise.context.*;
 import org.eclipse.microprofile.config.inject.*;
 import org.eclipse.microprofile.health.*;
-import org.eclipse.microprofile.health.HealthCheck;
 
 import java.io.*;
 import java.net.*;
@@ -23,7 +20,7 @@ public class DbHealthCheck implements HealthCheck
   public HealthCheckResponse call()
   {
     HealthCheckResponseBuilder responseBuilder =
-      HealthCheckResponse.named("Database connection health check");
+      HealthCheckResponse.named(String.format("Database connection health check on %s %d", host, port));
     try
     {
       serverListening(host, port);

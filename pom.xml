@@ -16,7 +16,6 @@
     <module>common-tests</module>
     <module>async-services</module>
     <module>orders</module>
-    <module>orders/orders-infrastructure</module>
   </modules>
   <properties>
     <maven.compiler.source>21</maven.compiler.source>
