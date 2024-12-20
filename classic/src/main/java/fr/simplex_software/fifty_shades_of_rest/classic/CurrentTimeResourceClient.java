@@ -8,5 +8,4 @@ import org.eclipse.microprofile.rest.client.inject.*;
 @Path("time")
 public interface CurrentTimeResourceClient extends BaseMpClient
 {
-
 }

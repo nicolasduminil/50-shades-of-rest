@@ -1173,11 +1173,64 @@ into/from the database, by delegating each CRUD operation to the `CustomerServic
 This is all what we can say about this service and the associated one,
 `OrderConsumer`, is very similar.
 
-In oder to test our RESTful services, our project provides the `OrdersIT` class
-which, as its name implies, is an integration test using [RESTassured](https://rest-assured.io/) library.
-This is an open source library that offers a light and very practical DSL 
-(*Domain Specific Language*) like test framework. It supports all the HTTP 
-requests and has lots of options to validate the responses to them.
+## Testing RESTfull services
+
+With Quarkus, testing has never been so easy. All you need is to include the
+`quarkus-junit5` extension in your Maven `pom.xml` file and to annotate your 
+test classes with `@QuarkusTest` or `QuarkusIntegrationTest`, depending on whether
+the test is a unit or an integration one.
+
+In our examples we'll be using exclusively the `@QuarkusTest` annotation and,
+by the way, it is worth noting that Quarkus changes slightly the notion of unit
+tests. As a matter of fact, tests annotated with `@QuarkusTest`, which are
+Quarkus unit tests, don't really match with the general definition of the unit
+testing. Executing such a test leads the Quarkus JUnit 5 extension to start an
+embedded [Undertow](https://undertow.io/) web server and deploy to it directly
+the binaries resulted from the compilation process. Once deployed, the Quarkus 
+application will listen for REST requests on the default URL http://localhost:8081
+and, instead of just testing one requirement, in isolation, as recommended by 
+the theory, the test may perform HTTP requests against the application endpoints.
+This looks more like integration tests, except the fact that the test and the 
+classes under test run in the same JVM, as well as the web server, which is 
+embedded.
+
+It might seem confusing that `@QuarkusTest` annotated classes, defined by the
+documentation as being unit tests, be in fact closer to integration ones. 
+And it is confusing. But there is a nuance here. 
+
+While enabling tests closer to integration
+testing in the traditional sense, Quarkus considers this approach as part of their
+unit testing strategy, due to its speed and convenience. It's a hybrid approach
+that allows for both focused component testing and broader integration scenarios.
+
+As opposed to `@QuarkusTest`, the `@QuarkusIntegrationTest` annotation runs the 
+application's *fast JAR*, resulted from the Maven build process, in a separate 
+JVM. Consequently, the test interacts with the application under test exclusively
+over the network, which makes impossible to inject beans into test classes. These 
+tests are closer to end-to-end ones because they implement a purely black-box 
+approach and a production-like testing method.
+
+All our tests in this project are `@QuarkusTest` annotated ones. Among them, there 
+are unit tests whose convention name follows the one of the `maven-surefire-plugin`,
+i.e. `Test*`, and there are hybrid unit-to-integration tests which naming convention
+follows the one of the `maven-failsafe-plugin`, i.e. `*IT`.
+
+As REST is vast field, there are many test packages and libraries used since
+years for testing. Consequently, we provide the following test categories:
+
+  - [RESTassured](https://rest-assured.io/) tests;
+  - [Eclipse MicroProfile REST Client](https://microprofile.io/specifications/microprofile-rest-client/) tests.
+  - [Jakarta RESTfull Services](https://jakarta.ee/specifications/restful-ws/) clients.
+  - Java 11 HTTP clients.
+
+All these test categories are integrated, of course, with JUnit 5. Let’s have now
+a look at them all.
+
+### Testing with RESTassured
+
+RESTassured, is a very well-known open source library that offers a light and 
+very practical Java DSL (*Domain Specific Language*) for testing.
+It supports all the HTTP requests and has lots of options to validate responses.
 
 Let's have a look at the listing below:
 
@@ -1197,7 +1250,7 @@ This code is a fragment extracted for the `OrderBaseTest` class in the `orders-t
 module of our project. Given that all the RESTassured tests of the different 
 RESTfull services implementations in this project are very similar, it's a good
 design decision to factor them in a common abstract class and to make them extend 
-it. Hence, the listing above is a snipet taken from this class which shows how 
+it. Hence, the listing above is a snippet taken from this class which shows how 
 RESTassured allows to execute an HTTP POST requests on the `CustomerResource`,
 in order to create a new customer. As you can see, RESTassured suports a *given-
 when-then* syntax borrowed from the acceptance tests scenarios. Please notice how
@@ -1286,7 +1339,62 @@ In order to run the integration tests, proceed as follows:
     $ cd orders-classic
     $ mvn clean install failsafe:integration-test
 
-You'll see an output report stating that all the unit and integration tests have succeeded.
+You'll see an output report stating that all the unit and integration tests have
+succeeded.
+
+### Testing with Eclipse MicroProfile REST Client
+
+As an important part of the general Eclipse MicroProfile specifications, REST 
+Client provides a typesafe approach, using proxies and annotations, to invoke 
+RESTful services over HTTP. Quarkus, as a full Eclipse MicroProfile implementation,
+supports of course REST Client via the following extension:
+
+    ...
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-client</artifactId>
+    </dependency>
+    ...
+
+The MicroProfile REST Client, as implemented by Quarkus, is based on the idea of
+RMI (*Remote Method Invocation*) proxies that are generated from an interfaces 
+whose methods, including annotations, return types, signatures and exception 
+declarations, match the target service. The listing below shows such an interface:
+
+    @RegisterRestClient(configKey = "base_uri")
+    @Path("customers")
+    public interface CustomerApiClient extends BaseCustomerApiClient {}
+    ...
+    public interface BaseCustomerApiClient extends CustomerApi
+    {
+      @Override
+      @GET
+      Response getCustomers();
+
+      @Override
+      @GET
+      @Path("/{id}")
+      Response getCustomer(@PathParam("id") Long id);
+
+      @Override
+      @GET
+      @Path("/email/{email}")
+      Response getCustomerByEmail(@PathParam("email") String email);
+
+      @Override
+      @POST
+      Response createCustomer(CustomerDTO customerDTO);
+
+      @Override
+      @PUT
+      Response updateCustomer(CustomerDTO customerDTO);
+
+      @Override
+      @DELETE
+      Response deleteCustomer(CustomerDTO customerDTO);
+    }
+
+
 
 Now, once you made sure that your unit and integration tests work as expected, you 
 might want to run them *production like*, i.e. to perform end-to-end tests. In 
@@ -1615,6 +1723,556 @@ You can test the readiness checks as follows:
         ]
       }
 
+Last but not least, querying the endpoint http://localhost:8080/q/health will 
+display both the liveness and readiness checks. Additionally, in dev mode, all
+the health checks are available through the Health-UI, at http://localhost:8080/q/health-ui.
+
+# Eclipse MicroProfile Metrics
+
+During the previous paragraph we've seen how Eclipse MicroProfile Health helps 
+us to monitor our applications and services status, by instrumenting checks. But
+there is more about it: Eclipse MicroProfile Metrics, a complementary specification,
+provides an API to gather and expose metrics.
+
+The specification defines three categories of metrics:
+
+  - *Base metrics* that all MicroProfile implementors have mandatory to provide. 
+  - *Vendor metrics* specific to given MicroProfile implementations. For example Quarkus, as a MicroProfile implementation, provides a set of specific metrics that other implementations don't provide.
+  - *Application metrics* which expose telemetry data specific to given applications and services and relevant for only the business logic that they handle.
+
+In order to use Eclipse MicroProfile Metrics in Quarkus applications, you need 
+to include the following extension in your Maven build process:
+
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-metrics</artifactId>
+    </dependency>
+
+Then, in order to access the base metrics proceed as follows:
+
+    $ curl -H "Accept: application/json" http://localhost:8080/q/metrics/base
+    {
+      "cpu.systemLoadAverage": 0.46,
+      "thread.count": 24,
+      "classloader.loadedClasses.count": 9883,
+      "classloader.unloadedClasses.total": 0,
+      "gc.total;name=G1 Young Generation": 6,
+      "gc.total;name=G1 Concurrent GC": 4,
+      "jvm.uptime": 99250,
+      "thread.max.count": 24,
+      "memory.committedHeap": 58720256,
+      "classloader.loadedClasses.total": 9883,
+      "cpu.availableProcessors": 12,
+      "thread.daemon.count": 10,
+      "gc.total;name=G1 Old Generation": 0,
+      "memory.maxHeap": 8321499136,
+      "cpu.processCpuLoad": 0.00020442320714459108,
+      "gc.time;name=G1 Old Generation": 0,
+      "memory.usedHeap": 14361272,
+      "gc.time;name=G1 Concurrent GC": 3,
+      "gc.time;name=G1 Young Generation": 18
+    }
+
+You got here the complete list of metrics that each MicroProfile Metrics implementation
+has to support. The listing below shows the Quarkus specific metrics:
+
+    $ curl -H "Accept: application/json" http://localhost:8080/q/metrics/vendor
+    {
+      "memoryPool.usage.max;name=G1 Survivor Space": 6410136,
+      "memory.freePhysicalSize": 14063583232,
+      "memoryPool.usage.max;name=CodeHeap 'non-profiled nmethods'": 1552128,
+      "memoryPool.usage;name=Metaspace": 51501160,
+      "memoryPool.usage;name=G1 Eden Space": 0,
+      "memoryPool.usage;name=CodeHeap 'non-profiled nmethods'": 1553024,
+      "memoryPool.usage;name=CodeHeap 'profiled nmethods'": 5075328,
+      "memoryPool.usage;name=G1 Old Gen": 12093576,
+      "memoryPool.usage.max;name=CodeHeap 'non-nmethods'": 1747456,
+      "memoryPool.usage.max;name=G1 Old Gen": 12093576,
+      "cpu.processCpuTime": 5440000000,
+      "memory.committedNonHeap": 69009408,
+      "memoryPool.usage.max;name=Compressed Class Space": 6514960,
+      "memoryPool.usage.max;name=G1 Eden Space": 29360128,
+      "memory.freeSwapSize": 1023406080,
+      "memoryPool.usage.max;name=Metaspace": 51496528,
+      "cpu.systemCpuLoad": 0.07182157283104758,
+      "memory.usedNonHeap": 66366464,
+      "memoryPool.usage;name=CodeHeap 'non-nmethods'": 1720320,
+      "memoryPool.usage;name=G1 Survivor Space": 2267696,
+      "memoryPool.usage;name=Compressed Class Space": 6515496,
+      "memory.maxNonHeap": -1,
+      "memoryPool.usage.max;name=CodeHeap 'profiled nmethods'": 5071360
+    }
+
+Let's have a look now at the application metrics that interest us the most.
+
+## Application metrics
+
+The Eclipse MicroProfile Metrics specification defines the following categories
+of application metrics:
+
+  - *Counters* which are incremented by one for each endpoint call.
+  - *Gauges* which behave similar to *counters* except that they can also be decremented, depending on the fluctuation of the metric to be measured.
+  - *Meters* which can measure the usage rate of metrics, for example the throughput of a RESTfull endpoint.
+  - *Timers* which are able to track how frequently an endpoint is invoked and how long the execution takes to complete.
+
+The following example, taken from the `CustomerResource` class, shows how to 
+use these metrics:
+
+    @GET
+    @Path("/random")
+    @Counted(name = "randomCustomerCounter",
+      description = "Counts how many times the getRandomCustomer() method has been called")
+    @Timed(name = "randomCustomerTimer",
+      description = "Times the getRandomCustomer() method",
+      unit = MetricUnits.MILLISECONDS)
+    public Response getRandomCustomer()
+    {
+      CustomerDTO randomCustomer = randomCustomerService.getRandomCustomer();
+      return Response.ok().entity(randomCustomer).build();
+    }
+
+    @GET
+    @Path("/random/{count}")
+    @Metered(name = "randomCustomerMeter",
+      description = "Measures the getRandomCustomers() method",
+      unit = MetricUnits.NONE)
+    public Response getRandomCustomers(@PathParam("count") int count)
+    {
+      List<CustomerDTO> randomCustomers = 
+        randomCustomerService.getRandomCustomers(count);
+      return Response.ok().entity(randomCustomers).build();
+    }
+    ...
+    @Override
+    @POST
+    public Response createCustomer(CustomerDTO customerDTO)
+    {
+      createdCustomers.incrementAndGet();
+      return Response
+        .created(URI.create("/customers/" + customerDTO.id()))
+        .entity(customerService.createCustomer(customerDTO)).build();
+    }
+    ...
+    @Gauge(name = "randomCustomerGauge",
+      description = "The number of newly created customers",
+      unit = MetricUnits.NONE)
+    public long getCreatedCustomerCount()
+    {
+      return createdCustomers.get();
+    }
+    ...
+
+The `CustmerResource` class has been enriched such that to add the 
+`getRandomCustmer(...)` and `getRandomCustomers(...)` methods. They call a public
+service called `randomuser.me` which, as its name implies, returns fictive customers.
+These methods have been added to our RESTful service in order to specifically 
+illustrate the use of MicroProfile Metrics and don't have any other business 
+related role.
+
+Looking at the code above, you can see the following:
+
+  - the counter named `randomCustomerCounter` which counts the number of times that the `getRandomCustomer(...)` endpoint has been called;
+  - the timer named `randomCustomerTimer` which tracks, among others, how long a call to the `getCustomerRandom(...)` takes;
+  - the meter named `randomCustomerMeter` that collects a great amount of information on the `getCustomersRandom(...)` endpoint. Among this information we'll find the number of observations, as well as the minimum and the medium throughput rate;
+  - the gauge named `randomCustomGauge` that counts the number of newly created customers.
+
+You can notice how easy to use MicroProfile Metrics with Quarkus is. You just 
+annotate your endpoint with the desired annotation, adding to it a relevant name
+and description.
+
+Finally, a word about the public service `randomuser.me`. In order to call it,
+we use the Eclipse MicroProfile REST Client implementation provided by Quarkus.
+The interface `RandomCustomerClientApi` below describes the contract of service:
+
+    @Path("/api")
+    @RegisterRestClient(baseUri = "https://randomuser.me")
+    public interface RandomCustomerApiClient
+    {
+      @GET
+      @Produces(MediaType.APPLICATION_JSON)
+      JsonObject getRandomCustomer();
+
+      @GET
+      @Produces(MediaType.APPLICATION_JSON)
+      @QueryParam("results")
+      JsonObject getRandomCustomers(@QueryParam("results") int count);
+    }
+
+This interface exposes two endpoints associated to the operations provided by the
+service  `randomuser.me` available at the URL http://randomuser.me. Both endpoints
+return JSON data containing fictive customer related information. The first one
+returns only one fictive customer while the 2nd one returns as many fictive 
+customers as indicated by the value of the query parameter `count`.
+
+This interface is transformed, at build time, by the Quarkus enricher, in an 
+operational implementation that can be used to access the target service as shown
+below:
+
+    @ApplicationScoped
+    public class RandomCustomerService
+    {
+      @Inject
+      @RestClient
+      RandomCustomerApiClient randomCustomerApiClient;
+
+      public CustomerDTO getRandomCustomer()
+      {
+        try
+        {
+          JsonObject response = randomCustomerApiClient.getRandomCustomer();
+          JsonArray results = response.getJsonArray("results");
+          return convertToCustomerDTO(results.getJsonObject(0));
+        }
+        catch (Exception e)
+        {
+          throw new RuntimeException("Failed to fetch random user", e);
+        }
+      }
+
+      public List<CustomerDTO> getRandomCustomers(int count)
+      {
+        try
+        {
+          JsonObject response = randomCustomerApiClient.getRandomCustomers(count);
+          JsonArray results = response.getJsonArray("results");
+          return results.stream()
+            .map(user -> convertToCustomerDTO((JsonObject) user))
+            .collect(Collectors.toList());
+        }
+        catch (Exception e)
+        {
+          throw new RuntimeException("Failed to fetch random users", e);
+        }
+      }
+
+      private CustomerDTO convertToCustomerDTO(JsonObject customer)
+      {
+        JsonObject name = customer.getJsonObject("name");
+        return new CustomerDTO(
+          name.getString("first"),
+          name.getString("last"),
+          customer.getString("email"),
+          customer.getString("phone")
+        );
+      }
+    }
+
+We can resume the role of the code above by saying that it provides support for
+invoking the external public service `randomuser.me` as well for converting the 
+JSON payload returned by the endpoint into instance of `CustomerDTO objects.`
+
+In order to test our application metrics, we need to proceed as follows:
+
+    $ cd orders
+    $ mvn -Dquarkus.container-image.build clean install
+    $ cd orders-infrastructure
+    $ mvn docker-compose:up
+    $ ./run.sh
+    $ curl -H "Accept: application/json" http://localhost:8080/q/metrics/application
+    {
+      "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerTimer": {
+      "p99": 1935.766229,
+      "min": 109.026576,
+      "max": 1935.766229,
+      "mean": 1289.4608055883618,
+      "p50": 654.010345,
+      "p999": 1935.766229,
+      "stddev": 641.1668576113614,
+      "p98": 1935.766229,
+      "p75": 1935.766229,
+      "fiveMinRate": 0.006736332885573337,
+      "fifteenMinRate": 0.0033183429188367235,
+      "meanRate": 0.007226752859584433,
+      "count": 4,
+      "oneMinRate": 0.014507326600483962,
+      "elapsedTime": 3149.544873
+    },
+    "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerGauge": 3,
+    "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerCounter": 4,
+    "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerMeter": 
+    {
+      "fiveMinRate": 0.0,
+      "fifteenMinRate": 0.0,
+      "meanRate": 0.0,
+      "count": 0,
+      "oneMinRate": 0.0
+    }
+
+Here we run the Maven build process by taking care to use the `Dquarkus.container-image.build`
+option which will build the Docker image named `nicolas/orders-classic:1.0-SNAPSHOT`.
+Then we run the `docker-compose` Maven goal which will start the required Docker
+containers: database, database admin UI and Quarkus application.
+Once all three containers have started, we execute the `bash` script
+`run.sh`containing the required `curl` commands to create a new customer by doing
+a POST request to http://localhost:8080/customers, with the following JSON payload:
+
+    {
+      "firstName": "Johhn",
+      "lastName": "Doe",
+      "phone": "",
+      "id": 0,
+      "email": "john.doe@email.com"
+    }
+
+Notice that, given that the `Customer` JPA entity class uses automatically generated
+IDs, the payload above has `"id": 0`.
+
+After having created a new customer, the `run.sh` script calls several times one
+of the service endpoints, such that to generate some traffic. Then, tou can get the
+application metrics:
+
+    $ curl -H "Accept: application/json" http://localhost:8080/q/metrics/application
+    {
+      "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerTimer": 
+      {
+        "p99": 1935.766229,
+        "min": 109.026576,
+        "max": 1935.766229,
+        "mean": 1289.4608055883618,
+        "p50": 654.010345,
+        "p999": 1935.766229,
+        "stddev": 641.1668576113614,
+        "p95": 1935.766229,
+        "p98": 1935.766229,
+        "p75": 1935.766229,
+        "fiveMinRate": 0.006736332885573337,
+        "fifteenMinRate": 0.0033183429188367235,
+        "meanRate": 0.007226752859584433,
+        "count": 4,
+        "oneMinRate": 0.014507326600483962,
+        "elapsedTime": 3149.544873
+      },
+      "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerGauge": 3,
+      "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerCounter": 4,
+       "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerMeter": 
+       {
+         "fiveMinRate": 0.0,
+         "fifteenMinRate": 0.0,
+         "meanRate": 0.0,
+         "count": 0,
+         "oneMinRate": 0.0
+       }
+    }
+
+Each execution environment being different, you may get slightly different values.
+The listing below shows the `run.sh` bash script.
+
+    #!/bin/bash
+    curl -X POST \
+      -H "Content-Type: application/json" \
+      -H "Accept: application/json" \
+      --data-binary "@customer.json" \
+      http://localhost:8080/customers
+
+    for i in {1. .5}
+    do
+      sleep 1
+      curl http://localhost:8080/customers/random
+    done
+
+As you can see, in order to invoke the `/customers`endpoint of our RESTful service,
+you need to pass two HTTP headers in the `POST` request: `Accept` and `Content-Type`,
+such that to configure the data type consumed and produced by it. Notice the 
+`data-binary` option of the `curl` command which allows to post the content of 
+a file. Then, the `/customers/random` endpoint is invoked 5 times, please feel
+free to adjust this number to the value which makes sense for you and don't 
+hesitate to add requests to the 2nd endpoint, such that to activate `randomCustomerMeter`.
+
+# Eclipse MicroProfile Fault Tolerance
+
+*Fault Tolerance* is probably the most important section of the Eclipse MicroProfile
+specifications because, as their name implies, they bring fault tolerance and 
+resilience to the enterprise grade services. In the Quarkus provided implementation,
+they consist in a set of annotations, as shown in the table below:
+
+| **Annotation**              | **Description**                                                                        |
+:-----------------------------|:---------------------------------------------------------------------------------------|
+| `@Timeout`                  | Defines a duration for a timeout                                                       |
+| `@Retry`                    | Defines criteria for retry operations                                                  |
+| `@Fallback`                 | Provides the method to be called in case of failure                                    |
+| `@Bulkhead`                 | Allows to isolate failures in a part of the service while the others continue to work  |
+| `@CircuitBreaker`           | Provides a way to fail fast and avoiding system overloading                            | 
+
+Each one of the annotation above corresponds to a resiliency pattern which allows
+to minimise the outage, should the infrastructure be unavailable. Let's look at
+them, one by one.
+
+## Circuit Breaker
+
+Sometimes, a RESTfull service might not be available, whatever the reason could
+be. When this happens, it would be worthless to let consumers continue to perform
+HTTP requests on these endpoints, because doing that will just overload the network 
+and getting a non-responsive service even less responsive. This is where the 
+*circuit breaker* comes into the play to regulate dysfunctional services such 
+that to prevent repetitive failures to overload the system.
+
+The pattern is based on the metaphor of a circuit breaker used in electronics
+and aims at protecting endpoints, in case of failure, in the same way that its 
+mechanical replica protects against too high currents. Like the later one,
+the former one has the following same states:
+
+  - *Closed*: The endpoint is available as long as its associated circuit breaker is in this status.
+  - *Half-open*: In this state, the circuit breaker checks whether the endpoint is back after a failure and, in this case, it switches to *closed*. 
+  - *Open*: Indicates that the associated endpoint is temporarily unavailable.
+
+Let's look at an example to understand how everything works:
+
+    ...
+    @GET
+    @Path("/random/{count}")
+    @CircuitBreaker(requestVolumeThreshold = 4,
+      failureRatio = 0.5, delay = 2000, successThreshold = 3)
+    public Response getRandomCustomers(@PathParam("count") int count)
+    {
+      List<CustomerDTO> randomCustomers = randomCustomerService.getRandomCustomers(count);
+      return Response.ok().entity(randomCustomers).build();
+    }
+    ...
+
+The `@CircuitBreaker` annotation in the listing above says that if, within the 
+last 4 calls (`requestVolumeThreshold`), 50% of request have failed (`failUreRatio`),
+then the circuit transits to the *open* state. It will stay in this state during
+2S (`delay`), after which, should the following 2 (`successThreshold`) requests
+be successful, it will switch back to the *close* state.
+
+## Timeout, Fallback and Retry
+
+Let's modify now our `/random/count` endpoint such that to illustrate the other
+MicroProfile Fault Tolerance annotations:
+
+    @GET
+    @Path("/random/{count}")
+    @Fallback(fallbackMethod = "getFallbackRandomCustomers")
+    @Retry(maxRetries = 3)
+    @Timeout(250)
+    public Response getRandomCustomers(@PathParam("count") int count)
+    {
+      List<CustomerDTO> randomCustomers = randomCustomerService.getRandomCustomers(count);
+      return Response.ok().entity(randomCustomers).build();
+    }
+    ...
+    private Response getFallbackRandomCustomers(int count)
+    {
+      CustomerDTO customerDTO = new CustomerDTO("john", "doe",
+        "john.doe@email.com", "222-123456");
+      return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+        .entity(customerDTO).build();
+    }
+    ...
+
+The method `getRandomCustomers(...)` in the listing above calls an external public
+service. This service might not be available and, if this happens, instead of 
+just throwing an exception and let the users manage themselves with it, a more
+suitable alternative is to declare a failure endpoint to which the control is 
+transferred each time that our external partner isn't available. This is what 
+does the annotation `@Fallback` in the listing above.
+
+Our strategy here is that, should the external service not be available to provide
+us with a fictive customer, then we build it ourselves. Of course, it might not
+be as random as the one provided by the external service and calling it repeatedly 
+will return each time the same data, but it should be fine for a degraded running
+mode.
+
+But there is another situation where th external service is available, but it 
+takes too long to serve the request. Here is where the `@Timeout` annotation comes
+into the play. In our example, if the incoming request takes more than 250 ms to
+be served then the fallback method will be called. If there isn't a fallback 
+method then a `TimeoutException` is raised.
+
+Sometimes, failures are caused by temporary issues such that network congestions.
+If you're confident that the unavailability is only short term then you could 
+also use a retry policy. This is what the `@Retry` annotation is doing. In our
+case, we will attempt to invoke three more times the `randomuser.me` public 
+service before calling the failure method. And of course, if we haven't declared
+a failure method, then a `TimeoutException` will be raised.
+
+## Testing fault tolerance policies
+
+We illustrated with a couple of example some of the most common fault tolerance
+strategies. But how could we make sure that they work as expected ? In order to
+test them we need to run in degraded mode and, for that, we need to simulate 
+such a degraded mode.
+
+We need a way to simulate that the external service we want to interact with 
+isn't reachable, or it is reachable but fail to process the request,
+or even worst, it is reachable, it succeeds to receive and process the
+requests but the network connection is lost while the responses are written back
+to the consumers.
+
+We can simulate all these outcomes using a Quarkus interceptor that catches up
+the network traffic and inserts different HTTP headers in the incoming requests
+and the outgoing responses, such that to mimics failures or to introduce delays
+and loses.
+
+The class `FaultSimulator` in the `failures` module of our Maven project performs
+the operations described above. Looking at the code, you can see the
+following enum structure which defines all the failure types that can happen:
+
+    private enum Fault
+    {
+      NONE,
+      INBOUND_REQUEST_LOSS,
+      SERVICE_FAILURE,
+      OUTBOUND_RESPONSE_LOSS
+    }
+
+Here we have the following categories:
+  - no failure (`NONE`)
+  - the request is lost between the consumer and the producer (`INBOUND_REQUEST_LOSS`)
+  - the producer receives the request but fails to process it (`SERVICE_FAILURE`)
+  - the consumer receives and processes the request but fails to write it back to the consumer (`RESPONSE_LOSS`)
+
+The `FaultSimulator` is a CDI (*Contexts and Dependency Injection*) bean having
+an application scope and being decorated with the `@Route` annotation, to serve
+and endpoint named `fail`. It takes the following query parameters:
+
+  - the type of failure: `INBOUND_REQUEST_LOSS`, `SERVICE_FAILURE`, `OUTBOUND_REQUEST_LOSS`. `NONE` is the default value.
+  - the fault ratio: a value in the interval [0, 1) defining how much percent of the requests will randomly fail. 0.5 is the default value.
+
+To run the simulator, you need first to start the Quarkus application, as usual:
+
+    $ cd 50-shades-of-rest
+    $ mvn -Dquarkus.container-image.build -DskipTests clean install
+    $ cd orders-infrastructure
+    $ mvn docker-compose:up
+
+This sequence of commands will start our three Docker containers. Then, use the
+`curl` command below in order to configure the `FaultSimulator` to lose 50% of 
+the incoming requests:
+
+    $ curl http://localhost:8080/fail?failure=INBOUND_REQUEST_LOSS
+    Faults are enabled: fault = INBOUND_REQUEST_LOSS, failure rate = 0.5
+
+Now, sending repetitively requests to the `/customers/random` or `/customers/random/{count}`
+endpoints and, if you're patient, you should see the circuit breaker opening and closing, 
+the timeout firing, etc.
+
+If, instead of `INBOUND_REQUEST_LOSS`, you want to simulate `SERVICE_FAILURE` 
+then you need to run:
+
+    $ curl http://localhost:8080/fail?failure=SERVICE_FAILURE
+    Faults are enabled: fault = SERVICE_FAILURE, failure rate = 0.5
+
+or
+
+    $ curl http://localhost:8080/fail?failure=OUTBOUND_RESPONSE_LOSS
+    Faults are enabled: fault = OUTBOUND_RESPONSE_LOSS, failure rate = 0.5
+
+if you want to experience `OUTBOUND_RESPONSE_LOSS`.
+
+Testing the fault tolerance is quite difficult because, as you can see, it 
+requires complex interactions between components, partners, services, etc.,
+accordingly, if you get unexpected results using the procedure detailed above,
+please double-check your numbers and make sure they are correlated each other.
+
+To cancel the `FaultSimulator` action of catching traffic and inserting HTTP
+headers, run the following `curl` command:
+
+    $ curl http://localhost:8080/fail?failure=NONE
+    Faults are enabled: fault = NONE, failure rate = 0.5
+
+This concludes our whirlwind tour to the Eclipse MicroProfile Fault Tolerance as
+implemented by Quarkus.
 
 # Asynchronous processing with REST services
 

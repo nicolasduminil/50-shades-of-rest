@@ -25,10 +25,11 @@
       <groupId>fr.simplex-software.workshop</groupId>
       <artifactId>orders-domain</artifactId>
     </dependency>
-    <!--dependency>
+    <dependency>
       <groupId>fr.simplex-software.workshop</groupId>
-      <artifactId>orders-client</artifactId>
-    </dependency-->
+      <artifactId>orders-api</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
