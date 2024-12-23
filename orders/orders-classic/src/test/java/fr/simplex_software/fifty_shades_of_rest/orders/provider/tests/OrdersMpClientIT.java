@@ -7,7 +7,7 @@ import jakarta.inject.*;
 import org.eclipse.microprofile.rest.client.inject.*;
 
 @QuarkusTest
-public class OrdersMpIT extends AbstractOrdersApiClient
+public class OrdersMpClientIT extends AbstractOrdersApiClient
 {
   @Inject
   @RestClient

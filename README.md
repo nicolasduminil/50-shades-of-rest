@@ -1394,6 +1394,106 @@ declarations, match the target service. The listing below shows such an interfac
       Response deleteCustomer(CustomerDTO customerDTO);
     }
 
+This listing shows two interfaces related to the `CustomerResource` service.
+The reason that there are two interfaces instead of one is that the 
+`CustomerApiClient` RESTful client is supposed to be used with different 
+implementations of the target `CustomerResponse` service, having each one its
+own `configKey` parameter and base URI. Therefore, we have defined the interface
+`BaseCustomerApiClient` as the common part of all the implementation clients, that has
+to be extended by each specific ones, in this case `CustomerApiClient`. This 
+will allow for having one `CustomerResource` service listening on, for example,
+http://localhost:8080/customers, while another one will listen on 
+http://localhost:9090/customers-async, ech one having its own RESTful client,
+without having to duplicate their interfaces bodies.
+
+As you certainly noticed, the `@RegisterRestClient` annotation is the one which,
+according to the Eclipse Microprofile specifications, declares a RESTful Client.
+As for the `configKey` parameter, it represents an alternative way to declare 
+the service base URI. The most common way to do it is to either use the `baseUri` parameter
+to hardcode the base URI, which wouldn't be convenient here, or to provide,
+in the `application.properties` file, the property `quarkus.rest-client."client".uri`.
+In this last case, `"client"` means the full client class name and, given that it
+might be quite long, a more practical alternative is to use `configKey`, as a 
+parameter of the `@RegisterRestClient` annotation and, in the `application.properties`
+file, to define just `base_uri/mp-rest/url`,which is much shorter.
+
+So this is our RESTful client interface from which, at the build time, Quarkus
+will generate a service proxy that could be used as service client. Here is how
+we can use in tests such a client.
+
+    @QuarkusTest
+    public class OrdersMpIT extends AbstractOrdersApiClient
+    {
+      @Inject
+      @RestClient
+      CustomerApiClient customerApiClient;
+      @Inject
+      @RestClient
+      OrderApiClient orderApiClient;
+
+      @Override
+      protected BaseCustomerApiClient getCustomerApiClient()
+      {
+        return customerApiClient;
+      }
+
+      @Override
+      protected BaseOrderApiClient getOrderApiClient()
+      {
+        return orderApiClient;
+      }
+    }
+
+Again, since there are several RESTful clients associated to possible different
+services instances, each one listening on its own URI, we need to dissociate them
+from the common part of all the tests. Hence, this common part is implemented as
+an abstract class, called `AbstractOrdersApiClient`, that each test should extend.
+Here below we reproduce a fragment of this class:
+
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    public abstract class AbstractOrdersApiClient
+    {
+      protected abstract BaseCustomerApiClient getCustomerApiClient();
+      protected abstract BaseOrderApiClient getOrderApiClient();
+
+      @Test
+      @Order(10)
+      public void testCreateCustomer()
+      {
+        CustomerDTO customer = new CustomerDTO("John", "Doe",
+          "john.doe@email.com", "1234567890");
+        assertThat(getCustomerApiClient().createCustomer(customer).getStatus())
+          .isEqualTo(HttpStatus.SC_CREATED);
+      }
+
+      @Test
+      @Order(20)
+      public void testCreateOrder()
+      {
+        Response response = getCustomerApiClient()
+          .getCustomerByEmail("john.doe@email.com");
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+        CustomerDTO customerDTO = response.readEntity(CustomerDTO.class);
+        assertThat(customerDTO).isNotNull();
+        OrderDTO order = new OrderDTO("myItem01",
+          new BigDecimal("100.25"), customerDTO.id());
+        assertThat(getOrderApiClient().createOrder(order).getStatus())
+          .isEqualTo(HttpStatus.SC_CREATED);
+      }
+      ...
+
+The customer and order RESTfull clients, as instances of `BaseCustomerApiClient`
+and `BaseOrderApiClient`, are declared abstract, such that to be overridden by 
+each test class. Then they are used to invoke the endpoints under test. This 
+simplicity makes the Eclipse MicroProfile RESTful Client one of the most practical
+method of integrating microservices.
+
+To run these tests:
+
+    $ mvn -Dquarkus.container-image.build clean install failsafe:integration-test
+
+## Testing with Jakarta RESTful Client
+
 
 
 Now, once you made sure that your unit and integration tests work as expected, you 

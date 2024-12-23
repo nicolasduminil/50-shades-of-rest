@@ -5,7 +5,7 @@ import io.quarkus.test.junit.*;
 import org.junit.jupiter.api.*;
 
 @QuarkusTest
-public class OrdersIT extends OrdersBaseTest
+public class OrdersRestAssuredClientIT extends OrdersBaseTest
 {
   @BeforeAll
   public static void beforeAll()
