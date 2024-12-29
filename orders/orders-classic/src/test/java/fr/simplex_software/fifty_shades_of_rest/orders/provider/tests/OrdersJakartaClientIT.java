@@ -16,7 +16,6 @@ import java.nio.charset.*;
 import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
-//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class OrdersJakartaClientIT
 {
@@ -155,7 +154,6 @@ public class OrdersJakartaClientIT
         .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
         .request().get(CustomerDTO.class);
       assertThat(customerDTO).isNotNull();
-      System.out.println("### customerId " + customerDTO.id());
       OrderDTO order = client.target(orderSrvUri).path("{id}")
         .resolveTemplate("id", customerDTO.id()).request().get(OrderDTO.class);
       assertThat(order).isNotNull();

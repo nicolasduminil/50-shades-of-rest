@@ -1494,6 +1494,174 @@ To run these tests:
 
 ## Testing with Jakarta RESTful Client
 
+Jakarta REST specifications include a client API that can be used for calling 
+endpoints. As opposed to other clients, like for example [Apache HTTP Client](https://hc.apache.org),
+the Jakarta REST Client is much more than just a HTTP client and, as such, it 
+features a neat fluent API.
+
+The listing below shows a fragment of the class `OrdesrJakartaClientIT`, an 
+integration test for the orders management service used throughout this booklet,
+using the Jakarta REST Client.
+
+    @QuarkusTest
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    public class OrdersJakartaClientIT
+    {
+      @TestHTTPEndpoint(CustomerResource.class)
+      @TestHTTPResource
+      URI customerSrvUri;
+
+      @TestHTTPEndpoint(OrderResource.class)
+      @TestHTTPResource
+      URI orderSrvUri;
+      ...
+      @Test
+      @Order(10)
+      public void testCreateCustomer()
+      {
+        try (Client client = ClientBuilder.newClient())
+        {
+          CustomerDTO customer = new CustomerDTO("John", "Doe",
+            "john.doe@email.com", "1234567890");
+          Response response = client.target(customerSrvUri).request()
+           .post(Entity.entity(customer, MediaType.APPLICATION_JSON));
+          assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_CREATED);
+          customer = response.readEntity(CustomerDTO.class);
+          assertThat(customer).isNotNull();
+          assertThat(customer.id()).isNotNull();
+          response.close();
+        }
+      }
+      ...
+      @Test
+      @Order(30)
+      public void testGetCustomer()
+      {
+        try (Client client = ClientBuilder.newClient())
+        {
+          CustomerDTO customerDTO = client.target(customerSrvUri)
+            .path("email/{email}").resolveTemplate("email", JOHN_EMAIL)
+            .request().get(CustomerDTO.class);
+          assertThat(customerDTO).isNotNull();
+          assertThat(customerDTO.email()).isEqualTo("john.doe@email.com");
+        }
+      }
+      ...
+      @Test
+      @Order(40)
+      public void testUpdateCustomer()
+      {
+        try (Client client = ClientBuilder.newClient())
+        {
+          CustomerDTO customerDTO = client.target(customerSrvUri)
+           .path("email/{email}").resolveTemplate("email", JOHN_EMAIL)
+           .request().get(CustomerDTO.class);
+          assertThat(customerDTO).isNotNull();
+          CustomerDTO updatedCustomer = new CustomerDTO(customerDTO.id(),
+            "Jane", "Doe",
+            "jane.doe@email.com", "0987654321");
+          Response response = client.target(customerSrvUri).request()
+            .put(Entity.entity(updatedCustomer, MediaType.APPLICATION_JSON));
+          assertThat(response).isNotNull();
+          assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_ACCEPTED);
+          CustomerDTO updatedCustomerDTO = response.readEntity(CustomerDTO.class);
+          assertThat(updatedCustomerDTO).isNotNull();
+          assertThat(updatedCustomerDTO.firstName()).isEqualTo("Jane");
+          response.close();
+        }
+      }
+      ...
+      @Test
+      @Order(100)
+      public void testDeleteCustomer()
+      {
+        try (Client client = ClientBuilder.newClient())
+        {
+          CustomerDTO customerDTO = client.target(customerSrvUri)
+           .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
+           .request().get(CustomerDTO.class);
+          assertThat(customerDTO).isNotNull();
+          Response response = client.target(customerSrvUri).request()
+            .build("DELETE", Entity.entity(customerDTO, MediaType.APPLICATION_JSON)).invoke();
+          assertThat(response).isNotNull();
+          assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NO_CONTENT);
+          response.close();
+        }
+      }
+      ...
+    }
+
+This integration test is integrally available in the `orders-classic` module of
+GitHub project. Here we're reproducing only a fragment showing how to invoke 
+RESTful endpoints, using `GET`, `POST`, `PUT` and `DELETE` HTTP requests.
+
+In order to invoke the `createCustome(...)` endpoint of our REST service, we need
+to send a `POST` request to it. As you've seen in the listing above, this is 
+done as follows using the Jakarta REST Client:
+
+    ...
+    client.target(customerSrvUri).request()
+      .post(Entity.entity(customer, MediaType.APPLICATION_JSON));
+    ...
+
+We need to obtain first an instance of `jakarta.ws.rs.Client` on the behalf of 
+which to submit the `POST` request, having in its body the instance of the class
+`CustomerDTO` that has to be created. Since the RESTful service accepts JSON input 
+data, this instance of the class `CustomerDTO` has to be marshalled into JSON.
+And the good news is that this conversion is automatically done.
+
+To retrieve a customer identified ny its email address we use a `GET` request,
+like this:
+
+    ...
+    CustomerDTO customerDTO = client.target(customerSrvUri)
+      .path("email/{email}").resolveTemplate("email", JOHN_EMAIL)
+      .request().get(CustomerDTO.class);
+    ...
+
+In this case, our endpoint is `customers/email/{email}` and you can see how to 
+use `resolveTemplate(...)` verb in order to build the associated URI. Then, the
+`GET` request will return a JSON payload that will be automatically unmarshalled 
+to a `CustomerDTO` class instance. Please notice that, since the email address
+appears as a part of the URI, it needs to be encoded.
+
+To update a customer we proceed in a similar way.
+
+    ...
+    Response response = client.target(customerSrvUri).request()
+      .put(Entity.entity(updatedCustomer, MediaType.APPLICATION_JSON));
+    ...
+
+This is how a `PUT` request is performed, such that to update an existing 
+customer. The idea is the same as in the case of the `POST`: the request's body
+has to contain the `CustomerDTO` instance that needs to be updated. It will be 
+automatically marshalled to JSON thanks to the `MediaType.APPLICATION_JSON` 
+parameter.
+
+Last but not least, the `DELETE` request is done as shown below:
+
+    ...
+    Response response = client.target(customerSrvUri).request()
+      .build("DELETE", 
+        Entity.entity(customerDTO, MediaType.APPLICATION_JSON))
+        .invoke();
+    ...
+
+As you can see, the `DELETE` request doesn't obey to the same rules as `PUT` and
+`POST` because it doesn't directly accept a body. Instead, the generic `build(...)`
+method, used to indistinctly build any HTTP request, shall be applied here, passing
+to it the request name, `DELETE` in this case, as well as its body content, in 
+this case the `CustomerDTO` instance to be removed. And as usual, the marshalling
+is automatically performed.
+
+All the other test methods of the class `OrdersJakartaClientIT` are similar 
+to the ones presented above, please take a moment to look at them such to make
+sure you understand what everything is about. As a matter of fact, Jakarta REST
+Client is a very important specification and, if you must know a single API in 
+order to invoke RESTful services, then this is the one.
+
+## Testing with Java 11 HTTP Client
+
 
 
 Now, once you made sure that your unit and integration tests work as expected, you 
