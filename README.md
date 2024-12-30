@@ -1492,7 +1492,7 @@ To run these tests:
 
     $ mvn -Dquarkus.container-image.build clean install failsafe:integration-test
 
-## Testing with Jakarta RESTful Client
+### Testing with Jakarta RESTful Client
 
 Jakarta REST specifications include a client API that can be used for calling 
 endpoints. As opposed to other clients, like for example [Apache HTTP Client](https://hc.apache.org),
@@ -1660,9 +1660,111 @@ sure you understand what everything is about. As a matter of fact, Jakarta REST
 Client is a very important specification and, if you must know a single API in 
 order to invoke RESTful services, then this is the one.
 
-## Testing with Java 11 HTTP Client
+### Testing with Java 11 HTTP Client
 
+Historically, the only HTTP client that Java provided as a part of its JDK was 
+the `HttpUrlConnection` API. This API is a low-level one and, while it can be 
+used as a RESTful client, it doesn't really bring the required user-friendliness
+and feature richness. Therefore, libraries like Apache HTTP Client were commonly
+used as a RESTful client API. But since Java 11 this situation has changed.
 
+The JEP 321, initially distributed as a preview with Java 9 but officially 
+incorporated in Java 11, is now the standard way to invoke RESTful services. 
+This new client API fully supports asynchronous operations as well as HTTP/2 
+and WebSocket 1.1/2. It is articulated around the following 4 core classes and
+interfaces:
+
+  - `java.net.http.HttpClient`
+  - `java.net.http.HttpRequest`
+  - `java.net.http.HttpResponse`
+  - `java.net.http.WebSocket`
+
+Let's look at the example provided by the `OrdersJava11ClientIT` class located
+in the `orders-classic` module:
+
+    ...
+    @Test
+    @Order(10)
+    public void testCreatCustomer() throws Exception
+    {
+      try (HttpClient httpClient = HttpClient.newHttpClient())
+      {
+        CustomerDTO customer = new CustomerDTO("John", "Doe",
+          "john.doe@email.com", "1234567890");
+        HttpResponse<String> response = httpClient.
+          send(builder.uri(customersUri)
+          .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(customer)))
+          .build(), HttpResponse.BodyHandlers.ofString());
+        assertThat(response.statusCode()).isEqualTo(HttpStatus.SC_CREATED);
+        customer = objectMapper.readValue(response.body(), CustomerDTO.class);
+        assertThat(customer.id()).isNotNull();
+        assertThat(customer.firstName()).isEqualTo("John");
+      }
+    }
+    ...
+
+This example demonstrates how to create a new customer by sending a `POST` request
+to the `/customers` endpoint of our RESTful service. The first thing to do is to 
+instantiate a `HttpClient` by calling the factory method `newHttpClient(...)`. 
+Then, we call its `send(...)` method by passing to it a `HttpRequest`, in our case a
+`POST`. This `HttpRequest` instance is created via its specialized builder, as 
+shown below:
+
+    ...
+    private HttpRequest.Builder builder =
+      HttpRequest.newBuilder()
+      .header("Content-Type", "application/json");
+    ...
+
+Here we're initializing the HTTP `Content-Type` header such that the RESTful 
+service accepts JSON payloads. The factory method `newBuilder(...)` may take as 
+an input argument the base URI. We're not using it in our case as we have two 
+different URIs, `/customers` and `/orders` that we initialize on the behalf of the
+`TestHTTPResource` and `TestHTTPEndpoint` Quarkus annotations.
+
+In order to add a body to the HTTP request, as mandatory in the case of a `POST`,
+we're using a `BodyPublisher`. The API provides several, as follows:
+
+  - `StringProcessor`: reads body from a `String`, created with `HttpRequest.BodyPublishers.ofString(...)`
+  - `InputStreamProcessor`: reads body from an `InputStream`, created with `HttpRequest.BodyPublishers.ofInputStream(...)`
+  - `ByteArrayProcessor`: reads body from a byte array, created with `HttpRequest.BodyPublishers.ofByteArray(...)`
+  - `FileProcessor`: reads body from a file at the given path, created with `HttpRequest.BodyPublishers.ofFile(...)`
+
+In our case, we're marshalling the `CustomerDTO` instance, corresponding to the 
+new customer to be created, to JSON and pass it to a `StringProcessor` using
+`HttpRequest.BodyPublishers.ofString(...)`. Then, we extract the response body 
+and unmarshall it, from JSON to the resulting `CustomerDTO` instance.
+
+This processing template is applied for all the endpoints returning an instance
+of `CustomerDTO` or `OrderDTO`. For endpoints returning a collection of such 
+instances, we need to proceed differently:
+
+    ...
+      @Test
+      @Order(20)
+      public void testGetCustomers() throws Exception
+      {
+        try (HttpClient httpClient = HttpClient.newHttpClient())
+        {
+          HttpResponse<String> response = httpClient.send(builder.uri(customersUri)
+            .GET().build(), HttpResponse.BodyHandlers.ofString());
+          assertThat(response.statusCode()).isEqualTo(HttpStatus.SC_OK);
+          CustomerDTO[] customers =
+            objectMapper.readValue(response.body(), CustomerDTO[].class);
+          assertThat(customers.length).isEqualTo(1);
+          assertThat(customers[0].firstName()).isEqualTo("John");
+        }
+      }
+    ...
+In this last case, we need a `GET` request, consequently, we don't set its body.
+And instead of unmarshalling the response body to a `CustomerDTO`,
+as we did previously, we do it to a `CustomerDTO` array. Then, we get the first
+object of this array.
+
+Please spend a moment to carefully inspect how the other requests, `PUT` and 
+`DELETE` are processed by the Java 11 HTTP Client API.
+
+### Testing production-like
 
 Now, once you made sure that your unit and integration tests work as expected, you 
 might want to run them *production like*, i.e. to perform end-to-end tests. In 
