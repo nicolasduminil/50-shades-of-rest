@@ -2689,89 +2689,122 @@ specifications.
 #### Blocking asynchronous consumers
 
 The listing below shows a Quarkus integration test that invokes in a blocking
-while asynchronous mode the endpoint `/time` of the `CurrentTimeResource` REST
+while asynchronous mode the endpoint `/customers` of the `CustomerResource` REST
 service.
 
+    ...
     @Test
-    public void testCurrentTime()
+    @Order(10)
+    public void testCreateCustomer() throws Exception
     {
       try (Client client = ClientBuilder.newClient())
       {
-        Future<String> timeFuture = client.target(TIME_SRV_URL).request().async().get(String.class);
-        String time = timeFuture.get(5, TimeUnit.SECONDS);
-        assertThat(parseTime(time)).isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES));
-      }
-      catch (Exception ex)
-      {
-        fail("### TestBlockingAsyncCurrentTimeResource.testCurrentTime(): ...);
+        CustomerDTO customer = new CustomerDTO("John", "Doe",
+          "john.doe@email.com", "1234567890");
+        Future<Response> futureResponse = client.target(customerSrvUri).request().async()
+          .post(Entity.entity(customer, MediaType.APPLICATION_JSON));
+        Response response = futureResponse.get(5, TimeUnit.SECONDS);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_CREATED);
+        customer = response.readEntity(CustomerDTO.class);
+        assertThat(customer).isNotNull();
+        assertThat(customer.id()).isNotNull();
+        response.close();
       }
     }
+    ...
+
 <p style="text-align: center;">Listing 3.1: Using the JAX-RS 2.0 blocking client to asynchronously invoke endpoints</p>
 
-This code may be found in the `async-clients/jaxrs20-async-clients/` directory
+This code may be found in the `OrdersJaxRs20BlockingIT` class of the `orders-classic` directory
 of the GitHub repository. Please notice the `async()` verb in the request definition.
 
-As you can see, this time the endpoint invocation doesn't return a `String`,
-but a `Future<String>`, i.e a kind of promise that, once the operation completed,
+As you can see, this time the endpoint invocation doesn't return a `CustomerDTO`
+instance but a `Future<CustomerDTO>` one, i.e a kind of promise that, once the operation completed,
 the result will be returned. The call to the service returns immediately, before
 it had a chance to complete. Then, the `get()` method will block the current
 thread waiting for completion during 5 seconds. Hence, the blocking side of the
 call.
+
+Please notice also that, since RESTassured doesn't support asynchronous endpoints
+invocation, we're using in the Jakarta REST Client.
 
 #### Non-blocking asynchronous consumers
 
 Now let's look at a 2nd example implementing the same integration test but in a
 non-blocking way.
 
+
+    ...
     @Test
-    public void testCurrentTime()
+    @Order(10)
+    public void testCreateCustomer() throws Exception
     {
+      Callback callback = new Callback();
       try (Client client = ClientBuilder.newClient())
       {
-        CountDownLatch latch = new CountDownLatch(1);
-        client.target(TIME_SRV_URL).request().async().get(new InvocationCallback<String>()
-        {
-          @Override
-          public void completed(String t)
-          {
-            ldt = parseTime(t);
-            latch.countDown();
-          }
-
-          @Override
-          public void failed(Throwable throwable)
-          {
-            fail(""" 
-              ### NonBlockingAsyncCurrentTimeResourceIT.testCurrentTime(): 
-              Unexpected exception %s""", throwable.getMessage());
-            latch.countDown();
-          }
-        });
-        if (latch.await(5, TimeUnit.SECONDS))
-          assertThat(ldt)
-            .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES));
-      }
-      catch (Exception ex)
-      {
-        fail("""
-          ### NonBlockingAsyncCurrentTimeResourceIT.testCurrentTime()): 
-          Unexpected exception %s""", ex.getMessage());
+        CustomerDTO customer = new CustomerDTO("John", "Doe",
+          "john.doe@email.com", "1234567890");
+        client.target(customerSrvUri).request().async()
+         .post(Entity.entity(customer, MediaType.APPLICATION_JSON), callback);
+        Response response = callback.getResponse();
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_CREATED);
+        customer = response.readEntity(CustomerDTO.class);
+        assertThat(customer).isNotNull();
+        assertThat(customer.id()).isNotNull();
+        response.close();
       }
     }
 <p style="text-align: center;">Listing 3.2: Using the JAX-RS 2.0 non-blocking client to asynchronously invoke endpoints</p>
 
 We're still using the `async()` method to invoke our endpoint but, this time,
-the `get()` method won't take anymore the type of the expected result as its
-input parameter, but an instance of the interface `jakarta.ws.rs.client.InvocationCallback`.
+the `post(...)` method won't take anymore the type of the expected result as its
+input parameter, but an instance of the class `Callback` which implements the 
+interface `jakarta.ws.rs.client.InvocationCallback`.
 This interface has two methods:
 
     public void completed(T t);
     public void failed(Throwable throwable);
 
 The first one notifies the task completion. It takes as its input parameter the
-operation result, i.e. the `String` containing the current date and time.
+operation result, i.e. the `Response` instance containing the newly created customer.
 The 2nd one notifies the task failure and takes as its input parameter the current
 exception which prevented it to complete.
+
+Here is the `Callback` class:
+
+    public class Callback implements InvocationCallback<Response>
+    {
+      private final CountDownLatch latch;
+      private final AtomicReference<Response> ar;
+
+      public Callback()
+      {
+        this.latch = new CountDownLatch(1);
+        this.ar = new AtomicReference<>();
+      }
+
+      @Override
+      public void completed(Response response)
+      {
+        ar.set(response);
+        latch.countDown();
+      }
+
+      @Override
+      public void failed(Throwable throwable)
+      {
+        latch.countDown();
+        fail("### Callback.failed(): Unexpected exception", throwable);
+      }
+
+      public Response getResponse() throws InterruptedException
+      {
+        Response resp = null;
+        if (latch.await(5, TimeUnit.SECONDS))
+          resp = ar.get();
+        return resp;
+      }
+    }
 
 Our callback is executed by a different thread than the one making the call.
 This thread, called *worker thread*, will be started automatically. In order
@@ -2780,6 +2813,27 @@ exit before the worker one finishes the job, a count-down with the initial value
 of 1 is armed. It will be decremented by both `completed()` and `failed()` methods,
 such that, by using the `await()` function, we can wait the end of the worker
 thread, before exiting the main one.
+
+This new design of our asynchronous consumer is non-blocking because, instead of
+using the polling, like we did in the previous example, it uses an instance of 
+`InvocationCallback` interface whose `completed(...)` method is automatically 
+triggered when the operation is terminated. Hence, the consumer doesn't have to
+wait anymore for the end of the operation.
+
+However, you might wonder how come this consumer is non-blocking since it does
+a `lactch.await(...)` statement, which is blocking, of course ? Well, don't forget
+that our consumer isn't a real one but an integration test. The consumer itself,
+i.e. the HTTP client, is non-blocking because the HTTP request is handled 
+asynchronously by the JAX-RS client's thread pool and, consequently, the call 
+returns immediately, allowing the thread to do other work. The blocking part occurs
+only when we need the result. So, the consumer itself is non-blocking and the
+waiting for results, via `latch.await(...)`, is used only in our test scenario.
+In a real case we wouldn't call `getResponse(...)` at all but handle everything
+in the `completed(...)` callback method.
+
+In conclusion, while our current implementation includes a blocking call in 
+`getResponse()`, it's primarily for testing purposes. The underlying client remains 
+non-blocking, and in production use, we would typically avoid the blocking call altogether.
 
 ### Java 8: Asynchronously invoking REST services
 
