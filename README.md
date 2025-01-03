@@ -2840,13 +2840,29 @@ non-blocking, and in production use, we would typically avoid the blocking call 
 Using the `java.util.concurrent.Future` class for asynchronously invoking REST
 endpoints was already great progress compared to the initial 1.x release of the
 JAX-RS specifications which only allowed synchronous calls. Introduced in Java 5,
-this class represents,as we've seen, the result of an asynchronous processing.
-It contains all the required methods to poll and wait for the result, however
-it remains quite basic and limited.
+this class is returned, as we've seen, by asynchronous processing.
+It contains all the required methods to poll and wait for the result, it also 
+supports callbacks, however it remains quite basic and limited.
 
-Several years later, Java 8 improves the asynchronous processing by introducing
-the class `CompletableFuture` as an enhancement of `Future`. It not only represents
-a future result but also provides a plethora of methods to compose, combine,
+In non-blocking mode, as demonstrated in the previous example, the result of an
+endpoint invocation has to be processed in the `completed(...)` method of the 
+`InvocationCallback` implementation, otherwise the consumer needs to use a latch
+and wait on it the result availability. While this is okay in tests, it cannot 
+be accepted in production-ready applications as, in this case, the non-blocking
+aspect of the execution would be completely lost.
+
+Accordingly, a RESTful consumer using asynchronous non-blocking communication has
+to invoke an endpoint on its main thread and to process the invocation result on the 
+main thread of a different callback class. And since processing the RESTful call 
+response is specific to each business case, this means that a different callback, 
+one for each business case, is required. Which will quickly lead to the famous
+*callback hell*.
+
+This is why, several years after having introduced the `Future` class, Java 8 
+improves the asynchronous processing by introducing the class `CompletableFuture`
+as an enhancement of the former one. It not only represents
+a future result, like its predecessor, but also provides a plethora of methods 
+to compose, combine,
 execute asynchronous tasks, and handle their results without blocking.
 
 So let's examine how to use these new classes in the Java 8 style.

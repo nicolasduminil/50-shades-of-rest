@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class OrdersJava11ClientIT
+public class OrdersSyncJava11ClientIT
 {
   private final ObjectMapper objectMapper = new ObjectMapper();
   private HttpRequest.Builder builder =

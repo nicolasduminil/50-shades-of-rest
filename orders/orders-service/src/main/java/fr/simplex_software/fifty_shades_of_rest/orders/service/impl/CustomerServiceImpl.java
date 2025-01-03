@@ -46,8 +46,10 @@ public class CustomerServiceImpl implements CustomerService
   @Transactional
   public CustomerDTO createCustomer(CustomerDTO customerDTO)
   {
+    System.out.println("### CustomerServiceImpl.createCustomer(): CustomerDTO " + customerDTO.id() + " " + customerDTO.email() + " " + customerDTO.firstName() + " " + customerDTO.lastName());
     Customer customer = CustomerMapper.INSTANCE.toEntity(customerDTO);
     customer.setId(null);
+    System.out.println("### CustomerServiceImpl.createCustomer():Customer " + customer.getId() + " " + customer.getEmail() + " " + customer.getFirstName() + " " + customer.getLastName());
     customerRepository.persistAndFlush(customer);
     return CustomerMapper.INSTANCE.fromEntity(customer);
   }

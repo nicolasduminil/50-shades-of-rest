@@ -12,12 +12,13 @@ import org.junit.jupiter.api.*;
 import java.math.*;
 import java.net.*;
 import java.nio.charset.*;
+import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class OrdersJakartaClientIT
+public class OrdersAsyncJaxRs20BlockingClientIT
 {
   @TestHTTPEndpoint(CustomerResource.class)
   @TestHTTPResource
@@ -42,14 +43,15 @@ public class OrdersJakartaClientIT
 
   @Test
   @Order(10)
-  public void testCreateCustomer()
+  public void testCreateCustomer() throws Exception
   {
     try (Client client = ClientBuilder.newClient())
     {
       CustomerDTO customer = new CustomerDTO("John", "Doe",
         "john.doe@email.com", "1234567890");
-      Response response = client.target(customerSrvUri).request()
+      Future<Response> futureResponse = client.target(customerSrvUri).request().async()
         .post(Entity.entity(customer, MediaType.APPLICATION_JSON));
+      Response response = futureResponse.get(5, TimeUnit.SECONDS);
       assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_CREATED);
       customer = response.readEntity(CustomerDTO.class);
       assertThat(customer).isNotNull();
@@ -60,11 +62,12 @@ public class OrdersJakartaClientIT
 
   @Test
   @Order(20)
-  public void testGetCustomers()
+  public void testGetCustomers() throws Exception
   {
     try (Client client = ClientBuilder.newClient())
     {
-      Response response = client.target(customerSrvUri).request().get();
+      Future<Response> futureResponse = client.target(customerSrvUri).request().async().get();
+      Response response = futureResponse.get(5, TimeUnit.SECONDS);
       assertThat(response).isNotNull();
       assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
       CustomerDTO[] customers = response.readEntity(CustomerDTO[].class);
@@ -77,13 +80,14 @@ public class OrdersJakartaClientIT
 
   @Test
   @Order(30)
-  public void testGetCustomer()
+  public void testGetCustomer() throws Exception
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CustomerDTO customerDTO = client.target(customerSrvUri)
+      Future<CustomerDTO> futureCustomerDTO = client.target(customerSrvUri)
         .path("email/{email}").resolveTemplate("email", JOHN_EMAIL)
-        .request().get(CustomerDTO.class);
+        .request().async().get(CustomerDTO.class);
+      CustomerDTO customerDTO = futureCustomerDTO.get(5, TimeUnit.SECONDS);
       assertThat(customerDTO).isNotNull();
       assertThat(customerDTO.email()).isEqualTo("john.doe@email.com");
     }
@@ -91,19 +95,21 @@ public class OrdersJakartaClientIT
 
   @Test
   @Order(40)
-  public void testUpdateCustomer()
+  public void testUpdateCustomer() throws Exception
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CustomerDTO customerDTO = client.target(customerSrvUri)
+      Future<CustomerDTO> futureCustomerDTO = client.target(customerSrvUri)
         .path("email/{email}").resolveTemplate("email", JOHN_EMAIL)
-        .request().get(CustomerDTO.class);
+        .request().async().get(CustomerDTO.class);
+      CustomerDTO customerDTO = futureCustomerDTO.get(5, TimeUnit.SECONDS);
       assertThat(customerDTO).isNotNull();
       CustomerDTO updatedCustomer = new CustomerDTO(customerDTO.id(),
         "Jane", "Doe",
         "jane.doe@email.com", "0987654321");
-      Response response = client.target(customerSrvUri).request()
-        .put(Entity.entity(updatedCustomer, MediaType.APPLICATION_JSON));
+      Future<Response> futureResponse = client.target(customerSrvUri).request()
+        .async().put(Entity.entity(updatedCustomer, MediaType.APPLICATION_JSON));
+      Response response = futureResponse.get(5, TimeUnit.SECONDS);
       assertThat(response).isNotNull();
       assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_ACCEPTED);
       CustomerDTO updatedCustomerDTO = response.readEntity(CustomerDTO.class);
@@ -115,18 +121,20 @@ public class OrdersJakartaClientIT
 
   @Test
   @Order(50)
-  public void testCreateOrder()
+  public void testCreateOrder() throws Exception
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CustomerDTO customerDTO = client.target(customerSrvUri)
+      Future<CustomerDTO> futureCustomerDTO = client.target(customerSrvUri)
         .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
-        .request().get(CustomerDTO.class);
+        .request().async().get(CustomerDTO.class);
+      CustomerDTO customerDTO = futureCustomerDTO.get(5, TimeUnit.SECONDS);
       assertThat(customerDTO).isNotNull();
       OrderDTO order = new OrderDTO("myItem01",
         new BigDecimal("100.25"), customerDTO.id());
-      Response response = client.target(orderSrvUri).request()
-        .post(Entity.entity(order, MediaType.APPLICATION_JSON));
+      Future<Response> futureResponse = client.target(orderSrvUri).request()
+        .async().post(Entity.entity(order, MediaType.APPLICATION_JSON));
+      Response response = futureResponse.get(5, TimeUnit.SECONDS);
       assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_CREATED);
       response.close();
     }
@@ -134,11 +142,12 @@ public class OrdersJakartaClientIT
 
   @Test
   @Order(60)
-  public void testGetOrders()
+  public void testGetOrders() throws Exception
   {
     try (Client client = ClientBuilder.newClient())
     {
-      OrderDTO[] orders = client.target(orderSrvUri).request().get(OrderDTO[].class);
+      Future<OrderDTO[]> futureOrders = client.target(orderSrvUri).request().async().get(OrderDTO[].class);
+      OrderDTO[] orders = futureOrders.get(5, TimeUnit.SECONDS);
       assertThat(orders).isNotNull();
       assertThat(orders).hasSize(1);
     }
@@ -146,16 +155,19 @@ public class OrdersJakartaClientIT
 
   @Test
   @Order(70)
-  public void testGetOrder()
+  public void testGetOrder() throws Exception
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CustomerDTO customerDTO = client.target(customerSrvUri)
+      Future<CustomerDTO> futureCustomerDTO = client.target(customerSrvUri)
         .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
-        .request().get(CustomerDTO.class);
+        .request().async().get(CustomerDTO.class);
+      CustomerDTO customerDTO = futureCustomerDTO.get(5, TimeUnit.SECONDS);
       assertThat(customerDTO).isNotNull();
-      OrderDTO order = client.target(orderSrvUri).path("{id}")
-        .resolveTemplate("id", customerDTO.id()).request().get(OrderDTO.class);
+      Future<OrderDTO> futureOrder = client.target(orderSrvUri).path("{id}")
+        .resolveTemplate("id", customerDTO.id()).request()
+        .async().get(OrderDTO.class);
+      OrderDTO order = futureOrder.get(5, TimeUnit.SECONDS);
       assertThat(order).isNotNull();
       assertThat(order.customerId()).isEqualTo(customerDTO.id());
     }
@@ -163,22 +175,26 @@ public class OrdersJakartaClientIT
 
   @Test
   @Order(80)
-  public void testUpdateOrder()
+  public void testUpdateOrder() throws Exception
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CustomerDTO customerDTO = client.target(customerSrvUri)
+      Future<CustomerDTO> futureCustomerDTO = client.target(customerSrvUri)
         .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
-        .request().get(CustomerDTO.class);
+        .request().async().get(CustomerDTO.class);
+      CustomerDTO  customerDTO = futureCustomerDTO.get(5, TimeUnit.SECONDS);
       assertThat(customerDTO).isNotNull();
-      OrderDTO orderDTO = client.target(orderSrvUri).path("{id}")
-        .resolveTemplate("id", customerDTO.id()).request().get(OrderDTO.class);
+      Future<OrderDTO> futureOrderDTO = client.target(orderSrvUri).path("{id}")
+        .resolveTemplate("id", customerDTO.id()).request()
+        .async().get(OrderDTO.class);
+      assertThat(futureOrderDTO).isNotNull();
+      OrderDTO orderDTO = futureOrderDTO.get(5, TimeUnit.SECONDS);
       assertThat(orderDTO).isNotNull();
       OrderDTO updatedOrder = new OrderDTO(orderDTO.id(), "myItem02",
         new BigDecimal("200.50"), orderDTO.customerId());
-      Response response = client.target(orderSrvUri)
-        .request()
-        .put(Entity.json(updatedOrder));
+      Future<Response> futureResponse = client.target(orderSrvUri)
+        .request().async().put(Entity.entity(updatedOrder, MediaType.APPLICATION_JSON));
+      Response response = futureResponse.get(5, TimeUnit.SECONDS);
       assertThat(response).isNotNull();
       assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_ACCEPTED);
       OrderDTO updatedOrderDTO = response.readEntity(OrderDTO.class);
@@ -190,16 +206,19 @@ public class OrdersJakartaClientIT
 
   @Test
   @Order(90)
-  public void testDeleteOrder()
+  public void testDeleteOrder() throws Exception
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CustomerDTO customerDTO = client.target(customerSrvUri)
+      Future<CustomerDTO> futureCustomerDTO = client.target(customerSrvUri)
         .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
-        .request().get(CustomerDTO.class);
+        .request().async().get(CustomerDTO.class);
+      CustomerDTO customerDTO = futureCustomerDTO.get(5, TimeUnit.SECONDS);
       assertThat(customerDTO).isNotNull();
-      OrderDTO orderDTO = client.target(orderSrvUri).path("{id}")
-        .resolveTemplate("id", customerDTO.id()).request().get(OrderDTO.class);
+      Future<OrderDTO> futureOrderDTO = client.target(orderSrvUri).path("{id}")
+        .resolveTemplate("id", customerDTO.id())
+        .request().async().get(OrderDTO.class);
+      OrderDTO orderDTO = futureOrderDTO.get(5, TimeUnit.SECONDS);
       assertThat(orderDTO).isNotNull();
       Response response = client.target(orderSrvUri).request()
         .build("DELETE", Entity.entity(orderDTO, MediaType.APPLICATION_JSON)).invoke();
@@ -211,13 +230,14 @@ public class OrdersJakartaClientIT
 
   @Test
   @Order(100)
-  public void testDeleteCustomer()
+  public void testDeleteCustomer() throws Exception
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CustomerDTO customerDTO = client.target(customerSrvUri)
+      Future<CustomerDTO> futureCustomerDTO = client.target(customerSrvUri)
         .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
-        .request().get(CustomerDTO.class);
+        .request().async().get(CustomerDTO.class);
+      CustomerDTO customerDTO = futureCustomerDTO.get(5, TimeUnit.SECONDS);
       assertThat(customerDTO).isNotNull();
       Response response = client.target(customerSrvUri).request()
         .build("DELETE", Entity.entity(customerDTO, MediaType.APPLICATION_JSON)).invoke();

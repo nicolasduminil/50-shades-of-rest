@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @QuarkusTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class OrdersJaxRs20NonBlockingIT
+public class OrdersAsyncJaxRs20NonBlockingClientIT
 {
   @TestHTTPEndpoint(CustomerResource.class)
   @TestHTTPResource
