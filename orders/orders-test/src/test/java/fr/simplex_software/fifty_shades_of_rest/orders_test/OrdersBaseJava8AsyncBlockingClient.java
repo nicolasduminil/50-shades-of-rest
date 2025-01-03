@@ -58,19 +58,8 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
     {
       CustomerDTO customerDTO = new CustomerDTO("John", "Doe",
         "john.doe@email.com", "1234567890");
-      CompletableFuture<Response> futureResponse = CompletableFuture.supplyAsync(() ->
-          client.target(customerSrvUri).request()
-            .post(Entity.entity(customerDTO, MediaType.APPLICATION_JSON)))
-        .exceptionally(handleFailure());
-      futureResponse.thenAccept(response ->
-      {
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_CREATED);
-        CustomerDTO newCustomerDTO = response.readEntity(CustomerDTO.class);
-        assertThat(newCustomerDTO).isNotNull();
-        assertThat(newCustomerDTO.id()).isNotNull();
-        response.close();
-      });
+      CompletableFuture<Response> futureResponse = createCustomer(client, customerDTO);
+      futureResponse.thenAccept(response -> assertCustomer(response, HttpStatus.SC_CREATED, "John"));
     }
   }
 
@@ -80,19 +69,8 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CompletableFuture<Response> futureResponse = CompletableFuture.supplyAsync(() ->
-          client.target(customerSrvUri).request().get())
-        .exceptionally(handleFailure());
-      futureResponse.thenAccept(response ->
-      {
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-        CustomerDTO[] customers = response.readEntity(CustomerDTO[].class);
-        assertThat(customers).isNotNull();
-        assertThat(customers).hasSize(1);
-        assertThat(customers[0].firstName()).isEqualTo("John");
-        response.close();
-      });
+      CompletableFuture<Response> futureResponse = getCustomers(client);
+      futureResponse.thenAccept(this::assertCustomers);
     }
   }
 
@@ -102,20 +80,8 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CompletableFuture<Response> futureResponse = CompletableFuture.supplyAsync(() ->
-          client.target(customerSrvUri)
-            .path("email/{email}").resolveTemplate("email", JOHN_EMAIL)
-            .request().get())
-        .exceptionally(handleFailure());
-      futureResponse.thenAccept(response ->
-      {
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-        CustomerDTO customer = response.readEntity(CustomerDTO.class);
-        assertThat(customer).isNotNull();
-        assertThat(customer.firstName()).isEqualTo("John");
-        response.close();
-      });
+      CompletableFuture<Response> futureResponse = getCustomerByEmail(client, JOHN_EMAIL);
+      futureResponse.thenAccept(response -> assertCustomer(response, HttpStatus.SC_OK, "John"));
     }
   }
 
@@ -125,30 +91,18 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CompletableFuture<Response> futureResponse = CompletableFuture.supplyAsync(() ->
-          client.target(customerSrvUri)
-            .path("email/{email}").resolveTemplate("email", JOHN_EMAIL)
-            .request().get())
+      CompletableFuture<Response> futureResponse = getCustomerByEmail(client, JOHN_EMAIL)
         .thenApply(response -> response.readEntity(CustomerDTO.class))
         .thenCompose(customerDTO ->
         {
           CustomerDTO updatedCustomerDTO = new CustomerDTO(customerDTO.id(),
             "Jane", "Doe",
             "jane.doe@email.com", "0987654321");
-          return CompletableFuture.supplyAsync(() ->
-            client.target(customerSrvUri).request()
-              .put(Entity.entity(updatedCustomerDTO, MediaType.APPLICATION_JSON)));
+          return updateCustomer (client, updatedCustomerDTO);
         })
         .exceptionally(handleFailure());
-      futureResponse.thenAccept(response ->
-      {
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_ACCEPTED);
-        CustomerDTO updatedCustomerDTO = response.readEntity(CustomerDTO.class);
-        assertThat(updatedCustomerDTO).isNotNull();
-        assertThat(updatedCustomerDTO.firstName()).isEqualTo("Jane");
-        response.close();
-      });
+      futureResponse.thenAccept(response -> assertCustomer(response,
+        HttpStatus.SC_ACCEPTED, "Jane"));
     }
   }
 
@@ -158,25 +112,17 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CompletableFuture<Response> futureResponse = CompletableFuture
-        .supplyAsync(() -> client.target(customerSrvUri)
-          .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
-          .request().get())
+      CompletableFuture<Response> futureResponse = getCustomerByEmail(client, JANE_EMAIL)
         .thenApply(response -> response.readEntity(CustomerDTO.class))
         .thenCompose(customerDTO ->
         {
-          OrderDTO order = new OrderDTO("myItem01",
+          OrderDTO orderDTO = new OrderDTO("myItem01",
             new BigDecimal("100.25"), customerDTO.id());
-          return CompletableFuture.supplyAsync(() ->
-            client.target(orderSrvUri).request()
-              .post(Entity.entity(order, MediaType.APPLICATION_JSON)));
+          return createOrder(client, orderDTO);
         })
         .exceptionally(handleFailure());
-      futureResponse.thenAccept(response ->
-      {
-        int status = response.getStatus();
-        assertThat(status).isEqualTo(HttpStatus.SC_CREATED);
-      });
+      futureResponse.thenAccept(response -> assertOrder(response,
+        HttpStatus.SC_CREATED, "myItem01"));
     }
   }
 
@@ -186,17 +132,8 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CompletableFuture<Response> futureResponse = CompletableFuture.supplyAsync(() ->
-          client.target(orderSrvUri).request().get())
-        .exceptionally(handleFailure());
-      futureResponse.thenAccept(response ->
-      {
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-        OrderDTO[] orders = response.readEntity(OrderDTO[].class);
-        assertThat(orders).isNotNull();
-        assertThat(orders).hasSize(1);
-      });
+      CompletableFuture<Response> futureResponse = getOrders(client);
+      futureResponse.thenAccept(this::assertOrders);
     }
   }
 
@@ -206,10 +143,7 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CompletableFuture<Response> futureResponse = CompletableFuture.supplyAsync(() ->
-          client.target(customerSrvUri)
-            .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
-            .request().get())
+      CompletableFuture<Response> futureResponse = getCustomerByEmail(client, JANE_EMAIL)
         .thenApply(response -> response.readEntity(CustomerDTO.class))
         .thenCompose(customerDTO ->
           CompletableFuture.supplyAsync(() ->
@@ -217,14 +151,7 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
               .resolveTemplate("id", customerDTO.id()).request()
               .get()))
         .exceptionally(handleFailure());
-      futureResponse.thenAccept(response ->
-      {
-        assertThat(response).isNotNull();
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-        OrderDTO order = response.readEntity(OrderDTO.class);
-        assertThat(order).isNotNull();
-        assertThat(order.item()).isEqualTo("myItem01");
-      });
+      futureResponse.thenAccept(response -> assertOrder(response, HttpStatus.SC_OK, "myItem01"));
     }
   }
 
@@ -234,37 +161,16 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CompletableFuture<Response> futureResponse = CompletableFuture.supplyAsync(() ->
-          client.target(customerSrvUri)
-            .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
-            .request().get())
-        .thenApply(response -> response.readEntity(CustomerDTO.class))
-        .thenCompose(customerDTO ->
-        {
-          assertThat(customerDTO).isNotNull();
-          return CompletableFuture.supplyAsync(() ->
-            client.target(orderSrvUri).path("{id}")
-              .resolveTemplate("id", customerDTO.id()).request()
-              .get());
-        })
-        .thenApply(response -> response.readEntity(OrderDTO.class))
+      CompletableFuture<Response> futureResponse = getOrderByCustomerEmail(client, JANE_EMAIL)        .thenApply(response -> response.readEntity(OrderDTO.class))
         .thenCompose(orderDTO ->
         {
           assertThat(orderDTO).isNotNull();
           OrderDTO updatedOrder = new OrderDTO(orderDTO.id(), "myItem02",
             new BigDecimal("200.50"), orderDTO.customerId());
-          return CompletableFuture.supplyAsync(() ->
-            client.target(orderSrvUri)
-              .request().put(Entity.entity(updatedOrder, MediaType.APPLICATION_JSON)));
+          return updateOrder(client, updatedOrder);
         })
         .exceptionally(handleFailure());
-      futureResponse.thenAccept(response ->
-      {
-        OrderDTO updatedOrderDTO = response.readEntity(OrderDTO.class);
-        assertThat(updatedOrderDTO).isNotNull();
-        assertThat(updatedOrderDTO.item()).isEqualTo("myItem02");
-        response.close();
-      });
+      futureResponse.thenAccept(response -> assertOrder(response, HttpStatus.SC_ACCEPTED, "myItem02"));
     }
   }
 
@@ -274,27 +180,12 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CompletableFuture<Response> futureResponse = CompletableFuture.supplyAsync(() ->
-          client.target(customerSrvUri)
-            .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
-            .request().get())
-        .thenApply(response -> response.readEntity(CustomerDTO.class))
-        .thenCompose(customerDTO ->
-        {
-          assertThat(customerDTO).isNotNull();
-          return CompletableFuture.supplyAsync(() ->
-            client.target(orderSrvUri).path("{id}")
-              .resolveTemplate("id", customerDTO.id()).request()
-              .get());
-        })
+      CompletableFuture<Response> futureResponse = getOrderByCustomerEmail(client, JANE_EMAIL)
+        .thenApply(response -> response.readEntity(OrderDTO.class))
         .thenCompose(orderDTO ->
         {
           assertThat(orderDTO).isNotNull();
-          return CompletableFuture.supplyAsync(() ->
-            client.target(orderSrvUri)
-              .request()
-              .build("DELETE", Entity.entity(orderDTO, MediaType.APPLICATION_JSON))
-              .invoke());
+          return deleteOrder(client, orderDTO);
         })
         .exceptionally(handleFailure());
       futureResponse.thenAccept(response -> {
@@ -311,17 +202,10 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
   {
     try (Client client = ClientBuilder.newClient())
     {
-      CompletableFuture<Response> futureResponse = CompletableFuture.supplyAsync(() ->
-          client.target(customerSrvUri)
-            .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
-            .request().get())
+      CompletableFuture<Response> futureResponse = getCustomerByEmail(client, JANE_EMAIL)
         .thenApply(response -> response.readEntity(CustomerDTO.class))
-        .thenCompose(customerDTO ->
-          CompletableFuture.supplyAsync(() ->
-            client.target(customerSrvUri).request()
-              .build("DELETE", Entity.entity(customerDTO, MediaType.APPLICATION_JSON))
-              .invoke()))
-        .exceptionally(handleFailure());
+        .thenCompose(customerDTO -> deleteCustomer(client, customerDTO)
+        .exceptionally(handleFailure()));
       futureResponse.thenAccept(response ->
       {
         assertThat(response).isNotNull();
@@ -329,6 +213,131 @@ public abstract class OrdersBaseJava8AsyncBlockingClient
         response.close();
       });
     }
+  }
+
+  private CompletableFuture<Response> createCustomer(Client client, CustomerDTO customerDTO)
+  {
+    return CompletableFuture.supplyAsync(() ->
+      client.target(customerSrvUri).request()
+        .post(Entity.entity(customerDTO, MediaType.APPLICATION_JSON)))
+      .exceptionally(handleFailure());
+  }
+
+  private CompletableFuture<Response> getCustomers(Client client)
+  {
+    return CompletableFuture.supplyAsync(() ->
+      client.target(customerSrvUri).request().get())
+      .exceptionally(handleFailure());
+  }
+
+  private void assertCustomers(Response response)
+  {
+    assertThat(response).isNotNull();
+    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+    CustomerDTO[] customers = response.readEntity(CustomerDTO[].class);
+    assertThat(customers).isNotNull();
+    assertThat(customers).hasSize(1);
+    response.close();
+  }
+
+  private CompletableFuture<Response> updateCustomer(Client client, CustomerDTO customerDTO)
+  {
+    return CompletableFuture.supplyAsync(() ->
+      client.target(customerSrvUri).request()
+        .put(Entity.entity(customerDTO, MediaType.APPLICATION_JSON)))
+      .exceptionally(handleFailure());
+  }
+
+  private CompletableFuture<Response> getCustomerByEmail (Client client, String email)
+  {
+    return CompletableFuture.supplyAsync(() ->
+      client.target(customerSrvUri)
+        .path("email/{email}").resolveTemplate("email", email)
+        .request().get())
+      .exceptionally(handleFailure());
+  }
+
+  private void assertCustomer(Response response, int status, String firstName)
+  {
+    assertThat(response).isNotNull();
+    assertThat(response.getStatus()).isEqualTo(status);
+    CustomerDTO customer = response.readEntity(CustomerDTO.class);
+    assertThat(customer).isNotNull();
+    assertThat(customer.firstName()).isEqualTo(firstName);
+    response.close();
+  }
+
+  private CompletableFuture<Response> createOrder(Client client, OrderDTO orderDTO)
+  {
+    return CompletableFuture.supplyAsync(() ->
+      client.target(orderSrvUri).request()
+        .post(Entity.entity(orderDTO, MediaType.APPLICATION_JSON)))
+      .exceptionally(handleFailure());
+  }
+
+  private void assertOrder(Response response, int status, String item)
+  {
+    assertThat(response).isNotNull();
+    assertThat(response.getStatus()).isEqualTo(status);
+    OrderDTO order = response.readEntity(OrderDTO.class);
+    assertThat(order).isNotNull();
+    assertThat(order.item()).isEqualTo(item);
+    response.close();
+  }
+
+  private CompletableFuture<Response> getOrders(Client client)
+  {
+    return CompletableFuture.supplyAsync(() ->
+      client.target(orderSrvUri).request().get())
+      .exceptionally(handleFailure());
+  }
+
+  private void assertOrders(Response response)
+  {
+    assertThat(response).isNotNull();
+    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+    OrderDTO[] orders = response.readEntity(OrderDTO[].class);
+    assertThat(orders).isNotNull();
+    assertThat(orders).hasSize(1);
+    response.close();
+  }
+
+  private CompletableFuture<Response> getOrderByCustomerEmail(Client client, String email)
+  {
+    return getCustomerByEmail(client, email)
+      .thenApply(response -> response.readEntity(CustomerDTO.class))
+      .thenCompose(customerDTO ->
+        CompletableFuture.supplyAsync(() ->
+          client.target(orderSrvUri).path("{id}")
+            .resolveTemplate("id", customerDTO.id()).request()
+            .get()))
+      .exceptionally(handleFailure());
+  }
+
+  private CompletableFuture<Response> updateOrder(Client client, OrderDTO orderDTO)
+  {
+    return CompletableFuture.supplyAsync(() ->
+      client.target(orderSrvUri).request()
+        .put(Entity.entity(orderDTO, MediaType.APPLICATION_JSON)))
+      .exceptionally(handleFailure());
+  }
+
+  private CompletableFuture<Response> deleteOrder(Client client, OrderDTO orderDTO)
+  {
+    return CompletableFuture.supplyAsync(() ->
+      client.target(orderSrvUri).request()
+        .build("DELETE", Entity.entity(orderDTO, MediaType.APPLICATION_JSON))
+        .invoke())
+      .exceptionally(handleFailure());
+  }
+
+  private CompletableFuture<Response> deleteCustomer(Client client, CustomerDTO customerDTO)
+  {
+    return CompletableFuture.supplyAsync(() ->
+      client.target(customerSrvUri).request()
+        .build("DELETE", Entity.entity(customerDTO, MediaType.APPLICATION_JSON))
+        .invoke())
+      .exceptionally(handleFailure());
   }
 
   private Function<Throwable, Response> handleFailure()
