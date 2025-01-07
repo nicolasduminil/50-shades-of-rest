@@ -8,22 +8,15 @@ import io.quarkus.test.junit.*;
 import java.net.*;
 
 @QuarkusTest
-public class OrdersAsyncJava8NonBlockingClientIT //extends OrdersBaseJava8AsyncNonBlockingClient
+public class OrdersAsyncJava8BlockingClientIT extends OrdersBaseJava8AsyncBlockingClient
 {
   @TestHTTPEndpoint(CustomerResource.class)
   @TestHTTPResource
   private URI customerSrvUri;
-  @TestHTTPEndpoint(CustomerResource.class)
-  @TestHTTPResource
-  private URI orderSrvUri;
+
 
   public URI getCustomerSrvUri()
   {
     return customerSrvUri;
-  }
-
-  public URI getOrderSrvUri()
-  {
-    return orderSrvUri;
   }
 }

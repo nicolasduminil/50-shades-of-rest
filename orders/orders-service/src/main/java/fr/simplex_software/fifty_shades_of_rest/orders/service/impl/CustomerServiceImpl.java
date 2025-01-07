@@ -56,6 +56,13 @@ public class CustomerServiceImpl implements CustomerService
   @Transactional
   public CustomerDTO updateCustomer(CustomerDTO customerDTO)
   {
+    /*Customer existingCustomer = customerRepository.findByIdOptional(customerDTO.id()).orElseThrow(() -> new CustomerNotFoundException("""
+        ### CustomerServiceImpl.updateCustomer():
+          Customer not found for id:"""
+      + customerDTO.id()));
+    CustomerMapper.INSTANCE.updateEntityFromDTO(customerDTO, existingCustomer);
+    customerRepository.updateById(existingCustomer.getId(), existingCustomer);
+    return customerDTO;*/
     Optional<Customer> optionalCustomer =
       customerRepository.findByIdOptional(customerDTO.id());
     return optionalCustomer.map(existingCustomer ->
@@ -68,7 +75,6 @@ public class CustomerServiceImpl implements CustomerService
         ### CustomerServiceImpl.updateCustomer():
           Customer not found for id:"""
         + customerDTO.id()));
-
   }
 
   @Override
