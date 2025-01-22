@@ -12,6 +12,7 @@ import org.junit.jupiter.api.*;
 import java.math.*;
 import java.net.*;
 import java.nio.charset.*;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.*;
@@ -164,10 +165,10 @@ public class OrdersAsyncJaxRs20BlockingClientIT
         .request().async().get(CustomerDTO.class);
       CustomerDTO customerDTO = futureCustomerDTO.get(5, TimeUnit.SECONDS);
       assertThat(customerDTO).isNotNull();
-      Future<OrderDTO> futureOrder = client.target(orderSrvUri).path("{id}")
+      Future<List<OrderDTO>> futureOrders = client.target(orderSrvUri).path("/customer/{id}")
         .resolveTemplate("id", customerDTO.id()).request()
-        .async().get(OrderDTO.class);
-      OrderDTO order = futureOrder.get(5, TimeUnit.SECONDS);
+        .async().get(new GenericType<>() {});
+      OrderDTO order = futureOrders.get(5, TimeUnit.SECONDS).getFirst();
       assertThat(order).isNotNull();
       assertThat(order.customerId()).isEqualTo(customerDTO.id());
     }
@@ -184,11 +185,11 @@ public class OrdersAsyncJaxRs20BlockingClientIT
         .request().async().get(CustomerDTO.class);
       CustomerDTO  customerDTO = futureCustomerDTO.get(5, TimeUnit.SECONDS);
       assertThat(customerDTO).isNotNull();
-      Future<OrderDTO> futureOrderDTO = client.target(orderSrvUri).path("{id}")
+      Future<List<OrderDTO>> futureOrderDTOs = client.target(orderSrvUri).path("/customer/{id}")
         .resolveTemplate("id", customerDTO.id()).request()
-        .async().get(OrderDTO.class);
-      assertThat(futureOrderDTO).isNotNull();
-      OrderDTO orderDTO = futureOrderDTO.get(5, TimeUnit.SECONDS);
+        .async().get(new GenericType<>() {});
+      assertThat(futureOrderDTOs).isNotNull();
+      OrderDTO orderDTO = futureOrderDTOs.get(5, TimeUnit.SECONDS).getFirst();
       assertThat(orderDTO).isNotNull();
       OrderDTO updatedOrder = new OrderDTO(orderDTO.id(), "myItem02",
         new BigDecimal("200.50"), orderDTO.customerId());
@@ -215,10 +216,10 @@ public class OrdersAsyncJaxRs20BlockingClientIT
         .request().async().get(CustomerDTO.class);
       CustomerDTO customerDTO = futureCustomerDTO.get(5, TimeUnit.SECONDS);
       assertThat(customerDTO).isNotNull();
-      Future<OrderDTO> futureOrderDTO = client.target(orderSrvUri).path("{id}")
+      Future<List<OrderDTO>> futureOrderDTOs = client.target(orderSrvUri).path("/customer/{id}")
         .resolveTemplate("id", customerDTO.id())
-        .request().async().get(OrderDTO.class);
-      OrderDTO orderDTO = futureOrderDTO.get(5, TimeUnit.SECONDS);
+        .request().async().get(new GenericType<>() {});
+      OrderDTO orderDTO = futureOrderDTOs.get(5, TimeUnit.SECONDS).getFirst();
       assertThat(orderDTO).isNotNull();
       Response response = client.target(orderSrvUri).request()
         .build("DELETE", Entity.entity(orderDTO, MediaType.APPLICATION_JSON)).invoke();

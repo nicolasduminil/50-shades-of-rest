@@ -15,7 +15,7 @@ import static fr.simplex_software.fifty_shades_of_rest.orders_test.OrdersJava8As
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public abstract class OrdersBaseJava8AsyncBlockingClient
+public abstract class OrdersBaseJava8AsyncClient
 {
   private static final String JOHN_EMAIL =
     URLEncoder.encode("john.doe@email.com", StandardCharsets.UTF_8);

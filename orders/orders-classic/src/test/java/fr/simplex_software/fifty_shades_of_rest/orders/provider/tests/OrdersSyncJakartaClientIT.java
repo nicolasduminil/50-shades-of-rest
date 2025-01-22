@@ -12,6 +12,7 @@ import org.junit.jupiter.api.*;
 import java.math.*;
 import java.net.*;
 import java.nio.charset.*;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -154,10 +155,11 @@ public class OrdersSyncJakartaClientIT
         .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
         .request().get(CustomerDTO.class);
       assertThat(customerDTO).isNotNull();
-      OrderDTO order = client.target(orderSrvUri).path("{id}")
-        .resolveTemplate("id", customerDTO.id()).request().get(OrderDTO.class);
-      assertThat(order).isNotNull();
-      assertThat(order.customerId()).isEqualTo(customerDTO.id());
+      List<OrderDTO> orders = client.target(orderSrvUri).path("/customer/{id}")
+        .resolveTemplate("id", customerDTO.id()).request().get(new GenericType<>() {});
+      assertThat(orders).isNotNull();
+      assertThat(orders).hasAtLeastOneElementOfType(OrderDTO.class);
+      assertThat(orders.getFirst().customerId()).isEqualTo(customerDTO.id());
     }
   }
 
@@ -171,9 +173,11 @@ public class OrdersSyncJakartaClientIT
         .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
         .request().get(CustomerDTO.class);
       assertThat(customerDTO).isNotNull();
-      OrderDTO orderDTO = client.target(orderSrvUri).path("{id}")
-        .resolveTemplate("id", customerDTO.id()).request().get(OrderDTO.class);
-      assertThat(orderDTO).isNotNull();
+      List<OrderDTO> orderDTOs = client.target(orderSrvUri).path("/customer/{id}")
+        .resolveTemplate("id", customerDTO.id()).request().get(new GenericType<>() {});
+      assertThat(orderDTOs).isNotNull();
+      assertThat(orderDTOs).hasAtLeastOneElementOfType(OrderDTO.class);
+      OrderDTO orderDTO = orderDTOs.getFirst();
       OrderDTO updatedOrder = new OrderDTO(orderDTO.id(), "myItem02",
         new BigDecimal("200.50"), orderDTO.customerId());
       Response response = client.target(orderSrvUri)
@@ -198,11 +202,12 @@ public class OrdersSyncJakartaClientIT
         .path("email/{email}").resolveTemplate("email", JANE_EMAIL)
         .request().get(CustomerDTO.class);
       assertThat(customerDTO).isNotNull();
-      OrderDTO orderDTO = client.target(orderSrvUri).path("{id}")
-        .resolveTemplate("id", customerDTO.id()).request().get(OrderDTO.class);
-      assertThat(orderDTO).isNotNull();
+      List<OrderDTO> orderDTOs = client.target(orderSrvUri).path("/customer/{id}")
+        .resolveTemplate("id", customerDTO.id()).request().get(new GenericType<>() {});
+      assertThat(orderDTOs).isNotNull();
+      assertThat(orderDTOs).hasAtLeastOneElementOfType(OrderDTO.class);
       Response response = client.target(orderSrvUri).request()
-        .build("DELETE", Entity.entity(orderDTO, MediaType.APPLICATION_JSON)).invoke();
+        .build("DELETE", Entity.entity(orderDTOs.getFirst(), MediaType.APPLICATION_JSON)).invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NO_CONTENT);
       response.close();

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.*;
 import java.math.*;
 import java.net.*;
 import java.nio.charset.*;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -173,12 +174,13 @@ public class OrdersAsyncJaxRs20NonBlockingClientIT
       CustomerDTO customerDTO = callback.getResponse().readEntity(CustomerDTO.class);
       assertThat(customerDTO).isNotNull();
       callback = new Callback();
-      client.target(orderSrvUri).path("{id}")
+      client.target(orderSrvUri).path("/customer/{id}")
         .resolveTemplate("id", customerDTO.id()).request()
         .async().get(callback);
-      OrderDTO order = callback.getResponse().readEntity(OrderDTO.class);
-      assertThat(order).isNotNull();
-      assertThat(order.customerId()).isEqualTo(customerDTO.id());
+      List<OrderDTO> orders = callback.getResponse().readEntity(new GenericType<>() {});
+      assertThat(orders).isNotNull();
+      assertThat(orders).hasAtLeastOneElementOfType(OrderDTO.class);
+      assertThat(orders.getFirst().customerId()).isEqualTo(customerDTO.id());
     }
   }
 
@@ -195,11 +197,14 @@ public class OrdersAsyncJaxRs20NonBlockingClientIT
       CustomerDTO customerDTO = callback.getResponse().readEntity(CustomerDTO.class);
       assertThat(customerDTO).isNotNull();
       callback = new Callback();
-      client.target(orderSrvUri).path("{id}")
+      client.target(orderSrvUri).path("/customer/{id}")
         .resolveTemplate("id", customerDTO.id()).request()
         .async().get(callback);
-      OrderDTO orderDTO = callback.getResponse().readEntity(OrderDTO.class);
-      assertThat(orderDTO).isNotNull();
+      List<OrderDTO> orderDTOs = callback.getResponse().readEntity(new GenericType<>() {});
+      assertThat(orderDTOs).isNotNull();
+      assertThat(orderDTOs).isNotNull();
+      assertThat(orderDTOs).hasAtLeastOneElementOfType(OrderDTO.class);
+      OrderDTO orderDTO = orderDTOs.getFirst();
       OrderDTO updatedOrder = new OrderDTO(orderDTO.id(), "myItem02",
         new BigDecimal("200.50"), orderDTO.customerId());
       callback = new Callback();
@@ -228,11 +233,13 @@ public class OrdersAsyncJaxRs20NonBlockingClientIT
       CustomerDTO customerDTO = callback.getResponse().readEntity(CustomerDTO.class);
       assertThat(customerDTO).isNotNull();
       callback = new Callback();
-      client.target(orderSrvUri).path("{id}")
+      client.target(orderSrvUri).path("/customer/{id}")
         .resolveTemplate("id", customerDTO.id())
         .request().async().get(callback);
-      OrderDTO orderDTO = callback.getResponse().readEntity(OrderDTO.class);
-      assertThat(orderDTO).isNotNull();
+      List<OrderDTO> orderDTOs = callback.getResponse().readEntity(new GenericType<>() {});
+      assertThat(orderDTOs).isNotNull();
+      assertThat(orderDTOs).hasAtLeastOneElementOfType(OrderDTO.class);
+      OrderDTO orderDTO = orderDTOs.getFirst();
       callback = new Callback();
       client.target(orderSrvUri).request().async()
         .method("DELETE", Entity.entity(orderDTO, MediaType.APPLICATION_JSON), callback);

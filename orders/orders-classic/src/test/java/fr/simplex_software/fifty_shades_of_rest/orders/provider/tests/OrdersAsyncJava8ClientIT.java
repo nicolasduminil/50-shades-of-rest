@@ -8,7 +8,7 @@ import io.quarkus.test.junit.*;
 import java.net.*;
 
 @QuarkusTest
-public class OrdersAsyncJava8BlockingClientIT extends OrdersBaseJava8AsyncBlockingClient
+public class OrdersAsyncJava8ClientIT extends OrdersBaseJava8AsyncClient
 {
   @TestHTTPEndpoint(CustomerResource.class)
   @TestHTTPResource

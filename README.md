@@ -2867,25 +2867,55 @@ execute asynchronous tasks, and handle their results without blocking.
 
 So let's examine how to use these new classes in the Java 8 style.
 
-#### Blocking asynchronous consumers
+#### Blocking Java 8 asynchronous consumers
 
-Have a look at the listing below, that you can found in the `async-clients/java8
--async-clients/` directory of the GitHub repository.
+Have a look at the listing below, that you can found in the `OrdersAsyncJava8ClientIT` class in the GitHub repository.
+In order to favor reuse, the body of this class has been factored in the abstract
+base class named `OrdersBaseJava8AsyncClient` which is extended by `OrdersAsyncJava8ClientIT`.
 
+    ...
     @Test
-    public void testCurrentTimeWithZoneId()
+    @Order(10)
+    public void testCreateCustomer()
     {
       try (Client client = ClientBuilder.newClient())
       {
-        CompletableFuture<String> timeFuture = CompletableFuture.supplyAsync(() ->
-          client.target(timeSrvUrl).path(ENCODED).request().get(String.class))
-          .exceptionally(ex -> fail("""
-             ### TestBlockingJava8CurrentTimeResource.testCurrentTimeWithZoneId():""",
-             ex.getMessage()));
-        assertThat(parseTime(timeFuture.join())).isCloseTo(LocalDateTime.now(),
-          byLessThan(1, ChronoUnit.MINUTES));
+        CustomerDTO customerDTO = new CustomerDTO("John", "Doe",
+          "john.doe@email.com", "1234567890");
+        CompletableFuture<Response> futureResponse = createCustomer(client, customerDTO);
+        Response response = futureResponse.join();
+        assertCustomer(response, HttpStatus.SC_CREATED, "John");
+        response.close();
       }
     }
+
+    @Test
+    @Order(20)
+    public void testGetCustomers()
+    {
+      try (Client client = ClientBuilder.newClient())
+      {
+        CompletableFuture<Response> futureResponse = getCustomers(client);
+        Response response = futureResponse.join();
+        assertCustomers(response);
+        response.close();
+      }
+    }
+
+    @Test
+    @Order(30)
+    public void testGetCustomer()
+    {
+      try (Client client = ClientBuilder.newClient())
+      {
+        CompletableFuture<Response> futureResponse = getCustomerByEmail(client, JOHN_EMAIL);
+        Response response = futureResponse.join();
+        assertCustomer(response, HttpStatus.SC_OK, "John");
+        response.close();
+      }
+    }
+    ...
+
 <p style="text-align: center;">Listing 3.3: Using the Java 8 blocking client to asynchronously invoke endpoints</p>
 
 What you see here is that the endpoint invocation is done now using
@@ -2900,18 +2930,18 @@ supplied task (the lambda function) will run on this separate thread. Since this
 is a blocking asynchronous endpoint invocation, we use the `join()` method in
 order to wait for the task completion.
 
-To resume, this example is very similar to the one in `async-clients/jaxrs20-
-async-clients/`, with the only difference that it returns a `CompletableFuture`
-instead of a `Future`. Also, the `async()` method isn't anymore required when
-instantiating the JAX-RS client request.
+To resume, this example is very similar to the one in `OrderJaxRs20BlockingClientIT`,
+with the only difference that it returns a `CompletableFuture`
+instead of a `Future`. Also, the `async()` method isn't anymore required whith
+`CompletableFuture`.
 
 > ** _NOTE:_ In order to reuse the same unit test scenarii in different subprojects
-while avoiding the code duplication, a shared subproject named `common-tests`
-has been provided. The class `BaseBlockingJava8` captures the code shown in the
-Listing 3.3 above and becomes the base class of all the ones implementing the
-same test strategy.
+while avoiding the code duplication, the shared  project named `orders-test`
+has been provided. The class `OrdersBaseJava8AsyncClient` captures the code shown in the
+listing above and becomes the base class of all the ones implementing the
+same test strategy. The class `OrdersJava8AsyncCommon` in the same project contains several common methods.
 
-#### Non-Blocking asynchronous consumers
+#### Non-Blocking Java 8 asynchronous consumers
 
 The same similarities that we noticed above are also in effect as far as the
 non-blocking asynchronous invocation are concerned. Here is a code fragment from

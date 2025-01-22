@@ -35,7 +35,7 @@ public class CustomerResource implements CustomerApi
   @GET
   public Response getCustomers()
   {
-    return Response.ok().entity(customerService.getCustomers()).build();
+    return Response.ok().entity(new GenericEntity<List<CustomerDTO>>(customerService.getCustomers()) {}).build();
   }
 
   @Override
