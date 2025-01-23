@@ -66,7 +66,6 @@ public final class OrdersJava8AsyncCommon
     CustomerDTO[] customers = response.readEntity(CustomerDTO[].class);
     assertThat(customers).isNotNull();
     assertThat(customers).hasSize(1);
-    response.close();
   }
 
   public static CompletableFuture<Response> updateCustomer(Client client, CustomerDTO customerDTO)
@@ -93,7 +92,6 @@ public final class OrdersJava8AsyncCommon
     CustomerDTO customer = response.readEntity(CustomerDTO.class);
     assertThat(customer).isNotNull();
     assertThat(customer.firstName()).isEqualTo(firstName);
-    response.close();
   }
 
   public static CompletableFuture<Response> createOrder(Client client, OrderDTO orderDTO)
@@ -111,7 +109,6 @@ public final class OrdersJava8AsyncCommon
     OrderDTO order = response.readEntity(OrderDTO.class);
     assertThat(order).isNotNull();
     assertThat(order.item()).isEqualTo(item);
-    response.close();
   }
 
   public static CompletableFuture<Response> getOrders(Client client)
@@ -128,7 +125,6 @@ public final class OrdersJava8AsyncCommon
     OrderDTO[] orders = response.readEntity(OrderDTO[].class);
     assertThat(orders).isNotNull();
     assertThat(orders).hasSize(1);
-    response.close();
   }
 
   public static CompletableFuture<Response> getOrderByCustomerEmail(Client client, String email)
