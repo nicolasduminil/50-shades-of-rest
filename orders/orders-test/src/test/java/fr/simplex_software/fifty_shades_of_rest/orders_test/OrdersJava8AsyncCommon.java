@@ -4,6 +4,7 @@ import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
 import jakarta.ws.rs.client.*;
 import jakarta.ws.rs.core.*;
 import org.apache.http.*;
+import org.slf4j.*;
 
 import java.net.*;
 import java.nio.charset.*;
@@ -20,7 +21,7 @@ public final class OrdersJava8AsyncCommon
     URLEncoder.encode("john.doe@email.com", StandardCharsets.UTF_8);
   public static final String JANE_EMAIL =
     URLEncoder.encode("jane.doe@email.com", StandardCharsets.UTF_8);
-
+  private static final Logger LOGGER = LoggerFactory.getLogger(OrdersJava8AsyncCommon.class.getName());
 
   private OrdersJava8AsyncCommon()
   {
@@ -222,15 +223,11 @@ public final class OrdersJava8AsyncCommon
   public static Function<Throwable, Response> handleFailure()
   {
     String methodName = Thread.currentThread().getStackTrace()[2].getMethodName();
-    return ex -> CompletableFuture.<Response>failedFuture(
-      new CompletionException(String.format("""
-        ### OrdersBaseJava8AsyncBlockingClient.%s():
-        %s""", methodName, ex.getMessage()), ex)
-    ).join();
+    return ex ->
+    {
+      String msg = "### OrdersBaseJava8AsyncBlockingClient.%s(): %s".formatted(methodName, ex);
+      LOGGER.error(msg);
+      return CompletableFuture.<Response>failedFuture(new Throwable(msg)).join();
+    };
   }
-
-  /*public <T> CompletableFuture<T> handleAsyncError(CompletableFuture<T> future, String errorMessage) {
-    return future.exceptionally(throwable -> throwable.
-      //throw new CompletionException(throwable));
-  }*/
 }
