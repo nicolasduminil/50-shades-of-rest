@@ -40,7 +40,7 @@ public class OrdersAsyncJaxRs21NonBlockingClientIT
     {
       CustomerDTO customerDTO = new CustomerDTO("John", "Doe",
         "john.doe@email.com", "1234567890");
-      Response resp = createCustomerRx(client, customerDTO)
+      createCustomerRx(client, customerDTO)
         .thenApply(response ->
         {
           assertCustomer(response, HttpStatus.SC_CREATED, "John");

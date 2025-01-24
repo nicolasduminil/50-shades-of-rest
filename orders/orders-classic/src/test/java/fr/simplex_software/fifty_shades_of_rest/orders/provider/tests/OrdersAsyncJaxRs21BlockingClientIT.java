@@ -38,13 +38,9 @@ public class OrdersAsyncJaxRs21BlockingClientIT
     {
       CustomerDTO customerDTO = new CustomerDTO("John", "Doe",
         "john.doe@email.com", "1234567890");
-      Response response = createCustomerRx(client, customerDTO).join();
-      assertCustomer(response, HttpStatus.SC_CREATED, "John");
-      CustomerDTO createdCustomer = response.readEntity(CustomerDTO.class);
-      assertThat(createdCustomer).isNotNull();
-      assertThat(createdCustomer.id()).isNotNull();
-      assertThat(createdCustomer.firstName()).isEqualTo("John");
-    }
+      assertCustomer(createCustomerRx(client, customerDTO).join(),
+        HttpStatus.SC_CREATED, "John");
+     }
   }
 
   @Test

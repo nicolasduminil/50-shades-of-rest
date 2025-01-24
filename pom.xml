@@ -10,11 +10,6 @@
   <name>50 Shades of REST :: The master POM</name>
   <modules>
     <module>failures</module>
-    <module>classic</module>
-    <module>async-clients</module>
-    <module>base-resources</module>
-    <module>common-tests</module>
-    <module>async-services</module>
     <module>orders</module>
   </modules>
   <properties>

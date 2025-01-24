@@ -3053,88 +3053,81 @@ Client API* and it simply consists in invoking the `rx()` method, instead of
 #### JAX-RS 2.1 blocking asynchronous consumers
 
 In the listing below, using `rx()` returns a response of type `CompletionStage`.
-Then the method `thenAccept()` will execute the given action in a blocking mode,
-on the same thread.
+Then the method `toCompleteFuture()` will transform it is a `CompletionFuture<Response>`
+result, such that to execute `join()` in a blocking mode, on the same thread.
 
-    @Test
-    public void testCurrentTime()
+    ...
+    public static CompletableFuture<Response> createCustomerRx(Client client, CustomerDTO customerDTO)
     {
-      try (Client client = ClientBuilder.newClient())
-      {
-        client.target(TIME_SRV_URL).request().rx().get(String.class)
-        .thenAccept(time -> {
-          assertThat(parseTime(time)).isCloseTo(LocalDateTime.now(),
-            byLessThan(1, ChronoUnit.MINUTES));
-        })
-        .exceptionally(ex -> {
-          fail("""
-            ### BlockingRxCurrentTimeResourceIT.testCurrentTime():
-             Unexpected exception %s""", ex.getMessage());
-          return null;
-        })
-        .toCompletableFuture().join();
-      }
+      return client.target(customerSrvUri)
+       .request()
+       .rx()
+       .post(Entity.entity(customerDTO, MediaType.APPLICATION_JSON))
+       .toCompletableFuture()
+       .exceptionally(throwable -> handleFailure().apply(throwable));
     }
+    ...
+    try (Client client = ClientBuilder.newClient())
+    {
+      CustomerDTO customerDTO = new CustomerDTO("John", "Doe",
+        "john.doe@email.com", "1234567890");
+      assertCustomer(createCustomerRx(client, customerDTO).join(),
+        HttpStatus.SC_CREATED, "John");
+    }
+    ...
+
 <p style="text-align: center;">Listing 3.6 Using the JAX-RS 2.1 blocking client to asynchronously invoke endpoints</p>
 
-Here, the call to `join()` will block the current thread until the operation
+As we've already seen previously, the call to `join()` will block the current thread until the operation
 completes.
 
-#### Non-Blocking asynchronous consumers
+#### JAX-RS 2.1 non-blocking asynchronous consumers
 
-Let's have a look now at the non-blocking asynchronous consumer:
+Let's have a look now at the non-blocking JAX-RS 2.1 asynchronous consumer:
 
-    @Test
-    public void testCurrentTime()
+    ...
+    try (Client client = ClientBuilder.newClient())
     {
-      try (Client client = ClientBuilder.newClient())
-      {
-        client.target(TIME_SRV_URL).request().rx().get(String.class)
-          .thenApply(time -> {
-            assertThat(parseTime(time)).isCloseTo(LocalDateTime.now(),
-              byLessThan(1, ChronoUnit.MINUTES));
-             return time;
-          })
-          .exceptionally(ex -> {
-            fail("""
-              ### BlockingRxCurrentTimeResourceIT.testCurrentTime():
-              Unexpected exception %s""", ex.getMessage());
-            return null;
-          });
-      }
+      CustomerDTO customerDTO = new CustomerDTO("John", "Doe",
+        "john.doe@email.com", "1234567890");
+      createCustomerRx(client, customerDTO)
+        .thenApply(response ->
+        {
+          assertCustomer(response, HttpStatus.SC_CREATED, "John");
+          return response;
+        })
+        .exceptionally(throwable -> handleFailure().apply(throwable))
+        .get(5, TimeUnit.SECONDS);
     }
+    ...
 <p style="text-align: center;">Listing 3.7 Using the JAX-RS 2.1 non-blocking client to asynchronously invoke endpoints</p>
 
-We have replaced the call to `thenAccept(...)` by `thenApply(...)`. Doing that,
+In this example, after calling `createCustomerRx(...)`, as we already did with 
+the blocking consumer, we call now `thenApply(...)` and, consequently, 
 we don't wait anymore the task completion, as we did previously by calling
 `join()`. Instead, `thenApply()` returns a `CompletionStage` with the result of
-the endpoint call which, in our case, is a `String`. So, as opposed to the
-approach using `thenAccept()` where `join()` blocks the current thread until
+the endpoint call which, in our case, is a `Response`. So, as opposed to the
+blocking approach, where `join()` blocks the current thread until
 the operation completes, the one using `thenApply()` remains non-blocking as it
-returns a `CompletionStage` that will complete in the future. However, as opposed
-to the first one which guarantees that the assertion has been evaluated before
-processing, the last one doesn't.
+returns a `CompletionStage` that will complete in the future. 
 
-This is furthermore what happens because, modifying the assertion  as follows:
-
-    assertThat(LocalDateTime.of(2019, Month.MARCH, 28, 14, 33))
-      .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES));
-
-the test will still pass, showing that the assertion isn't in fact evaluated,
-otherwise an `AssertionError` would have been raised. Accordingly, while non-blocking
-calls are still possible with the JAX-RS 2.1 `rx()` flavour, they are more suitable
-for being integrated in larger asynchronous flows than in tests, where a terminal
-`join()` is at some point required.
+Finally, similarly to the Java 8 asynchronous blockin/non-blocking consumer test
+case, we need anyway the terminal operation `get(...)`, which blocks until the 
+operation completes, or takes advantage of the JUnit 5 `@Timeout` feature. But 
+despite this blocking operation, our consumer stays fully non-blocking, only the 
+test itself is blocking. And as a matter of fact, how could it be different, as
+long as we need to check, in our integration test, the operation's result and, 
+for that, the operation needs to complete.
 
 ### Eclipse MicroProfile REST Client asynchronous consumers
 
 In the previous chapter we've already discussed the Eclipse MicroProfile specs
 and, especially, the REST Client ones which facilitates the communication between
 REST producers and consumers, on HTTP. We've demonstrated how this communication
-works when synchrounous producers and consumers are used. Let's look now at how
+works when synchronous producers and consumers are used. Let's look now at how
 this same communication works with synchronous producers and asynchronous consumers.
 
-As you probably remember from the `classic` project, our MP REST Client was the
+As you probably remember from the `orders-api` Maven module, our MP REST Client was the
 interface `CurrentTimeResourceClient`, shown below:
 
     ...
