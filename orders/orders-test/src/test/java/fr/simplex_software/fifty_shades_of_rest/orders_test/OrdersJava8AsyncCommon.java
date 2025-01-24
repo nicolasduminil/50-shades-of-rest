@@ -6,6 +6,7 @@ import jakarta.ws.rs.core.*;
 import org.apache.http.*;
 
 import java.net.*;
+import java.nio.charset.*;
 import java.util.concurrent.*;
 import java.util.function.*;
 
@@ -15,6 +16,11 @@ public final class OrdersJava8AsyncCommon
 {
   private static URI customerSrvUri;
   private static URI orderSrvUri;
+  public static final String JOHN_EMAIL =
+    URLEncoder.encode("john.doe@email.com", StandardCharsets.UTF_8);
+  public static final String JANE_EMAIL =
+    URLEncoder.encode("jane.doe@email.com", StandardCharsets.UTF_8);
+
 
   private OrdersJava8AsyncCommon()
   {
@@ -43,14 +49,15 @@ public final class OrdersJava8AsyncCommon
       .exceptionally(handleFailure());
   }
 
-  public static CompletableFuture<Response> customerCreate(Client client, CustomerDTO customerDTO)
+  public static CompletableFuture<Response> createCustomerRx(Client client, CustomerDTO customerDTO)
   {
-    return CompletableFuture.supplyAsync(() ->
-        client.target(customerSrvUri).request()
-          .post(Entity.entity(customerDTO, MediaType.APPLICATION_JSON)))
-      .exceptionally(handleFailure());
+    return client.target(customerSrvUri)
+      .request()
+      .rx()
+      .post(Entity.entity(customerDTO, MediaType.APPLICATION_JSON))
+      .toCompletableFuture()
+      .exceptionally(throwable -> handleFailure().apply(throwable));
   }
-
 
   public static CompletableFuture<Response> getCustomers(Client client)
   {
@@ -58,6 +65,17 @@ public final class OrdersJava8AsyncCommon
         client.target(customerSrvUri).request().get())
       .exceptionally(handleFailure());
   }
+
+  public static CompletableFuture<Response> getCustomersRx(Client client)
+  {
+    return client.target(customerSrvUri)
+      .request()
+      .rx()
+      .get()
+      .toCompletableFuture()
+      .exceptionally(throwable -> handleFailure().apply(throwable));
+  }
+
 
   public static void assertCustomers(Response response)
   {
@@ -76,6 +94,15 @@ public final class OrdersJava8AsyncCommon
       .exceptionally(handleFailure());
   }
 
+  public static CompletableFuture<Response> updateCustomerRx(Client client, CustomerDTO customerDTO)
+  {
+    return client.target(customerSrvUri).request().rx()
+      .put(Entity.entity(customerDTO, MediaType.APPLICATION_JSON))
+      .toCompletableFuture()
+      .exceptionally(throwable -> handleFailure().apply(throwable));
+  }
+
+
   public static CompletableFuture<Response> getCustomerByEmail(Client client, String email)
   {
     return CompletableFuture.supplyAsync(() ->
@@ -84,6 +111,18 @@ public final class OrdersJava8AsyncCommon
           .request().get())
       .exceptionally(handleFailure());
   }
+
+  public static CompletableFuture<Response> getCustomerByEmailRx(Client client, String email)
+  {
+    return client.target(customerSrvUri)
+      .path("email/{email}").resolveTemplate("email", email)
+      .request()
+      .rx()
+      .get()
+      .toCompletableFuture()
+      .exceptionally(throwable -> handleFailure().apply(throwable));
+   }
+
 
   public static void assertCustomer(Response response, int status, String firstName)
   {
@@ -165,6 +204,13 @@ public final class OrdersJava8AsyncCommon
       .exceptionally(handleFailure());
   }
 
+  public static CompletableFuture<Response> deleteCustomerRx(Client client, CustomerDTO customerDTO)
+  {
+    return client.target(customerSrvUri).request().rx().delete()
+      .toCompletableFuture()
+      .exceptionally(throwable -> handleFailure().apply(throwable));
+  }
+
   public static CompletableFuture<Response> getOrdersByCustomerId(Client client, Long id)
   {
     return CompletableFuture.supplyAsync(() ->
@@ -182,4 +228,9 @@ public final class OrdersJava8AsyncCommon
         %s""", methodName, ex.getMessage()), ex)
     ).join();
   }
+
+  /*public <T> CompletableFuture<T> handleAsyncError(CompletableFuture<T> future, String errorMessage) {
+    return future.exceptionally(throwable -> throwable.
+      //throw new CompletionException(throwable));
+  }*/
 }

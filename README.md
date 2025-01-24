@@ -2686,7 +2686,7 @@ Let's have a look at some examples of how this kind of asynchronous consumers,
 blocking and non-blocking, might be implemented based on the JAX-RS 2.0
 specifications.
 
-#### Blocking asynchronous consumers
+#### JAX-RS 2.0 blocking asynchronous consumers
 
 The listing below shows a Quarkus integration test that invokes in a blocking
 while asynchronous mode the endpoint `/customers` of the `CustomerResource` REST
@@ -2728,7 +2728,7 @@ call.
 Please notice also that, since RESTassured doesn't support asynchronous endpoints
 invocation, we're using in the Jakarta REST Client.
 
-#### Non-blocking asynchronous consumers
+#### JAX-RS 2.0 non-blocking asynchronous consumers
 
 Now let's look at a 2nd example implementing the same integration test but in a
 non-blocking way.
@@ -2867,9 +2867,9 @@ execute asynchronous tasks, and handle their results without blocking.
 
 So let's examine how to use these new classes in the Java 8 style.
 
-#### Blocking Java 8 asynchronous consumers
+#### Java 8 blocking asynchronous consumers
 
-Have a look at the listing below, that you can found in the `OrdersAsyncJava8ClientIT` class in the GitHub repository.
+Have a look at the listing below, that you can found in the `OrdersAsyncJava8BlockingClientIT` class in the GitHub repository.
 In order to favor reuse, the body of this class has been factored in the abstract
 base class named `OrdersBaseJava8AsyncClient` which is extended by `OrdersAsyncJava8ClientIT`.
 
@@ -2941,89 +2941,102 @@ has been provided. The class `OrdersBaseJava8AsyncClient` captures the code show
 listing above and becomes the base class of all the ones implementing the
 same test strategy. The class `OrdersJava8AsyncCommon` in the same project contains several common methods.
 
-#### Non-Blocking Java 8 asynchronous consumers
+#### Java 8 non-blocking asynchronous consumers
 
 The same similarities that we noticed above are also in effect as far as the
 non-blocking asynchronous invocation are concerned. Here is a code fragment from
-the class `TestNonBlockingAsyncTimeResource` found in the same directory:
+the class `OrdersAsyncJava8NonBlockingClientIT` found in the same directory:
 
     @Test
-    public void testCurrentTimeWithZoneId()
+    @Order(10)
+    @Timeout(5)
+    public void testCreateCustomer() throws Exception
     {
       try (Client client = ClientBuilder.newClient())
       {
-        Callback callback = new Callback();
-        CompletableFuture.supplyAsync(() ->
-        {
-          client.target(timeSrvUri).path(ENCODED).request().async().get(callback);
-          try
-          {
-            return callback.getTime();
-          }
-          catch (InterruptedException e)
-          {
-            throw new RuntimeException(e);
-          }
-        })
-        .thenAccept(t -> assertThat(parseTime(t))
-        .isCloseTo(LocalDateTime.now(), byLessThan(1, ChronoUnit.MINUTES)))
-        .exceptionally(ex -> fail("""
-          ### NonBlockingJava8CurrentTimeResourceIT.testCurrentTimeWithZoneId():""",
-           ex.getMessage()));
+        CustomerDTO customerDTO = new CustomerDTO("John", "Doe",
+          "john.doe@email.com", "1234567890");
+        createCustomer(client, customerDTO)
+          .thenAccept(response ->
+            assertCustomer(response, HttpStatus.SC_CREATED, "John"))
+          .get(5, TimeUnit.SECONDS);
       }
+    }
+
+    @Test
+    @Order(20)
+    @Timeout(5)
+    public void testGetCustomers() throws Exception
+    {
+      try (Client client = ClientBuilder.newClient())
+      {
+        getCustomers(client).thenAccept(response ->
+        {
+          assertThat(response).isNotNull();
+          assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
+          CustomerDTO[] customerDTOS = response.readEntity(CustomerDTO[].class);
+          assertThat(customerDTOS).isNotNull();
+          assertThat(customerDTOS).hasAtLeastOneElementOfType(CustomerDTO.class);
+        })
+          .get(5, TimeUnit.SECONDS);
+      }
+    }
+
+    @Test
+    @Order(30)
+    @Timeout(5)
+    public void testGetCustomer() throws Exception
+    {
+      try (Client client = ClientBuilder.newClient())
+      {
+        getCustomerByEmail(client, JOHN_EMAIL)
+          .thenAccept(response ->
+            assertCustomer(response, HttpStatus.SC_OK, "John"))
+          .get(5, TimeUnit.SECONDS);
+      }  
     }
 <p style="text-align: center;">Listing 3.4: Using the Java 8 non-blocking client to asynchronously invoke endpoints</p>
 
-If we didn't need to use the `async()` method in the previous example, here we
-do as, otherwise, we cannot pass a `Callback` instance to our `get()` method.
-For the rest, everything works nearly the same, differing slightly only that the
-`CompletionFuture` class is now used instead of `Future`. Also, we separately
-defined the `Callback` class instead of providing it in-line as this facilitates
-its reuse. Here's the listing:
+If you compare this non-blocking version of our test client with the previous 
+blocking one, then you might be surprized to not find a significative difference.
+For example, creating a new customer in a blocking way:
 
-    public class Callback implements InvocationCallback<String>
-    {
-      private final CountDownLatch latch;
-      private final AtomicReference<String> time;
+    ...
+    CompletableFuture<Response> futureResponse = createCustomer(client, customerDTO);
+    Response response = futureResponse.join();
+    ...
 
-      public Callback()
-      {
-        this.latch = new CountDownLatch(1);
-        this.time = new AtomicReference<>();
-      }
+and in a non-blocking way:
 
-      @Override
-      public void completed(String strTime)
-      {
-        time.set(strTime);
-        latch.countDown();
-      }
+    ...
+    createCustomer(client, customerDTO)
+      .thenAccept(response -> ...)
+      .get(5, TimeUnit.SECONDS);
+    ...
 
-      @Override
-      public void failed(Throwable throwable)
-      {
-        latch.countDown();
-        fail("### Callback.failed(): Unexpected exception", throwable);
-      }
+In both cases we're using the same common method:
 
-      public String getTime() throws InterruptedException
-      {
-        String strTime = null;
-        if (latch.await(5, TimeUnit.SECONDS))
-          strTime = time.get();
-        return strTime;
-      }
-    }
-<p style="text-align: center;">Listing 3.5: The class Callback</p>
+    public static CompletableFuture<Response> createCustomer(Client client, CustomerDTO customerDTO)
 
-Very few things have changed here, if any, compared to the preceding version.
+in the class `OrdersJavaAsyncCommon`. But in the 1st case we're calling `join()`
+on the returned `CompletableFuture<Response>`, which is blocking, while in the 
+2nd one we use `thenAccept()` to handle the response asynchronously and to create
+a `CompletableFuture<Void>` to track the test completion.
 
-> ** _NOTE:_ In order to reuse the same unit test scenarii in different subprojects
-while avoiding the code duplication, a shared subproject named `common-tests`
-has been provided. The class `BaseNonBlockingJava8` captures the code shown in the
-Listing 3.4 above and becomes the base class of all the ones implementing the
-same test strategy.
+The attentive reader has probably observed that the `get(...)` statement, used 
+by the non-blocking version, is blocking as well. Accordingly, one could say that,
+finally, the non-blocking version isn't more non-blocking than the blocking one, 
+since they are both invoking blocking operations. Then, I have to add in my defense
+that the `get(...)` statement, with timeout, is more controled than the `join()`
+statement. Additionally, don't forget that we're running integration tests here 
+and, at some point in time, they mandatory have to wait for completion somehow,
+such that to check whether they succeed or not. This wouldn't be the case of a
+"real" use case where, istead of waiting for completion of a long-running process,
+the application could perform it asynchronously and, during its processing time,
+to run in parallel another task.
 
+But indeed, we need to admit that the difference between blocking and non-blocking
+processing is quite insignificant in our case.
 
 ### JAX-RS 2.1: Asynchronously invoking REST services
 
@@ -3037,7 +3050,7 @@ JAX-RS 2.1 offers a new way to overcome these problems. It is called *Reactive
 Client API* and it simply consists in invoking the `rx()` method, instead of
 `async()`, as it was the case with JAX-RS 2.0.
 
-#### Blocking asynchronous consumers
+#### JAX-RS 2.1 blocking asynchronous consumers
 
 In the listing below, using `rx()` returns a response of type `CompletionStage`.
 Then the method `thenAccept()` will execute the given action in a blocking mode,
