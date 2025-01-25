@@ -23,7 +23,7 @@ public interface CustomerAsyncApiClient
   CompletionStage<Response> getCustomerByEmail(@PathParam("email") String email);
 
   @POST
-  Response createCustomer(CustomerDTO customerDTO);
+  CompletionStage<Response> createCustomer(CustomerDTO customerDTO);
 
   @PUT
   CompletionStage<Response> updateCustomer(CustomerDTO customerDTO);

@@ -1,3 +1,46 @@
+---
+title: 50 Shades of Quarkus RESTful Services
+author: Nicolas Duminil
+date: January 2025
+toc: false
+numbersections: true
+geometry: margin=2.5cm
+urlcolor: blue
+header-includes: |
+  \usepackage{fancyhdr}
+  \pagestyle{fancy}
+  \fancyhead[L]{Nicolas Duminil}
+  \fancyhead[R]{50 Shades of Quarkus RESTful Services}
+  \fancyfoot[L]{© Nicolas Duminil 2025}
+  \fancyfoot[R]{\thepage}
+  \fancyfoot[C]{}
+abstract: |
+  This booklet explores the diverse landscape of RESTful services implementation using
+  Quarkus, a modern Kubernetes-native Java framework. Starting with a historical
+  perspective on REST (*Representational State Transfer*) architecture, which originated
+  from Roy Fielding's doctoral dissertation in 2000, the article examines how this
+  25-year-old architectural style continues to evolve and present challenges in
+  today's software development landscape.
+
+  Despite REST's long-standing presence in the industry and its widespread adoption,
+  developers still encounter various complexities and nuances in implementing RESTful
+  services effectively. The article aims to shed light on different approaches and
+  patterns for building RESTful services using Quarkus, demonstrating how this
+  cutting-edge framework addresses common challenges while maintaining compliance with
+  REST principles.
+
+  Through practical examples and real-world scenarios, the article illustrates the
+  various "shades" or aspects of RESTful service implementation, from basic CRUD
+  operations to more sophisticated patterns. It explores how Quarkus's reactive
+  capabilities, efficient resource utilization, and cloud-native features can be
+  leveraged to build modern, scalable RESTful services that meet today's
+  performance and architectural demands.
+---
+
+\pagebreak
+\tableofcontents
+\pagebreak
+
 # Quarkus: 50 Shades of RESTful Services
 
 REST is now 25 years old. The birth certificate of this almost impossible to 
@@ -3127,51 +3170,119 @@ REST producers and consumers, on HTTP. We've demonstrated how this communication
 works when synchronous producers and consumers are used. Let's look now at how
 this same communication works with synchronous producers and asynchronous consumers.
 
-As you probably remember from the `orders-api` Maven module, our MP REST Client was the
-interface `CurrentTimeResourceClient`, shown below:
+As you probably remember from the `orders-api` Maven module, our MP REST Clients were the
+interfaces `CustomerApiClient` and `OrderApiClient`. These interfaces were defined
+such that to serve the synchronous invocation case, for example:
 
-    ...
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    String getCurrentDateAndTimeAtDefaultZone();
-    @GET
-    @Path("{zoneId}")
-    @Produces(MediaType.TEXT_PLAIN)
-    String getCurrentDateAndTimeAtZone(@PathParam("zoneId") String zoneId);
-    ...
+    @RegisterRestClient(configKey = "base_uri")
+    @Path("customers")
+    public interface CustomerApiClient extends BaseCustomerApiClient
+    {
+      @GET
+      Response getCustomers();
+
+      @GET
+      @Path("/{id}")
+      Response getCustomer(@PathParam("id") Long id);
+
+      @GET
+      @Path("/email/{email}")
+      Response getCustomerByEmail(@PathParam("email") String email);
+
+      @POST
+      Response createCustomer(CustomerDTO customerDTO);
+
+      @PUT
+      Response updateCustomer(CustomerDTO customerDTO);
+
+      @DELETE
+      Response deleteCustomer(CustomerDTO customerDTO);
+    }
 <p style="text-align: center;">Listing 3.8 The synchronous MP REST Client interface</p>
 
 Now we're demonstrating how to use the same producer as before, but with an async
-consumer. Hence, our MP REST Client inteface becomes `TimeResourceMpClientAsync`
-in the `async-clients/mp-async-clients` project of the GitHub repository.
+consumer. Hence, our MP REST Client interfaces are `CustomerAsyncApiClient` and
+`OrderAsyncApiClient`, in the same Maven module `orders-api`. Let's have a look
+at one of these interfaces:
 
     @RegisterRestClient(configKey = "base_uri")
-    @Path("time2")
-    public interface TimeResourceMpClientAsync
+    @Path("customers")
+    public interface CustomerAsyncApiClient
     {
       @GET
-      @Produces(MediaType.TEXT_PLAIN)
-      CompletionStage<String> getCurrentDateAndTimeAtDefaultZone();
+      CompletionStage<Response> getCustomers();
+
       @GET
-      @Path("{zoneId}")
-      @Produces(MediaType.TEXT_PLAIN)
-      CompletionStage<String> getCurrentDateAndTimeAtZone(@PathParam("zoneId") String zoneId);
+      @Path("/{id}")
+      CompletionStage<Response> getCustomer(@PathParam("id") Long id);
+
+      @GET
+      @Path("/email/{email}")
+      CompletionStage<Response> getCustomerByEmail(@PathParam("email") String email);
+
+      @POST
+      CompletionStage<Response> createCustomer(CustomerDTO customerDTO);
+
+      @PUT
+      CompletionStage<Response> updateCustomer(CustomerDTO customerDTO);
+
+      @DELETE
+      CompletionStage<Response> deleteCustomer(CustomerDTO customerDTO);
     }
 <p style="text-align: center;">Listing 3.9 The asynchronous MP REST Client interface</p>
 
-As you can see, our new MP REST Client interface doesn't return anymore directly
-the result, but a promise to this result as an instance of `CompletionStage<String>`.
-This new interface will be used by the Quarkus augmentation process, as explained
-previously, in order to generate a new asynchronous consumer for the same old
-synchronous producer (only the base URL has been changed, from `time` to `time2`).
+As you can see, our new MP REST Client interfaces don't return anymore directly
+the result, but a promise to this result as instances of `CompletionStage<Response>`.
+These new interfaces will be used by the Quarkus augmentation process, as explained
+previously, in order to generate new asynchronous consumers for the same old
+synchronous producers.
+
+Now, our new integration tests need to be adapted to the fact that the API endpoints
+don't return any more instances of `Response`, but of `CompletableStage<Response>`. Look
+for example at the following fragment:
+
+    ...
+    @Inject
+    @RestClient
+    OrderAsyncApiClient orderAsyncApiClient;
+    @Inject
+    @RestClient
+    CustomerAsyncApiClient customerAsyncApiClient;
+
+    @Test
+    @Order(10)
+    public void testCreateCustomer()
+    {
+    CustomerDTO customerDTO = new CustomerDTO("John", "Doe",
+      "john.doe@email.com", "1234567890");
+    assertCustomer(customerAsyncApiClient
+      .createCustomer(customerDTO).toCompletableFuture().join(),
+      HttpStatus.SC_CREATED, "John");
+    }
+
+    @Test
+    @Order(20)
+    public void testCreateOrder()
+    {
+      Long customerDTOID = customerAsyncApiClient
+        .getCustomerByEmail("john.doe@email.com")
+        .toCompletableFuture().join().readEntity(CustomerDTO.class).id();
+      assertThat(customerDTOID).isNotNull();
+      OrderDTO orderDTO = new OrderDTO("myItem01", new BigDecimal("100.25"), customerDTOID);
+      assertOrder(orderAsyncApiClient
+        .createOrder(orderDTO).toCompletableFuture().join(),
+        HttpStatus.SC_CREATED, "myItem01");
+    }
+    ...
+
 And everything works like before, as you can notice by executing the command:
 
-    $ mvn -pl async-clients/mp-async-clients/ test
-<p style="text-align: center;">Listing 3.9 Running unit tests with Maven</p>
+    $ mvn -pl orders/orders-classic failsafe:integration-test
+<p style="text-align: center;">Listing 3.9 Running integration tests with Maven</p>
 
-Here above the `-pl` Maven option will first move to the project `mp-async-clients`
-project before execute the Maven test lifecycle. This is a convenient way to run
-only partially unit tests, in separate subprojects, avoiding this way to run all
+Here above the `-pl` Maven option will first move to the project `orders-classic`
+before execute the Maven `integration-test` lifecycle. This is a convenient way to run
+only partially integration tests, in separate subprojects, avoiding this way to run all
 of them, which might be time-consuming.
 
 ## Asynchronous REST producers

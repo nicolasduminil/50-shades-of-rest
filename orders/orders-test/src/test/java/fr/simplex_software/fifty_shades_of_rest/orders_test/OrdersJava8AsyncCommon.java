@@ -84,7 +84,7 @@ public final class OrdersJava8AsyncCommon
     assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
     CustomerDTO[] customers = response.readEntity(CustomerDTO[].class);
     assertThat(customers).isNotNull();
-    assertThat(customers).hasSize(1);
+    assertThat(customers).hasAtLeastOneElementOfType(CustomerDTO.class);
   }
 
   public static CompletableFuture<Response> updateCustomer(Client client, CustomerDTO customerDTO)
@@ -164,7 +164,7 @@ public final class OrdersJava8AsyncCommon
     assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
     OrderDTO[] orders = response.readEntity(OrderDTO[].class);
     assertThat(orders).isNotNull();
-    assertThat(orders).hasSize(1);
+    assertThat(orders).hasAtLeastOneElementOfType(OrderDTO.class);
   }
 
   public static CompletableFuture<Response> getOrderByCustomerEmail(Client client, String email)

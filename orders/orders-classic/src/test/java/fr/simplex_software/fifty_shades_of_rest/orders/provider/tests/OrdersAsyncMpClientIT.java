@@ -2,6 +2,7 @@ package fr.simplex_software.fifty_shades_of_rest.orders.provider.tests;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.api.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
+import io.quarkus.test.junit.*;
 import jakarta.inject.*;
 import jakarta.ws.rs.core.*;
 import org.apache.http.*;
@@ -9,137 +10,117 @@ import org.eclipse.microprofile.rest.client.inject.*;
 import org.junit.jupiter.api.*;
 
 import java.math.*;
+import java.util.*;
 
+import static fr.simplex_software.fifty_shades_of_rest.orders_test.OrdersJava8AsyncCommon.*;
 import static org.assertj.core.api.Assertions.*;
 
+@QuarkusTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class OrdersAsyncMpClientIT
 {
   @Inject
   @RestClient
-  CustomerApiClient customerApiClient;
+  OrderAsyncApiClient orderAsyncApiClient;
   @Inject
   @RestClient
-  OrderApiClient orderApiClient;
+  CustomerAsyncApiClient customerAsyncApiClient;
 
   @Test
   @Order(10)
   public void testCreateCustomer()
   {
-    CustomerDTO customer = new CustomerDTO("John", "Doe",
+    CustomerDTO customerDTO = new CustomerDTO("John", "Doe",
       "john.doe@email.com", "1234567890");
-    assertThat(customerApiClient.createCustomer(customer).getStatus())
-      .isEqualTo(HttpStatus.SC_CREATED);
+    assertCustomer(customerAsyncApiClient.createCustomer(customerDTO).toCompletableFuture().join(),
+      HttpStatus.SC_CREATED, "John");
   }
 
   @Test
   @Order(20)
   public void testCreateOrder()
   {
-    Response response = customerApiClient
-      .getCustomerByEmail("john.doe@email.com");
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-    CustomerDTO customerDTO = response.readEntity(CustomerDTO.class);
-    assertThat(customerDTO).isNotNull();
-    OrderDTO order = new OrderDTO("myItem01",
-      new BigDecimal("100.25"), customerDTO.id());
-    assertThat(orderApiClient.createOrder(order).getStatus())
-      .isEqualTo(HttpStatus.SC_CREATED);
+    Long customerDTOID = customerAsyncApiClient.getCustomerByEmail("john.doe@email.com")
+      .toCompletableFuture().join().readEntity(CustomerDTO.class).id();
+    assertThat(customerDTOID).isNotNull();
+    OrderDTO orderDTO = new OrderDTO("myItem01", new BigDecimal("100.25"), customerDTOID);
+    assertOrder(orderAsyncApiClient.createOrder(orderDTO).toCompletableFuture().join(),
+      HttpStatus.SC_CREATED, "myItem01");
   }
 
   @Test
   @Order(30)
   public void testGetOrders()
   {
-    Response response = orderApiClient.getOrders();
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-    OrderDTO[] orders = orderApiClient.getOrders().readEntity(OrderDTO[].class);
-    assertThat(orders).isNotNull();
-    assertThat(orders).hasSize(1);
+    assertOrders(orderAsyncApiClient.getOrders().toCompletableFuture().join());
   }
 
   @Test
   @Order(40)
   public void testGetCustomers()
   {
-    Response response = customerApiClient.getCustomers();
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-    CustomerDTO[] customers = customerApiClient.getCustomers()
-      .readEntity(CustomerDTO[].class);
-    assertThat(customers).isNotNull();
-    assertThat(customers).hasSize(1);
+    assertCustomers(customerAsyncApiClient.getCustomers().toCompletableFuture().join());
   }
 
   @Test
   @Order(50)
   public void testUpdateCustomer()
   {
-    Response response = customerApiClient
-      .getCustomerByEmail("john.doe@email.com");
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-    CustomerDTO customerDTO = response.readEntity(CustomerDTO.class);
-    assertThat(customerDTO).isNotNull();
+    Long customerDTOID = customerAsyncApiClient.getCustomerByEmail("john.doe@email.com")
+      .toCompletableFuture().join().readEntity(CustomerDTO.class).id();
+    assertThat(customerDTOID).isNotNull();
     CustomerDTO updatedCustomer =
-      new CustomerDTO(customerDTO.id(), "Jane", "Doe",
+      new CustomerDTO(customerDTOID, "Jane", "Doe",
         "jane.doe@email.com", "0987654321");
-    response = customerApiClient.updateCustomer(updatedCustomer);
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_ACCEPTED);
-    CustomerDTO updatedCustomerDTO = response.readEntity(CustomerDTO.class);
-    assertThat(updatedCustomerDTO).isNotNull();
-    assertThat(updatedCustomerDTO.firstName()).isEqualTo("Jane");
+    assertCustomer(customerAsyncApiClient.updateCustomer(updatedCustomer).toCompletableFuture().join(),
+      HttpStatus.SC_ACCEPTED, "Jane");
   }
 
   @Test
   @Order(60)
   public void testGetCustomer()
   {
-    Response response = customerApiClient
-      .getCustomerByEmail("jane.doe@email.com");
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-    CustomerDTO customerDTO = response.readEntity(CustomerDTO.class);
-    assertThat(customerDTO).isNotNull();
-    assertThat(customerDTO.firstName()).isEqualTo("Jane");
+    assertCustomer(customerAsyncApiClient.getCustomerByEmail("jane.doe@email.com")
+      .toCompletableFuture().join(), HttpStatus.SC_OK, "Jane");
   }
 
   @Test
   @Order(70)
   public void testGetOrderByCustomer()
   {
-    Response response = customerApiClient
-      .getCustomerByEmail("jane.doe@email.com");
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-    CustomerDTO customerDTO = response.readEntity(CustomerDTO.class);
-    assertThat(customerDTO.firstName()).isEqualTo("Jane");
-    response = orderApiClient.getOrdersByCustomer(customerDTO.id());
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-    OrderDTO[] orders = response.readEntity(OrderDTO[].class);
-    assertThat(orders).isNotNull();
-    assertThat(orders).hasSize(1);
-    assertThat(orders[0].item()).isEqualTo("myItem01");
+    Long customerDTOID = customerAsyncApiClient.getCustomerByEmail("jane.doe@email.com")
+      .toCompletableFuture().join().readEntity(CustomerDTO.class).id();
+    assertThat(customerDTOID).isNotNull();
+    assertOrders(orderAsyncApiClient.getOrdersByCustomer(customerDTOID).toCompletableFuture().join());
   }
 
   @Test
   @Order(90)
   public void testDeleteCustomer()
   {
-    Response response = customerApiClient
-      .getCustomerByEmail("jane.doe@email.com");
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-    CustomerDTO customerDTO = response.readEntity(CustomerDTO.class);
-    assertThat(customerDTO).isNotNull();
-    response = customerApiClient.deleteCustomer(customerDTO);
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NO_CONTENT);
+    CustomerDTO customerDTO = customerAsyncApiClient.getCustomerByEmail("jane.doe@email.com")
+      .toCompletableFuture().join().readEntity(CustomerDTO.class);
+    customerAsyncApiClient.deleteCustomer(customerDTO).toCompletableFuture()
+      .thenAccept(response -> assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NO_CONTENT))
+      .join();
   }
 
   @Test
   @Order(80)
   public void testDeleteOrder()
   {
-    Response response = orderApiClient.getOrders();
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
-    OrderDTO[] orders = response.readEntity(OrderDTO[].class);
-    assertThat(orders).hasSize(1);
-    OrderDTO orderDTO = orders[0];
-    response = orderApiClient.deleteOrder(orderDTO);
-    assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NO_CONTENT);
+    orderAsyncApiClient.getOrders()
+      .thenAccept(response ->
+      {
+        assertOrders(response);
+        List<OrderDTO> orderDTOs = response.readEntity(new GenericType<>()
+        {
+        });
+        orderAsyncApiClient.deleteOrder(orderDTOs.getFirst())
+          .toCompletableFuture()
+          .thenAccept(response1 -> assertThat(response1.getStatus())
+            .isEqualTo(HttpStatus.SC_NO_CONTENT))
+          .join();
+      });
   }
 }
