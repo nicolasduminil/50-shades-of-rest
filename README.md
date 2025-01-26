@@ -8,6 +8,34 @@ geometry: margin=2.5cm
 urlcolor: blue
 header-includes: |
   \usepackage{fancyhdr}
+  \usepackage{listings}
+  \usepackage{listings}
+  \usepackage{xcolor}
+
+  \definecolor{codegreen}{rgb}{0,0.6,0}
+  \definecolor{codegray}{rgb}{0.5,0.5,0.5}
+  \definecolor{codepurple}{rgb}{0.58,0,0.82}
+  \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+  \lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+  }
+  \lstset{style=mystyle}
   \pagestyle{fancy}
   \fancyhead[L]{Nicolas Duminil}
   \fancyhead[R]{50 Shades of Quarkus RESTful Services}
@@ -40,6 +68,8 @@ abstract: |
 \pagebreak
 \tableofcontents
 \pagebreak
+
+\maketitle
 
 # Quarkus: 50 Shades of RESTful Services
 
@@ -332,12 +362,14 @@ and Quarkus are listed below:
 In order to use RESTeasy in your Quarkus application you need to include the 
 `quarkus-resteasy` extension in your Maven dependencies, as follows:
 
+\begin{lstlisting}[language=XML, caption=Maven dependencies required to use RESTeasy with Quarkus]
     ...
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-resteasy</artifactId>
     </dependency>
     ...
+\end{lstlisting}
 
 # Your first Quarkus RESTful service
 
@@ -353,9 +385,11 @@ can be found at https://github.com/nicolasduminil/50-shades-of-rest.git.
 
 In order to get the code source, to build and test it, proceed as follows:
 
+\begin{lstlisting}[language=XML, caption=Cloning the GitHub repository]
     $ git clone https://github.com/nicolasduminil/50-shades-of-rest.git
     $ cd 50-shades-of-rest
     $ mvn install failsafe:integration-test
+\end{lstlisting}
 
 The last command will compile the source code, package it in a Quarkus *fast JAR*,
 execute the unit and integration tests and deploy the Maven artifacts in the 
@@ -378,7 +412,7 @@ two packages:
 
 The figure below shows the class diagram of the domain layer.
 
-<img src="orders.png" width="300" height="300" />
+![](orders.png){width=300 height=300}
 
 As you can see, our simplified model consists in only two entities: order and 
 customer, each one being represented by a DTO and a JPA class. The DTO class is
@@ -393,6 +427,7 @@ as it contains the `customerId` as one of its properties.
 The JPA `Customer` and `Order` classes are in a relationship of one-to-many 
 bidirectional shown below:
 
+\begin{lstlisting}[language=Java, caption=The Customer JPA entity]
     @Entity
     @Table(name = "CUSTOMERS")
     @Cacheable
@@ -413,10 +448,12 @@ bidirectional shown below:
       private List<Order> orders;
       ...
     }
+\end{lstlisting}
 
 Here a `Customer` maintains the list of its associated `Order` instances, i.e. 
 the orders passed by the given customer.
 
+\begin{lstlisting}[language=Java, caption=The Order JPA entity]
     @Entity
     @Table(name = "ORDERS")
     public class Order
@@ -433,6 +470,7 @@ the orders passed by the given customer.
       private Customer customer;
       ...
     }
+\end{lstlisting}
 
 As you can see, an `Order`is in a relationship of *many-to-one* with its associated
 `Customer`, i.e. the customer having passed the given order. While an order is 
@@ -455,6 +493,7 @@ it would make sense to test the JPA entities which present more complexities,
 especially from the point ogf view of their *one-to-many* and *many-to-one*
 relationships. Let's have a look at the class `JpaHibernateIT`:
 
+\begin{lstlisting}[language=Java, caption=The JpaHibernateIT integration test]
     @QuarkusTest
     public class JpaHibernateIT
     {
@@ -496,6 +535,7 @@ relationships. Let's have a look at the class `JpaHibernateIT`:
       }
       ...
     }
+\end{lstlisting}
 
 The first thing to notice in the listing above is that our test is a Quarkus one,
 as declared by the annotation `@QuarkusTest`. This allows us, amongst others, to
@@ -522,7 +562,8 @@ recommends the first alternative, in this case we'll apply the last one because,
 our test is directly handling JPA, which advocates the use of `persistence.xml` as
 part of the standard. 
 
-    <?xml version="1.0" encoding="UTF-8"?>
+\begin{lstlisting}[language=XML, caption=The persistence.xml file]
+<?xml version="1.0" encoding="UTF-8"?>
     <persistence version="3.0" xmlns="https://jakarta.ee/xml/ns/persistence"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence 
@@ -541,6 +582,7 @@ part of the standard.
         </properties>
       </persistence-unit>
     </persistence>
+\end{lstlisting}
 
 As you can see, we're using here a JTA (*Java Transaction API*) compliant 
 datasource with the H2 database. The JPA provider is defined as being 
@@ -552,12 +594,15 @@ _sql` allows to log the SQL queries and, respectively, to format them.
 
 We don't need to configure any other details and executing the integration test
 
+\begin{lstlisting}[caption=Building and running the integration tests]
     $ cd orders-model
     $ mvn test-compile failsafe:integation-test
+\end{lstlisting}
 
 we should see Quarkus Dev Services starting the in-memory H2 database and a 
 successful test report. For example:
 
+\begin{lstlisting}[caption=The integration tests report]
     [INFO] -------------------------------------------------------
     [INFO]  T E S T S
     [INFO] -------------------------------------------------------
@@ -568,6 +613,7 @@ successful test report. For example:
     2024-12-07 13:40:59,695 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] (build-10) 
       Dev Services for default datasource (h2) started
     ...
+\end{lstlisting}
 
 ## The repository module
 
@@ -578,12 +624,14 @@ Mapping*) implementation, which makes possible complex mappings and queries. But
 in order to facilitate even more these operations, Quarkus provides [Panache](https://quarkus.io/guides/hibernate-orm-panache).
 To use it, the Quarkus extension `quarkus-hibernate-orm-panache` is required, as shown bellow:
 
+\begin{lstlisting}[language=XML, caption=The Maven dependencies for Quarkus Panache]
     ...
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-hibernate-orm-panache</artifactId>
     </dependency>
     ...
+\end{lstlisting}
 
 Panache provides the following two persistance design patterns:
 
@@ -596,6 +644,7 @@ more suitable, thanks to the concern separation that it provides.
 The repository module can be found in the `orders-repository` subproject on GitHub.
 Let's look quickly at the class `CustomerRespository`:
 
+\begin{lstlisting}[language=Java, caption=The CustomerRepository class]
     @ApplicationScoped
     public class CustomerRepository implements PanacheRepository<Customer> 
     {
@@ -641,10 +690,11 @@ Let's look quickly at the class `CustomerRespository`:
         return delete("lastName", lastName);
       }
     }
+\end{lstlisting}
 
 The UML diagram below shows the class hierarchy of our `CustomerRepository`.
 
-<img src="CustomerRepository.png" width="300" height="300" />
+![](CustomerRepository.png){width=300 height=300}
 
 As you can see, the `CustomerRepository` class implements `PanacheRepository` interface
 which, in turn, extends the `PanacheRepositoryBase` one. This way our class 
@@ -658,20 +708,24 @@ All the entry points provided *out-of-the-box* by the `PanacheRepository` and
 others, take a `String` parameter representing a very simplified SQL query. For 
 example, please notice the method below:
 
+\begin{lstlisting}[language=Java, caption=The updateId(...) method]
     public int updateById(Long id, Customer customer)
     {
       return update("firstName = ?1, lastName = ?2 where id = ?3",
         customer.getFirstName(), customer.getLastName(), id);
     }
+\end{lstlisting}
 
 Here, it's stunning in its simplicity how the string `"firstName = ?1, 
 lastName = ?2 where id = ?3"` becomes a full JPQL query like `"UPDATE CUSTOMERS 
 SET LAST_NAME = :1, LAST_NAME = :2 WHERE ID = :3"`. Or even simpler: 
 
+\begin{lstlisting}[language=Java, caption=The deleteByLastName(...) method]
     public Long deleteByLastName(String lastName)
     {
       return delete("lastName", lastName);
     }
+\end{lstlisting}
 
 where the string `delete ("lastName", lastName)` becomes `DELETE FROM CUSTOMERS 
 WHERE LAST_NAME = :1`.
@@ -685,6 +739,7 @@ The `orders-repository` module provides unit and integration tests for the two
 Panache repositories implemented here. The unit tests is using Mockito to 
 mock the database access layer, for example:
 
+\begin{lstlisting}[language=Java, caption=Mocking the CustomerRepository class]
     ...
     @InjectMock
     CustomerRepository customerRepository;
@@ -703,17 +758,20 @@ mock the database access layer, for example:
       Mockito.verify(customerRepository).findAll();
     }
     ...
+\end{lstlisting}
 
 The code above not only mocks the `CustomerRepository` class, responsible for 
 the data access layer, but also, given an invocation chain like 
 `customerRepository.findAll().stream().collect(Collectors.toList())`, it needs to 
 stub each element of the chain, as shown below:
 
+\begin{lstlisting}[language=Java, caption=Additional required mockings]
     ...
     PanacheQuery<Customer> mockQuery = mock(PanacheQuery.class);
     when(customerRepository.findAll()).thenReturn(mockQuery);
     when(mockQuery.stream()).thenReturn(expectedCustomers.stream());
     ...
+\end{lstlisting}
 
 which makes the unit test counter-intuitive and more complex than
 expected. This is one of the reason why, personally, I was never a fan of mocking.
@@ -724,6 +782,7 @@ our tests with the required resources. For example, we're using here a PostgreSQ
 database and the simple occurrence of the following Maven dependency in the 
 `pom.xml` file:
 
+\begin{lstlisting}[language=Java, caption=Maven dependencies for PostgreSQL]
     ...
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -731,12 +790,14 @@ database and the simple occurrence of the following Maven dependency in the
       <scope>test</scope>
     </dependency>
     ...
+\end{lstListing}
 
 automatically provisions a PostgreSQL image and runs it on the behalf of 
 `testcontainers`, in order to execute against it our integration tests. We only
 need to provide a couple of properties in the `application.properties` file, as
 shown below:
 
+\begin{lstlisting}[language=Java, caption=The `application.properties` file]
     ...
     quarkus.datasource.db-kind=postgresql
     quarkus.datasource.jdbc.driver=org.postgresql.Driver
@@ -744,10 +805,12 @@ shown below:
     quarkus.datasource.password=orders
     quarkus.hibernate-orm.database.generation=drop-and-create
     ...
+\end{lstlisting}
 
 With these elements in place, the integration tests simply inject the repositories
 under test, invoke the entry points and check the results. Here is an excerpt:
 
+\begin{lstlisting}[language=Java, caption=The integration test of the `CustomerRepository`]
     @QuarkusTest
     @DBRider
     @DBUnit(schema = "public", caseSensitiveTableNames = true, cacheConnection = false)
@@ -776,6 +839,7 @@ under test, invoke the entry points and check the results. Here is an excerpt:
       }
       ...
     }
+\end{lstlisting}
 
 You're probably familiar by now with annotations like `@QuarkusTest`, `@Test` 
 and `@Inject`. Just in case you aren't:
@@ -800,6 +864,7 @@ For example, by using the annotation `@DataSet(value = "orders.yml", cleanAfter 
 `CUSTOMERS` and `ORDERS` tables with the content of the `orders.yml` file, located by default 
 in `src/test/resources/datasets`. This file is listed below:
 
+\begin{lstlisting}[caption=The file `orders.yml`]
     customers:
       - id: 1
         first_name: "John"
@@ -828,6 +893,7 @@ in `src/test/resources/datasets`. This file is listed below:
         customer_id: 2
         item: "myItem4"
         price: 400.00
+\end{lstlisting}
 
 This simple YAML notation describes the operations that should be performed on 
 database tables before running the test method `testFinadAl()`. As you can see,
@@ -856,6 +922,7 @@ the test execution. In our case, we insert a new record into the `CUSTOMERS` and
 `ORDERS` database tables and expect that their final status be the one defined in
 the file `expected-orders.yml`, as shown below:
 
+\begin{lstlisting}[caption=The file `expected-orders.yml`]
     customers:
       - first_name: "John"
         last_name: "Doe"
@@ -866,6 +933,7 @@ the file `expected-orders.yml`, as shown below:
         price: 100.25
       - item: "myItem2"
         price: 200.25
+\end{lstlisting}
 
 Before running each test, the database tables are deleted, as the result of the
 `@DataSet(cleanAfter = true)` annotation. Hence, after inserting the new customer
@@ -875,8 +943,10 @@ file.
 Now, in order to run our unit and integration tests described above, proceed 
 as follows:
 
+\begin{lstlisting}[caption=Building and running the integration tests]
     $ cd 50-shades-of-rest/orders/orders-repository
     $ mvn clean install faisafe:integration-test
+\end{lstlisting}
 
 A test report showing something like successfully running 30 unit tests and 20 
 integration ones should be displayed.
@@ -927,6 +997,7 @@ Our service layer is structured is four pieces:
 
 The interfaces represent our services contract. The code below shows the `CustomerService` interface:
 
+\begin{lstlisting}[language=Java, caption=The interface `CustomerService`]
     public interface CustomerService
     {
       List<CustomerDTO> getCustomers();
@@ -937,6 +1008,7 @@ The interfaces represent our services contract. The code below shows the `Custom
       void deleteCustomer(Long id);
       Customer findCustomerById(Long id);
     }
+\end{lstlisting}
 
 This interface exposes 2 categories of services, read-only and read-write or
 write-only ones. One of the points that we could suggest, looking at this interface,
@@ -957,6 +1029,7 @@ and functional way to perform mapping operations.
 In our project we're using [mapstruct](https://mapstruct.org/) which is one of the most well known mappers.
 The listing below shows the `CustomerMapper`:
 
+\begin{lstlisting}[language=Java, caption=The interface `CustomerMapper`]
     @Mapper(componentModel = "cdi", unmappedTargetPolicy = ReportingPolicy.IGNORE)
     public interface CustomerMapper
     {
@@ -966,6 +1039,7 @@ The listing below shows the `CustomerMapper`:
       @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
       void updateEntityFromDTO(CustomerDTO customerDTO, @MappingTarget Customer customer);
     }
+\end{lstlisting}
 
 The first thing to notice is that a `mapstruct` mapper doesn't require to 
 explicitly define an implementation class, but can generate it from an interface.
@@ -993,6 +1067,7 @@ value tells `mapstruct` to ignore null values during the mapping process.
 
 Sometimes, the mapping definition is more complicated, as seen below:
 
+\begin{lstlisting}[language=Java, caption=The abstract class `OrderMapper`]
     @Mapper(componentModel = "cdi", unmappedTargetPolicy = ReportingPolicy.IGNORE)
     public abstract class OrderMapper
     {
@@ -1024,6 +1099,7 @@ Sometimes, the mapping definition is more complicated, as seen below:
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     public abstract void updateEntityFromDTO(OrderDTO customerDTO, @MappingTarget Order order);
     ...
+\end{lstlisting}
 
 In this case, the default mapping of `OrderDTO` instances to `Order` ones isn't 
 suitable and  it requires more than 
@@ -1053,6 +1129,7 @@ into the mapper.
 
 The service implementation is quite simple, as shown below:
 
+\begin{lstlisting}[language=Java, caption=The class `CustomerServerImpl`]
     @ApplicationScoped
     public class CustomerServiceImpl implements CustomerService
     {
@@ -1119,6 +1196,7 @@ The service implementation is quite simple, as shown below:
         return customerRepository.findById(id);
       }
     }
+\end{lstlisting}
 
 We can resume the service implementation above by saying that it injects the 
 `CustomerRepository` and, for each service operation, it calls the repository 
@@ -1138,6 +1216,7 @@ classical implementations use it and are synchronous.
 
 Lets' have a look at the `CustomerResource` RESTfull service:
 
+\begin{lstlisting}[language=Java, caption=The class `CustomerResourcel`]
     @ApplicationScoped
     @Path("customers")
     @Produces(MediaType.APPLICATION_JSON)
@@ -1194,6 +1273,8 @@ Lets' have a look at the `CustomerResource` RESTfull service:
         return Response.noContent().build();
       }
     }
+
+\end{lstlisting}
 
 The first thing you'll notice looking at the `CustomerResource` RESTful service,
 reproduced above, is that it os a CDI bean, having an application scope. As you 
@@ -1277,6 +1358,7 @@ It supports all the HTTP requests and has lots of options to validate responses.
 
 Let's have a look at the listing below:
 
+\begin{lstlisting}[language=Java, caption=A fragment of the `CustomerResource` and `OrderResource` integration test]
     ...
     @Test
     @Order(10)
@@ -1288,6 +1370,7 @@ Let's have a look at the listing below:
         .when().post(customersUrl).then().statusCode(HttpStatus.SC_CREATED);
     }
     ...
+\end{lstlisting}
 
 This code is a fragment extracted for the `OrderBaseTest` class in the `orders-test`
 module of our project. Given that all the RESTassured tests of the different 
@@ -1302,6 +1385,7 @@ been successfully executed.
 
 Another example, below, shows how to get all the orders passed by a given customer:
 
+\begin{lstlisting}[language=Java, caption=Another fragment of the `CustomerResource` and `OrderResource` integration test]
     ...
     @Test
     @Order(70)
@@ -1317,6 +1401,7 @@ Another example, below, shows how to get all the orders passed by a given custom
       assertThat(orderDTO.item()).isEqualTo("myItem01");
     }
     ...
+\end{lstlisting}
 
 In this example, the `basePath(...)` and `pathParam(...)` methods are used to 
 define the endpoint URI. The response is checked for success and its payload is
@@ -1324,6 +1409,7 @@ extracted as an instance of the `CustomerDTO` class.
 
 A more complicated case is shown below:
 
+\begin{lstlisting}[language=Java, caption=Another fragment of the `CustomerResource` and `OrderResource` integration test]
     ...
     @Test
     @Order(50)
@@ -1342,6 +1428,7 @@ A more complicated case is shown below:
         .as(CustomerDTO.class).firstName()).isEqualTo("Jane");
     }
     ...
+\end{lstlisting}
 
 This test performs an HTTP GET request against the `CustomerResource` service 
 and, then, it updates the retrieved customer by executing a 2nd HTTP PUT request.
@@ -1354,6 +1441,7 @@ allowed ourselves a slight infringement of this principle.
 Okay, so this was our base abstract class that all the RESTassured based integration
 tests are supposed to extend. Let's see now the concrete class:
 
+\begin{lstlisting}[language=Java, caption=`OrderBaseTest`]
     @QuarkusTest
     public class OrdersIT extends OrdersBaseTest
     {
@@ -1371,6 +1459,7 @@ tests are supposed to extend. Let's see now the concrete class:
         ordersUrl = null;
       }
     }
+\end{lstlisting}
 
 That's all. We need only to define the RESTfull services URI as they might be 
 different depending on their implementation. For example, we might decide to 
@@ -1379,8 +1468,10 @@ the tests body are identical.
 
 In order to run the integration tests, proceed as follows:
 
+\begin{lstlisting}[caption=Building and running integration tests]
     $ cd orders-classic
     $ mvn clean install failsafe:integration-test
+\end{lstlisting}
 
 You'll see an output report stating that all the unit and integration tests have
 succeeded.
@@ -1392,18 +1483,21 @@ Client provides a typesafe approach, using proxies and annotations, to invoke
 RESTful services over HTTP. Quarkus, as a full Eclipse MicroProfile implementation,
 supports of course REST Client via the following extension:
 
+\begin{lstlisting}[language=Java, caption=Maven dependencies for using RESTeasy with Quarkus]
     ...
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-rest-client</artifactId>
     </dependency>
     ...
+\end{lstlisting}
 
 The MicroProfile REST Client, as implemented by Quarkus, is based on the idea of
 RMI (*Remote Method Invocation*) proxies that are generated from an interfaces 
 whose methods, including annotations, return types, signatures and exception 
 declarations, match the target service. The listing below shows such an interface:
 
+\begin{lstlisting}[language=Java, caption=...]
     @RegisterRestClient(configKey = "base_uri")
     @Path("customers")
     public interface CustomerApiClient extends BaseCustomerApiClient {}
@@ -1436,6 +1530,7 @@ declarations, match the target service. The listing below shows such an interfac
       @DELETE
       Response deleteCustomer(CustomerDTO customerDTO);
     }
+\end{lstlisting}
 
 This listing shows two interfaces related to the `CustomerResource` service.
 The reason that there are two interfaces instead of one is that the 
@@ -1464,6 +1559,7 @@ So this is our RESTful client interface from which, at the build time, Quarkus
 will generate a service proxy that could be used as service client. Here is how
 we can use in tests such a client.
 
+\begin{lstlisting}[language=Java, caption=...]
     @QuarkusTest
     public class OrdersMpIT extends AbstractOrdersApiClient
     {
@@ -1486,6 +1582,7 @@ we can use in tests such a client.
         return orderApiClient;
       }
     }
+\end{lstlisting}
 
 Again, since there are several RESTful clients associated to possible different
 services instances, each one listening on its own URI, we need to dissociate them
@@ -1493,6 +1590,7 @@ from the common part of all the tests. Hence, this common part is implemented as
 an abstract class, called `AbstractOrdersApiClient`, that each test should extend.
 Here below we reproduce a fragment of this class:
 
+\begin{lstlisting}[language=Java, caption=...]
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     public abstract class AbstractOrdersApiClient
     {
@@ -1524,6 +1622,7 @@ Here below we reproduce a fragment of this class:
           .isEqualTo(HttpStatus.SC_CREATED);
       }
       ...
+\end{lstlisting}
 
 The customer and order RESTfull clients, as instances of `BaseCustomerApiClient`
 and `BaseOrderApiClient`, are declared abstract, such that to be overridden by 
@@ -1546,6 +1645,7 @@ The listing below shows a fragment of the class `OrdesrJakartaClientIT`, an
 integration test for the orders management service used throughout this booklet,
 using the Jakarta REST Client.
 
+\begin{lstlisting}[language=Java, caption=The integration class OrdersJakartaClientIT]
     @QuarkusTest
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     public class OrdersJakartaClientIT
@@ -1633,6 +1733,7 @@ using the Jakarta REST Client.
       }
       ...
     }
+\end{lstlisting}
 
 This integration test is integrally available in the `orders-classic` module of
 GitHub project. Here we're reproducing only a fragment showing how to invoke 
@@ -1725,6 +1826,7 @@ interfaces:
 Let's look at the example provided by the `OrdersJava11ClientIT` class located
 in the `orders-classic` module:
 
+\begin{lstlisting}[language=Java, caption=The integration class OrdersJava11ClientIT]
     ...
     @Test
     @Order(10)
@@ -1745,6 +1847,7 @@ in the `orders-classic` module:
       }
     }
     ...
+\end{lstlisting}
 
 This example demonstrates how to create a new customer by sending a `POST` request
 to the `/customers` endpoint of our RESTful service. The first thing to do is to 
@@ -1782,6 +1885,7 @@ This processing template is applied for all the endpoints returning an instance
 of `CustomerDTO` or `OrderDTO`. For endpoints returning a collection of such 
 instances, we need to proceed differently:
 
+\begin{lstlisting}[language=Java, caption=Testing with Java 11 HTTP client]
     ...
       @Test
       @Order(20)
@@ -1799,6 +1903,8 @@ instances, we need to proceed differently:
         }
       }
     ...
+\end{lstlisting}
+
 In this last case, we need a `GET` request, consequently, we don't set its body.
 And instead of unmarshalling the response body to a `CustomerDTO`,
 as we did previously, we do it to a `CustomerDTO` array. Then, we get the first
@@ -1827,22 +1933,26 @@ two `docker` images: for running in JVM and, respectively, in native mode.
 
 The `pom.xml` file, on the other part, uses the following Quarkus extension:
 
+\begin{lstlisting}[language=XML, caption=The Maven dependencies for using Docker with Quarkus]
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-container-image-docker</artifactId>
     </dependency>
+\end{lstlisting}
 
 When executing the Maven build process with the environment variable `quarkus.container-image.build`
 having the value of `true`, this Quarkus extension will run a `docker build` 
 command against one of these files, depending on whether you want to build a JVM
 or a native image. In order to check that you can run the following sequence:
 
+\begin{lstlisting}[caption=Building and running the Docker image]
     $ cd orders
     $ mvn -Dquarkus.container-image.build clean install
     $ docker images
     ...
     nicolas/orders-classic 1.0-SNAPSHOT 0549f3bbd68d 38 minutes ago 480MB
     ...
+\end{lstlisting}
 
 The `docker` image `nicolas/orders-classic:1.0-SNAPSHOT` is the one corresponding
 to our Quarkus `orders-classic` application. You can customize, of course, the 
@@ -1860,6 +1970,7 @@ find the file `docker-compose.yml` in the `src/main/resource` directory. This
 file orchestrates the startand the stop of the `docker` images required to run
 the `orders-classic` Quarkus application.
 
+\begin{lstlisting}[caption=The `docker-compose.yml` file]
     version: "2.4"
     services:
       database:
@@ -1900,6 +2011,7 @@ the `orders-classic` Quarkus application.
         QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgresql:5432/orders
         QUARKUS_DATASOURCE_USERNAME: postgres
         QUARKUS_DATASOURCE_PASSWORD: postgres
+\end{lstlisting}
 
 This `docker-compose.yml` file contains the instructions required to orchestrate
 3 containers:
@@ -1916,6 +2028,7 @@ be installed locally, as pre-requisites. Then, we can use either the CLI
 
 If you look in the project's `pom.xml` file, you'll se that:
 
+\begin{lstlisting}[language=XML, caption=Using the `docker-compose-maven-plugin`]
       <plugin>
         <groupId>com.dkanejs.maven.plugins</groupId>
         <artifactId>docker-compose-maven-plugin</artifactId>
@@ -1927,6 +2040,7 @@ If you look in the project's `pom.xml` file, you'll se that:
           <removeOrphans>true</removeOrphans>
         </configuration>
       </plugin>
+\end{lstlisting}
 
 This is the `docker-compose` Maven plugin configuration. It states that it will
 start the containers in detached mode and will remove all the mounted volumes and
@@ -1935,6 +2049,7 @@ orphan images when the containers stop.
 Now, to run our `orders-classic` Quarkus application in production mode, proceed
 as follows:
 
+\begin{lstlisting}[caption=Running the production-ready infrastructure]
     $ cd orders/orders-infrastructure
     $ mvn docker-compose:up
     $ docker ps
@@ -1942,6 +2057,7 @@ as follows:
       ...          nicolas/orders-classic:1.0-SNAPSHOT     ...      ...    ...   0.0.0.0:8080->8080/tcp
       ...          adminer                                 ...      ...    ...   0.0.0.0:8081->8080/tcp
       ...          postgres:latest                         ...      ...    ...   0.0.0.0:5432->5432/tcp
+\end{lstlisting}
 
 Here we can check that, after having executed the Maven command, all our three 
 containers are up and running. We can test our application using different REST
@@ -1952,10 +2068,12 @@ and this is what we''l be using here.
 In order to use Swagger UI the `pom.xml` file of the `orders-classic` project 
 needs to include the following Quarkus extension:
 
+\begin{lstlisting}[language=XML, caption=The Maven dependencies for MP OpenAPI]
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-openapi</artifactId>
     </dependency>
+\end{lstlisting}
 
 and the `application.properties` file has to define the following property:
 
@@ -1964,7 +2082,8 @@ and the `application.properties` file has to define the following property:
 With these elements in place, fire your prefered browser to http://localhost:8080/q/swagger-ui/ 
 and you'll be presented with the Swager UI main window, as shown below:
 
-![Swagger orders](swagger-orders.png)
+![Swagger orders](swagger-orders.png){width=300 height=300}
+
 
 Using this graphical interface you can now fully exercise your API and test it 
 by combining all the possible scenarios.
@@ -1978,10 +2097,12 @@ whether they are ready to serve requests and work properly. Quarkus implements
 the Eclipse MicroProfile Health specifications through its SmallRye Health extension
 which Maven dependencies are shown below:
 
+\begin{lstlisting}[language=XML, caption=The Maven dependencies for MP Health]
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-health</artifactId>
     </dependency>
+\end{lstlisting}
 
 In order to provide information concerning its own health, a service performs 
 self-checks. The specifications define two categories of such self-checks:
@@ -2003,6 +2124,7 @@ With Quarkus, these endpoints are configurable, of course, by using
 Let's see a simple example of liveness check. The listing below shows the class 
 `ServiceHealthCheck` located in the `orders-classic` module of our GitHub repository.
 
+\begin{lstlisting}[language=Java, caption=An MP Health example]
     @ApplicationScoped
     @Liveness
     public class ServiceHealthCheck implements HealthCheck
@@ -2018,6 +2140,7 @@ Let's see a simple example of liveness check. The listing below shows the class
          .build();
       }
     }
+\end{lstlisting}
 
 As you can see, in order to perform liveness checks, a class needs to:
 
@@ -2034,16 +2157,19 @@ customize the returned liveness status by adding some descriptive text to it.
 
 Let's see if it works:
 
+\begin{lstlisting}[caption=Building and running the MP Health example]
     $ cd orders
     $ mvn -pl orders-infrastructure docker-compose:down
     $ mvn -Dquarkus.container-image.build clean install 
     $ mvn -pl orders-infrastructure docker-compose:up
+\end{lstlisting}
 
 The `mvn` commands above clean the project's `target` directory, build a Docker
 image as specified by the `Dockerfile.jvm`, move to the `orders-infrastructure`
 module and runs the `docker-compose up` command against the `docker-compose.yml`
 file. To probe the liveness check do:
 
+\begin{lstlisting}[caption=Testing the MP Health example]
     $ curl http://localhost:8080/q/health/live
     {
       "status": "UP",
@@ -2060,6 +2186,7 @@ file. To probe the liveness check do:
         }
       ]
     }
+\end{lstlisting}
 
 or fire your preferred browser.
 
@@ -3402,4 +3529,3 @@ We have already discussed the blocking and unblocking asynchronous clients durin
 the preceding chapter.
 
 ## JAX-RS 2.1 asynchronous producers
-
