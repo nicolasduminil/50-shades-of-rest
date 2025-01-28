@@ -3721,7 +3721,22 @@ Quarkus augmentor automatically generates from ths interface:
 This code fragment demonstrates how to invoke the customers and orders RESTful 
 services endpoints such that to create customers and orders. The precedent 
 RESTassured test was synchronous while this one is asynchronous. This shows that 
-the same RESTful asynchronous sertful may be consumed via synchronous or 
+the same RESTful asynchronous producer may be consumed via synchronous or 
 asynchronous consumers.
 
-## JAX-RS 2.1 asynchronous producers
+### JAX-RS 2.1 asynchronous producers
+
+The `CompletableFuture<T>` and `CompletionStage<T>` classes, available since 
+Java 8, that we just used in order to define the `CustomerAsyncApiClient` interface
+presented in the previous paragraph, are supported by the JAX-RS specifications,
+only since their 2.1 release. Modern asynchronous RESTful services take advantage
+of these classes rather than of the `AsyncResponse` interface that we used in 
+order to illustrate the JAX-RS 2.0 asynchronous producers. 
+
+The listing below shows a fragment of the `CustomerResourceAsyncJaxRs21` class
+that implements the same customer RESTful service, using this technique.
+In Chapter 7, when we discussed the RESTfull asynchronous consumers, we have 
+emphasized the new features that the JAX-RS 2.1 specifications brought, compared
+to the former releases. And as you probably remember, one of these major
+features was the support of the Java 8 `CompletableFuture<T>` and `CompletionStage<T>`
+classes.

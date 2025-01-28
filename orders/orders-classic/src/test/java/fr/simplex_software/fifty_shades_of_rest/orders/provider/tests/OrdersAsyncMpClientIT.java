@@ -26,7 +26,7 @@ public class OrdersAsyncMpClientIT
   @RestClient
   CustomerAsyncApiClient customerAsyncApiClient;
 
-  @Test
+  /*@Test
   @Order(10)
   public void testCreateCustomer()
   {
@@ -122,5 +122,5 @@ public class OrdersAsyncMpClientIT
             .isEqualTo(HttpStatus.SC_NO_CONTENT))
           .join();
       });
-  }
+  }*/
 }

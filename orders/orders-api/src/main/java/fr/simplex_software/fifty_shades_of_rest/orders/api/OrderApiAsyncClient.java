@@ -4,7 +4,7 @@ import jakarta.ws.rs.*;
 import org.eclipse.microprofile.rest.client.inject.*;
 
 @RegisterRestClient(configKey = "base_uri")
-@Path("customers-async")
-public interface CustomerAsyncApiClient extends BaseCustomerApiClient
+@Path("orders-async21")
+public interface OrderApiAsyncClient extends BaseOrderApiClient
 {
 }
