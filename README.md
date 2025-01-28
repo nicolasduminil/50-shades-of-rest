@@ -3448,7 +3448,7 @@ side asynchronous processing.
 ### JAX-RS 2.0 asynchronous producers
 
 To use REST JAX-RS 2.0 asynchronous producers requires to interact with the
-`AsynResponse` inteface introduced by the version of the specs.
+`AsynResponse` interface introduced by the version of the specs.
 
     public interface AsyncResponse
     {
@@ -3457,64 +3457,115 @@ To use REST JAX-RS 2.0 asynchronous producers requires to interact with the
     }
 <p style="text-align: center;">Listing 4.1 The interface AsyncResponse introduced by JAX-RS 2.0</p>
 
-The subproject `async-jaxrs20` in the `async-services` folder of the GitHub repository
+The subproject `orders-async` in the  GitHub repository
 shows an example to illustrate the use of the `AsyncResponse` interface. Here is
 an extract:
 
     ...
-    private static final String TIME_SERVER = "time.google.com";
-    private static final String FMT = "d MMM uuuu, HH:mm:ss XXX z";
-    private final NTPUDPClient ntpClient = new NTPUDPClient();
-    private static InetAddress inetAddress;
-    private static final Logger LOG = LoggerFactory.getLogger(BaseNtpResourceAsync.class);
-
-    @PostConstruct
-    public void postConstruct() throws Exception
+    @ApplicationScoped
+    @Path("customers-async")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public class CustomerResourceAsync implements CustomerAsyncApi
     {
-      inetAddress = InetAddress.getByName(TIME_SERVER);
-      ntpClient.setDefaultTimeout(5000);
-      ntpClient.open();
-      ...
-    }
+      @Inject
+      CustomerService customerService;
 
-    @GET
-    public void currentTime(@Suspended AsyncResponse ar) throws IOException
-    {
-      long time = ntpClient.getTime(inetAddress).getMessage().getTransmitTimeStamp().getTime();
-      ar.resume(Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault())
-        .format(DateTimeFormatter.ofPattern(FMT)));
-    }
+      @Override
+      @GET
+      public void getCustomers(@Suspended AsyncResponse ar)
+      {
+        ar.resume(Response.ok().entity(customerService.getCustomers()).build());
+      }
 
-    @GET
-    @Path("{zoneId}")
-    public void zonedTime(@PathParam("zoneId") String zoneId, @Suspended AsyncResponse ar) throws IOException
-    {
-      long time = ntpClient.getTime(inetAddress).getMessage().getTransmitTimeStamp().getTime();
-      ar.resume(Instant.ofEpochMilli(time).atZone(ZoneId.of(URLDecoder.decode(zoneId, StandardCharsets.UTF_8))).format(DateTimeFormatter.ofPattern(FMT)));
+      @Override
+      @GET
+      @Path("/{id}")
+      public void getCustomer(@PathParam("id") Long id, @Suspended AsyncResponse ar)
+      {
+        ar.resume(Response.ok().entity(customerService.getCustomer(id)).build());
+      }
+
+      @Override
+      @GET
+      @Path("/email/{email}")
+      public void getCustomerByEmail(@PathParam("email") String email, @Suspended AsyncResponse ar)
+      {
+        ar.resume(Response.ok()
+          .entity(customerService.getCustomerByEmail(URLDecoder.decode(email, StandardCharsets.UTF_8)))
+          .build());
+      }
+
+      @Override
+      @POST
+      public void createCustomer(CustomerDTO customerDTO, @Suspended AsyncResponse ar)
+      {
+        ar.resume(Response.created(URI.create("/customers/" + customerDTO.id()))
+          .entity(customerService.createCustomer(customerDTO))
+          .build());
+      }
+
+      @Override
+      @PUT
+      public void updateCustomer(CustomerDTO customerDTO, @Suspended AsyncResponse ar)
+      {
+        ar.resume(Response.accepted().entity(customerService.updateCustomer(customerDTO)).build());
+      }
+
+      @Override
+      @DELETE
+      public void deleteCustomer(CustomerDTO customerDTO, @Suspended AsyncResponse ar)
+      {
+        customerService.deleteCustomer(customerDTO.id());
+        ar.resume(Response.noContent().build());
+      }
     }
     ...
 <p style="text-align: center;">Listing 4.2 Using the interface AsyncResponse introduced by JAX-RS 2.0</p>
 
-The first thing to notice is that our textbook REST service business case has
-changed. Since we implement now an asynchronous processing, we needed an endpoint
-which doesn't return instantly, as it was the case of the preceding one, that
-sent back the current date and time in different time zones. Now, we're invoking
-the Google's time-server, at `time.google.com`, to request date and time and this
-operation, consisting in calling and external service, is supposed to take longer.
+The first thing to notice is that the interface implemented by the RESTful service
+above is different from the one previously implemented by the synchronous version
+of the same service. This is because the method signature has changed, as shown 
+in the listing below:
 
-The other thing we need to notice is that, this time, our endpoints don't
-return anymore a `String` instance formatted as a date and time, but a `void`.
-That's a surprise as one could legimately wonder what could be the point of a
-REST endpoint returning a `void` ?
+    @RegisterRestClient(configKey = "base_uri")
+    @Path("customers-async")
+    public interface CustomerAsyncApiClient
+    {
+      @GET
+      CompletionStage<Response> getCustomers();
 
-And last but not least, the 3rd thing to notice is the `@Suspended` annotated
-instance of the `AsyncResponse` input parameter passed to each endpoint.
+      @GET
+      @Path("/{id}")
+      CompletionStage<Response> getCustomer(@PathParam("id") Long id);
 
-Here is what things work: injecting an instance of `AsyncResponse` as an input
+      @GET
+      @Path("/email/{email}")
+      CompletionStage<Response> getCustomerByEmail(@PathParam("email") String email);
+
+      @POST
+      CompletionStage<Response> createCustomer(CustomerDTO customerDTO);
+
+      @PUT
+      CompletionStage<Response> updateCustomer(CustomerDTO customerDTO);
+
+      @DELETE
+      CompletionStage<Response> deleteCustomer(CustomerDTO customerDTO);
+    }
+
+As you can see, this service interface is defined such that to return `CompletAbleStage<Response>`
+instances instead of `Response` ones, as the synchrounous version used to do. 
+However, the service's endpoints themselves return `void`. This is the other 
+thing we need to notice. That's a surprise as one could legitimately wonder what
+could be the point of a REST endpoint returning a `void` ? And last but not least, 
+the 3rd thing to notice is the `@Suspended` annotated instance of the `AsyncResponse`
+input parameter passed to each endpoint.
+
+Here is how things work: injecting an instance of `AsyncResponse` as an input
 parameter of our endpoints, using the `@Suspended` annotation, has the effect of
 suspending, from the current thread of execution, the HTTP request which will
 be handled by a new background thread spawned on this purpose. Once that this thread
-did its work, in our case getting the date and time from the Google service,
+did its work, in our case processing requests concerning customers and orders management,
 it sends a response back to the consumer by calling `AsyncResponse.resume()...`.
 This means a successfull response and, hence, a status code 200 is sent back to
 the consumer. Also, the `resume()` method will automatically marshall the formatted
@@ -3522,10 +3573,155 @@ date and time into the HTTP request body.
 
 We can use a variety of synchronous or asynchronous, blocking or non-blocking
 consumers with such a REST service. For example, the Quarkus test class
-`TestNtpResourceAsyncJaxrs20` demonstrates a RESTassured synchronous consumer,
-while `TestBlockingJava8NtpResourceJaxrs20` and `TestNonBlockingJava8NtpResourceJaxrs20`
-show the same test in an asynchronous blocking and, respectivelly, unblocking way.
-We have already discussed the blocking and unblocking asynchronous clients during
-the preceding chapter.
+`OrdersAsyncRestAssuredClientIT`, here below, demonstrates a RESTassured 
+asynchronous blocking consumer.
+
+    @QuarkusTest
+    public class OrdersAsyncRestAssuredClientIT extends OrdersBaseTest
+    {
+      @BeforeAll
+      public static void beforeAll()
+      {
+        customersUrl = "/customers-async";
+        ordersUrl = "/orders-async";
+      }
+
+      @AfterAll
+      public static void afterAll()
+      {
+        customersUrl = null;
+        ordersUrl = null;
+      }
+    }
+
+We already explained the base class `OrdersBaseTest` which captures the RESTassured 
+common body of the blocking consumer used for tests. Extending this class by both 
+`OrdersAsyncRestAssuredClientIT`, in our current project, and `OrdersSyncRestAssuredClientIT`,
+in the `orders-classic` project, that we have extensively discussed previously, 
+demonstrates that the same test code, i.e. a synchronous blocking one, could be
+used to invoke both a synchronous and an asynchronous RESTful service.
+
+Feel free to run this test as usual:
+
+    $ mvn test-compile failsafe:integration-tests
+
+in order to check that the same synchronous test can be used to consume both the
+synchronous and asynchronous version of the REST service.
+
+As we have seen during the preceding chapter, there exists a large variety of 
+RESTful services consumers types, using different libraries or APIs, for example
+RESTassured, Eclipose Microprofile REST Client, Java 8, JAX-RS 2.0, JAX-RS 2.1, etc.
+We already have shown how to write integration tests that are RESTful consumers
+of synchronous services, using all of these APIs and libraries, so we won't do it
+again for the asynchronous services, but we rather leave it as a reader's homework.
+
+Let's look however at an integration test invoking our asynchronous RESTful 
+service endpoint using the Eclipse MicroProfile REST Client. First, we need to 
+define the interface from which the Quarkus augmentor will generate the client:
+
+    @RegisterRestClient(configKey = "base_uri")
+    @Path("customers-async")
+    public interface CustomerAsyncApiClient
+    {
+      @GET
+      CompletionStage<Response> getCustomers();
+
+      @GET
+      @Path("/{id}")
+      CompletionStage<Response> getCustomer(@PathParam("id") Long id);
+
+      @GET
+      @Path("/email/{email}")
+      CompletionStage<Response> getCustomerByEmail(@PathParam("email") String email);
+
+      @POST
+      CompletionStage<Response> createCustomer(CustomerDTO customerDTO);
+
+      @PUT
+      CompletionStage<Response> updateCustomer(CustomerDTO customerDTO);
+
+      @DELETE
+      CompletionStage<Response> deleteCustomer(CustomerDTO customerDTO);
+    }
+
+Nothing new in this code, everything has already been seen formerly. And here 
+is a fragment of the integration tests which instruments the consumer that the
+Quarkus augmentor automatically generates from ths interface:
+
+    @QuarkusTest
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    public class OrdersAsyncMpClientIT
+    {
+      private static Long customerId;
+      private static Long orderId;
+
+      @Inject
+      @RestClient
+      CustomerAsyncApiClient customerResourceClient;
+      @Inject
+      @RestClient
+      OrderAsyncApiClient orderResourceClient;
+
+      @Test
+      @Order(10)
+      public void testCreateCustomer()
+      {
+        CustomerDTO customer = new CustomerDTO("John", "Doe",
+          "john.doe@email.com", "1234567890");
+        customerResourceClient.createCustomer(customer)
+          .thenAccept(response -> 
+          {
+            try (Response r = response) 
+            {
+              assertThat(r).isNotNull();
+              assertThat(r.getStatus()).isEqualTo(HttpStatus.SC_CREATED);
+              CustomerDTO createdCustomer = r.readEntity(CustomerDTO.class);
+              assertThat(createdCustomer).isNotNull();
+              assertThat(createdCustomer.id()).isNotNull();
+              customerId = createdCustomer.id();
+            }
+          })
+         .exceptionally(ex -> 
+         {
+           System.out.println("### Unexpected exception " + ex.getMessage());
+           return null;
+         })
+         .toCompletableFuture().join();
+      }
+      ...
+      @Test
+      @Order(60)
+      public void testCreateOrder()
+      {
+        OrderDTO order = new OrderDTO("1234567890", 
+          new BigDecimal("100.00"), customerId);
+        orderResourceClient.createOrder(order)
+        .thenAccept(response -> 
+        {
+          try (Response r = response) 
+          {
+            assertThat(r).isNotNull();
+            assertThat(r.getStatus()).isEqualTo(HttpStatus.SC_CREATED);
+            OrderDTO createdOrder = r.readEntity(OrderDTO.class);
+            assertThat(createdOrder).isNotNull();
+            assertThat(createdOrder.id()).isNotNull();
+            orderId = createdOrder.id();
+          }
+        })
+        .exceptionally(ex -> 
+        {
+          System.out.println("### Unexpected exception " + ex.getMessage());
+          return null;
+        })
+       .toCompletableFuture().join();
+      }
+      ...
+    }
+
+This code fragment demonstrates how to invoke the customers and orders RESTful 
+services endpoints such that to create customers and orders. The precedent 
+RESTassured test was synchronous while this one is asynchronous. This shows that 
+the same RESTful asynchronous sertful may be consumed via synchronous or 
+asynchronous consumers.
 
 ## JAX-RS 2.1 asynchronous producers

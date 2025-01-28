@@ -8,7 +8,7 @@ import org.eclipse.microprofile.rest.client.inject.*;
 import java.util.concurrent.*;
 
 @RegisterRestClient(configKey = "base_uri")
-@Path("orders")
+@Path("orders-async")
 public interface OrderAsyncApiClient
 {
   @GET
