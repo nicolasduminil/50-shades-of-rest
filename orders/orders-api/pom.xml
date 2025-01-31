@@ -9,7 +9,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
   <artifactId>orders-api</artifactId>
-  <name>50 Shades of REST :: the service module</name>
+  <name>50 Shades of REST :: the API module</name>
   <dependencies>
     <dependency>
       <groupId>io.quarkus</groupId>

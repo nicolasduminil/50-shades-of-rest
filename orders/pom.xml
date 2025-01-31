@@ -20,6 +20,7 @@
     <module>orders-test</module>
     <module>orders-infrastructure</module>
     <module>orders-async</module>
+    <module>orders-reactive</module>
   </modules>
   <dependencyManagement>
     <dependencies>

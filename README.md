@@ -3726,17 +3726,163 @@ asynchronous consumers.
 
 ### JAX-RS 2.1 asynchronous producers
 
-The `CompletableFuture<T>` and `CompletionStage<T>` classes, available since 
-Java 8, that we just used in order to define the `CustomerAsyncApiClient` interface
-presented in the previous paragraph, are supported by the JAX-RS specifications,
-only since their 2.1 release. Modern asynchronous RESTful services take advantage
-of these classes rather than of the `AsyncResponse` interface that we used in 
-order to illustrate the JAX-RS 2.0 asynchronous producers. 
-
-The listing below shows a fragment of the `CustomerResourceAsyncJaxRs21` class
-that implements the same customer RESTful service, using this technique.
 In Chapter 7, when we discussed the RESTfull asynchronous consumers, we have 
 emphasized the new features that the JAX-RS 2.1 specifications brought, compared
 to the former releases. And as you probably remember, one of these major
 features was the support of the Java 8 `CompletableFuture<T>` and `CompletionStage<T>`
-classes.
+classes for RESTful services implementation. Hence, since JAX-RS 2.1, modern 
+asynchronous RESTful services take advantage of these classes rather than of the
+`AsyncResponse` interface that used to be used with JAX-RS 2.0 asynchronous 
+producers.
+
+The listing below shows a fragment of the `CustomerResourceAsyncJaxRs21` class
+that implements the same customer RESTful service, using this technique.
+
+    @ApplicationScoped
+    @Path("customers-async21")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public class CustomerResourceAsyncJaxRs21
+    {
+      @Inject
+      private CustomerService customerService;
+      @Inject
+      private ManagedExecutor managedExecutor;
+
+      @GET
+      public CompletionStage<Response> getCustomers()
+      {
+        return managedExecutor.supplyAsync(() ->
+          Response.ok()
+            .entity(customerService.getCustomers())
+            .build());
+      }
+
+      @GET
+      @Path("/{id}")
+      public CompletionStage<Response> getCustomer(@PathParam("id") Long id)
+      {
+        return managedExecutor.supplyAsync(() ->
+          Response.ok()
+           .entity(customerService.getCustomer(id))
+           .build());
+      }
+
+      @GET
+      @Path("/email/{email}")
+      public CompletionStage<Response> getCustomerByEmail(@PathParam("email") String email)
+      {
+        return managedExecutor.supplyAsync(() ->
+          Response.ok()
+           .entity(customerService.getCustomerByEmail(URLDecoder.decode(email, StandardCharsets.UTF_8)))
+           .build());
+      }
+
+
+      @POST
+      public CompletionStage<Response> createCustomer(CustomerDTO customerDTO)
+      {
+        return managedExecutor.supplyAsync(() ->
+          Response.created(URI.create("/customers/" + customerDTO.id()))
+            .entity(customerService.createCustomer(customerDTO))
+            .build());
+      }
+
+
+      @PUT
+      public CompletionStage<Response> updateCustomer(CustomerDTO customerDTO)
+      {
+        return managedExecutor.supplyAsync(() ->
+          Response.accepted()
+            .entity(customerService.updateCustomer(customerDTO))
+            .build());
+      }
+
+
+      @DELETE
+      public CompletionStage<Response> deleteCustomer(CustomerDTO customerDTO)
+      {
+        return CompletableFuture.supplyAsync(() ->
+        {
+          customerService.deleteCustomer(customerDTO.id());
+          return Response.noContent().build();
+        });
+      }
+    }
+
+Our new implementation od the asynchronous RESTful service for the customer 
+management defines endpoints which return a `CompletionStage<Response>` instance,
+instead of a `Response` one, as it was the case of the synchronous version of 
+this same service, or a `void`, as it was the case of the JAX-RS 2.0 flavour that
+took advantage of the `AsyncResponse`. So, this is the first thing to notice.
+
+The second thing to notice is the use of the `CompletableFuture.supplyAsync()` 
+statement to invoke endpoints. This way we wrap synchronous calls to the service
+layer and we move the associated blocking operations off the main thread. But 
+since the `supplyAsync(...)` method is the right choice here, beware that we're
+not using it directly, but on the behalf of a `ManagedExecutor`. This class is part 
+of the Eclipse MicroProfile Context Propagation specifications and handles 
+automatically the CDI propagation. 
+
+Running the integration tests `OrdersAsyncJaxRs21MpClientIT` and `OrdersAsyncJaxRs21RestAssuredClient`
+allows you to prove that the same previous consumers are 100% compliant with 
+the new asynchronous producers. We can then conclude that, whether a producer is 
+synchronous or asynchronous, blocking or non-blocking, doesn't matter much from 
+the point of view of the consumers, who may be indifferently synchronous, 
+asynchronous, blocking or non-blocking.
+
+## Reactive RESTfull services
+
+Reactive programming is a different programming paradigm, which contrasts to the
+imperative one, more common, by promoting the asynchronous executions. Instead 
+of providing a sequence of ordered steps like imperative programming does, reactive
+programming provides *continuations*. These are notifications sent to the caller,
+once that the current operation completes or an exception occurs. This way, the 
+caller main thread is free to do any other work, while the asynchronous operation
+is in progress, and to *continue*, once it finished processing, successfully or not.
+
+The definition above doesn't contrast much with the one of the asynchronous 
+processing itself. As a matter of fact, it only provides a partial explanation 
+of the reactive programming, but it doesn't fully capture the key distinctions 
+between it and the asynchronous programming. Let's try to clarify these distinctions.
+
+Asynchronous programming is about handling operations that complete in the future
+without blocking. It's primarily concerned with *when* something happens, i.e. 
+*later* versus *now*. Reactive programming is more comprehensive and it's about
+handling streams of data and events over time. It's not just about when operations
+complete, but about:
+
+-- Handling continuous data flows
+-- Processing data streams
+-- Propagating changes through a system
+-- Managing back-pressure (controlling how fast data flows)
+
+The key distinction is that reactive programming is a specialized form of 
+asynchronous programming that deals with data streams and propagation of change,
+while asynchronous programming simply deals with non-blocking operations. Reactive
+programming is asynchronous, but asynchronous programming isn't mandatory reactive.
+
+From the point of view of the RESTful services, which represent the main topic 
+here, reactive programming is often defined by focusing only on the asynchronous
+aspect, continuations and non-blocking behaviour. This is because the other central
+aspects of the reactive programming, like stream-oriented and data flows, are 
+less common use cases to be implemented by RESTful services. Accordingly, when it
+comes to illustrate reactive programming, the examples are, more often than not,
+I/O operations to access databases, filesystems or message brokers. While it is
+less common to let RESTful services to directly deal with this kind of 
+operation, calling a long-running external process might be one use case where 
+reactive programming could be required, even with RESTful services, and not only
+for its asynchronous capabilities.
+
+Quarkus is said as being built, from the ground up, on the top of [Eclipse VertX](https://vertx.io/), one 
+of the most known reactive engine. Consequently, it exposes to the developer a reactive API named [Mutiny](https://smallrye.io/smallrye-mutiny/).
+It provides a set of dedicated classes to facilitate nonblocking, event-driven
+or asynchronous operations and implements the [Reactive Streams](https://www.reactive-streams.org/) specifications, 
+including, among others, *backpressure*.
+
+Compared with Reactive Streams specifications, integrated in Java since its 9th 
+release, the Mutiny API brings an important simplification. As a matter of fact, 
+while simple in appearance as articulated around one class and four interfaces 
+only, the Reactive Streams specifications turn out to be quite complex when used
+directly. Since its 2nd release, the Mutiny API implements a variant of the 
+Reactive Streams specifications.

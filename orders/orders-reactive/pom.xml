@@ -8,8 +8,8 @@
     <artifactId>orders</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
-  <artifactId>orders-async</artifactId>
-  <name>50 Shades of REST :: the async module</name>
+  <artifactId>orders-reactive</artifactId>
+  <name>50 Shades of REST :: the reactive module</name>
   <dependencies>
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -46,11 +46,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-jdbc-h2</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
       <scope>test</scope>
@@ -60,5 +55,27 @@
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jdbc-postgresql</artifactId>
+      <!--scope>test</scope-->
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-reactive-pg-client</artifactId>
+      <!--scope>test</scope-->
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-reactive-panache</artifactId>
+    </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.quarkus.platform</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 </project>

@@ -14,7 +14,6 @@ import java.util.*;
 import java.util.stream.*;
 
 @ApplicationScoped
-@Transactional
 public class OrderServiceImpl implements OrderService
 {
   @Inject
