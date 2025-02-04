@@ -21,26 +21,25 @@ import java.util.*;
 public class CustomerResourceReact
 {
   @Inject
-  CustomerService customerService;
+  CustomerReactiveService customerService;
+  @Inject
+  OrderReactiveService orderService;
 
   @GET
+  @WithSession
   public Uni<Response> getCustomers()
   {
-    return Uni.createFrom()
-      .<Response>emitter(em -> {
-        List<CustomerDTO> customers = customerService.getCustomers();
-        em.complete(Response.ok().entity(customers).build());
-      })
-      .emitOn(Infrastructure.getDefaultWorkerPool());
+    return customerService.getCustomers()
+      .map(customers -> Response.ok(customers).build());
   }
 
   @GET
   @Path("/{id}")
+  @WithSession
   public Uni<Response> getCustomer(@PathParam("id") Long id)
   {
     return Uni.createFrom()
       .item(() -> id)
-      .emitOn(Infrastructure.getDefaultWorkerPool())
       .map(customerId -> Response.ok()
         .entity(customerService.getCustomer(customerId))
         .build());
@@ -48,51 +47,47 @@ public class CustomerResourceReact
 
   @GET
   @Path("/email/{email}")
+  @WithSession
   public Uni<Response> getCustomerByEmail(@PathParam("email") String email)
   {
-    return Uni.createFrom()
+    System.out.println("CustomerResourceReact.getCustomerByEmail() - email: " + email);
+    /*return Uni.createFrom()
       .item(() -> email)
-      .emitOn(Infrastructure.getDefaultWorkerPool())
       .map(customerDto -> Response.ok()
         .entity(customerService.getCustomerByEmail(URLDecoder.decode(email, StandardCharsets.UTF_8)))
-        .build());
+        .build());*/
+    return Uni.createFrom()
+      .item(() -> URLDecoder.decode(email, StandardCharsets.UTF_8))
+      .chain(decodedEmail -> customerService.getCustomerByEmail(decodedEmail))
+      //.chain(customerDTO -> orderService.getOrdersForCustomer(customerDTO.id()))
+      .map(orders -> Response.ok(orders).build());
   }
 
 
   @POST
+  @WithTransaction
   public Uni<Response> createCustomer(CustomerDTO customerDTO)
   {
-    return Uni.createFrom().emitter(em -> {
-      Uni.createFrom()
-        .item(customerDTO)
-        .emitOn(Infrastructure.getDefaultWorkerPool())
-        .flatMap(dto ->
-          Uni.createFrom().item(() -> {
-            // This will run on a worker thread
-            return customerService.createCustomer(dto);
-          })
-        )
-        .map(customer -> Response.created(URI.create("/customers/" + customer.id()))
-          .entity(customer)
-          .build())
-        .subscribe().with(
-          em::complete,
-          em::fail
-        );
-    });
+    return Uni.createFrom()
+      .item(customerDTO)
+      .flatMap(dto -> customerService.createCustomer(dto))
+      .map(customer -> Response.created(URI.create("/customers/" + customer.id()))
+        .entity(customer)
+        .build());
   }
 
 
   @PUT
+  @Path("/{id}")
   @WithTransaction
-  public Uni<Response> updateCustomer(CustomerDTO customerDTO)
+  public Uni<Response> updateCustomer(@PathParam("id") Long id, CustomerDTO customerDTO)
   {
     return Uni.createFrom()
-      .item(() -> customerDTO)
-      .emitOn(Infrastructure.getDefaultWorkerPool())
-      .map(dto -> Response.accepted()
-        .entity(customerService.updateCustomer(dto))
-        .build());
+      .item(customerDTO)
+      .flatMap(dto -> customerService.updateCustomer(id, dto)
+      .map (n -> Response.accepted()
+        .entity(n)
+        .build()));
   }
 
   @DELETE
@@ -103,7 +98,6 @@ public class CustomerResourceReact
       .<Response>emitter(em -> {
         customerService.deleteCustomer(customerDTO.id());
         em.complete(Response.noContent().build());
-      })
-      .emitOn(Infrastructure.getDefaultWorkerPool());
+      });
   }
 }

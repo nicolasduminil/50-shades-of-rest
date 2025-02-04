@@ -10,45 +10,55 @@ import java.util.*;
 @ApplicationScoped
 public class CustomerReactiveRepository implements PanacheRepository<Customer>
 {
-  public Uni<Customer> save(Customer customer) {
+  public Uni<Customer> save(Customer customer)
+  {
     return persist(customer).chain(() -> Uni.createFrom().item(customer));
   }
 
-  public Uni<Customer> createCustomer(Customer customer) {
+  public Uni<Customer> createCustomer(Customer customer)
+  {
+    System.out.println("CustomerReactiveRepository.createCustomer() - customer: " + customer.toString());
     return persist(customer)
       .map(ignored -> customer);
   }
 
-  public Uni<List<Customer>> findByLastName(String lastName) {
+  public Uni<List<Customer>> findByLastName(String lastName)
+  {
     return list("lastName", lastName);
   }
 
-  public Uni<Optional<Customer>> findByEmail(String email) {
+  public Uni<Optional<Customer>> findByEmail(String email)
+  {
     return find("email", email).firstResult().map(Optional::ofNullable);
   }
 
-  public Uni<List<Customer>> listCustomersWithOrders() {
+  public Uni<List<Customer>> listCustomersWithOrders()
+  {
     return list("""
-            select distinct c from Customer c
-            left join fetch c.orders 
-            where c.id is not null 
-            order by c.lastName""");
+      select distinct c from Customer c
+      left join fetch c.orders 
+      where c.id is not null 
+      order by c.lastName""");
   }
 
-  public Uni<List<Customer>> listCustomersByLastName(String lastName) {
+  public Uni<List<Customer>> listCustomersByLastName(String lastName)
+  {
     return list("lastName", lastName);
   }
 
-  public Uni<Integer> updateById(Long id, Customer customer) {
+  public Uni<Integer> updateById(Long id, Customer customer)
+  {
     return update("firstName = ?1, lastName = ?2 where id = ?3",
       customer.getFirstName(), customer.getLastName(), id);
   }
 
-  public Uni<Long> deleteByLastName(String lastName) {
+  public Uni<Long> deleteByLastName(String lastName)
+  {
     return delete("lastName", lastName);
   }
 
-  public Uni<Optional<Customer>> findByIdOptional(Long id) {
+  public Uni<Optional<Customer>> findByIdOptional(Long id)
+  {
     return findById(id).map(Optional::ofNullable);
   }
 }

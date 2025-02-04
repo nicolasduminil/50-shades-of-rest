@@ -41,12 +41,24 @@ public class CustomerReactiveServiceImpl implements CustomerReactiveService
   @Override
   public Uni<CustomerDTO> getCustomerByEmail(String email)
   {
-    return customerRepository.findByEmail(email)
+    System.out.println("CustomerReactiveServiceImpl.getCustomerByEmail() - email: " + email);
+    Uni<Optional<Customer>> customerRepositoryByEmail =
+      customerRepository.findByEmail(email);
+    System.out.println("CustomerReactiveServiceImpl.getCustomerByEmail() - customerRepositoryByEmail: " + customerRepositoryByEmail.toString());
+    customerRepositoryByEmail.onItem().ifNull().failWith(new CustomerNotFoundException("""
+      ### CustomerServiceImpl.getCustomerByEmail():
+      Customer not found for email: %s""".formatted(email)));
+    Uni<CustomerDTO> customerDTOUni = customerRepositoryByEmail.onItem().ifNotNull()
+      .transformToUni(customer ->
+      Uni.createFrom().item(CustomerMapper.INSTANCE.fromEntity(customer.get())));
+    System.out.println("CustomerReactiveServiceImpl.getCustomerByEmail() - customerDTOUni: " + customerDTOUni.toString());
+    return customerDTOUni;
+    /*return customerRepository.findByEmail(email)
       .map(optionalCustomer -> optionalCustomer
         .map(CustomerMapper.INSTANCE::fromEntity)
         .orElseThrow(() -> new CustomerNotFoundException("""
           ### CustomerServiceImpl.getCustomerByEmail():
-          Customer not found for email: %s""".formatted(email))));
+          Customer not found for email: %s""".formatted(email))));*/
   }
 
   @Override

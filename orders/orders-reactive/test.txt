@@ -1,0 +1,829 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------< fr.simplex-software.workshop:orders-reactive >------------
+[INFO] Building 50 Shades of REST :: the reactive module 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- failsafe:3.3.1:integration-test (default-cli) @ orders-reactive ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT
+2025-02-03 19:14:41,163 INFO  [org.tes.DockerClientFactory] (build-41) Testcontainers version: 1.20.4
+2025-02-03 19:14:41,252 INFO  [org.tes.doc.DockerClientProviderStrategy] (build-41) Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+2025-02-03 19:14:41,514 INFO  [org.tes.doc.DockerClientProviderStrategy] (build-41) Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
+2025-02-03 19:14:41,516 INFO  [org.tes.DockerClientFactory] (build-41) Docker host IP address is localhost
+2025-02-03 19:14:41,533 INFO  [org.tes.DockerClientFactory] (build-41) Connected to docker: 
+  Server Version: 27.2.0
+  API Version: 1.47
+  Operating System: Ubuntu 24.04.1 LTS
+  Total Memory: 31733 MB
+2025-02-03 19:14:41,545 INFO  [org.tes.ima.PullPolicy] (build-41) Image pull policy will be performed by: DefaultPullPolicy()
+2025-02-03 19:14:41,547 INFO  [org.tes.uti.ImageNameSubstitutor] (build-41) Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+2025-02-03 19:14:41,552 INFO  [org.tes.DockerClientFactory] (build-41) Checking the system...
+2025-02-03 19:14:41,553 INFO  [org.tes.DockerClientFactory] (build-41) ✔︎ Docker server version should be at least 1.6.0
+2025-02-03 19:14:41,706 INFO  [tc.doc.io/postgres:17] (build-41) Creating container for image: docker.io/postgres:17
+2025-02-03 19:14:41,711 INFO  [org.tes.uti.RegistryAuthLocator] (build-41) Failure when attempting to lookup auth config. Please ignore if you don't have images in an authenticated registry. Details: (dockerImageName: docker.io/postgres:17, configFile: /home/nicolas/.docker/config.json, configEnv: DOCKER_AUTH_CONFIG). Falling back to docker-java default behaviour. Exception message: Status 404: No config supplied. Checked in order: /home/nicolas/.docker/config.json (file not found), DOCKER_AUTH_CONFIG (not set)
+2025-02-03 19:14:41,819 INFO  [tc.doc.io/postgres:17] (build-41) Reusing container with ID: eee282ae363c3c46a015a4f29cfadcd5316c2d7f4c0da1c8b01172ed84fe8d49 and hash: b5f315d1fe435bc41660021acba6280cb00e7e5a
+2025-02-03 19:14:41,819 INFO  [tc.doc.io/postgres:17] (build-41) Reusing existing container (eee282ae363c3c46a015a4f29cfadcd5316c2d7f4c0da1c8b01172ed84fe8d49) and not creating a new one
+2025-02-03 19:14:42,026 INFO  [tc.doc.io/postgres:17] (build-41) Container docker.io/postgres:17 started in PT0.320490176S
+2025-02-03 19:14:42,027 INFO  [tc.doc.io/postgres:17] (build-41) Container is started (JDBC URL: jdbc:postgresql://localhost:9001/quarkus?loggerLevel=OFF)
+2025-02-03 19:14:42,027 INFO  [io.qua.dev.pos.dep.PostgresqlDevServicesProcessor] (build-41) Dev Services for PostgreSQL started.
+2025-02-03 19:14:42,029 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] (build-41) Dev Services for default datasource (postgresql) started - container ID is eee282ae363c
+2025-02-03 19:14:43,153 INFO  [org.hib.rea.pro.imp.ReactiveIntegrator] (JPA Startup Thread) HR000001: Hibernate Reactive
+[Hibernate] 
+    set client_min_messages = WARNING
+[Hibernate] 
+    alter table if exists ORDERS 
+       drop constraint if exists FKflgddyesjyik2ro2p501yys8r
+[Hibernate] 
+    drop table if exists CUSTOMERS cascade
+[Hibernate] 
+    drop table if exists ORDERS cascade
+[Hibernate] 
+    drop sequence if exists CUSTOMERS_SEQ
+[Hibernate] 
+    drop sequence if exists ORDERS_SEQ
+[Hibernate] 
+    set client_min_messages = WARNING
+[Hibernate] 
+    alter table if exists ORDERS 
+       drop constraint if exists FKflgddyesjyik2ro2p501yys8r
+[Hibernate] 
+    drop table if exists CUSTOMERS cascade
+[Hibernate] 
+    drop table if exists ORDERS cascade
+[Hibernate] 
+    drop sequence if exists CUSTOMERS_SEQ
+[Hibernate] 
+    drop sequence if exists ORDERS_SEQ
+[Hibernate] 
+    create sequence CUSTOMERS_SEQ start with 1 increment by 1
+[Hibernate] 
+    create sequence ORDERS_SEQ start with 1 increment by 1
+[Hibernate] 
+    create table CUSTOMERS (
+        ID bigint not null,
+        EMAIL varchar(40) not null,
+        FIRST_NAME varchar(40) not null,
+        LAST_NAME varchar(40) not null,
+        PHONE varchar(40) not null,
+        primary key (ID)
+    )
+[Hibernate] 
+    create table ORDERS (
+        PRICE numeric(38,2) not null,
+        CUSTOMER_ID bigint not null,
+        ID bigint not null,
+        ITEM varchar(40) not null,
+        primary key (ID)
+    )
+[Hibernate] 
+    alter table if exists ORDERS 
+       add constraint FKflgddyesjyik2ro2p501yys8r 
+       foreign key (CUSTOMER_ID) 
+       references CUSTOMERS 
+       on delete cascade
+2025-02-03 19:14:43,620 WARN  [io.qua.hib.orm.run.ser.QuarkusRuntimeInitDialectFactory] (JPA Startup Thread) Persistence unit default-reactive: Could not retrieve the database version to check it is at least 12.0.0
+2025-02-03 19:14:43,692 INFO  [io.quarkus] (main) orders-reactive 1.0-SNAPSHOT on JVM (powered by Quarkus 3.17.2) started in 3.698s. Listening on: http://localhost:8081
+2025-02-03 19:14:43,693 INFO  [io.quarkus] (main) Profile test activated. 
+2025-02-03 19:14:43,693 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, hibernate-orm-panache, hibernate-reactive, hibernate-reactive-panache, jdbc-postgresql, narayana-jta, reactive-pg-client, rest, rest-client, rest-client-jackson, rest-jackson, smallrye-context-propagation, vertx]
+Request method:	POST
+Request URI:	http://localhost:8081/customers-react
+Proxy:			<none>
+Request params:	<none>
+Query params:	<none>
+Form params:	<none>
+Path params:	<none>
+Headers:		Accept=*/*
+				Content-Type=application/json
+Cookies:		<none>
+Multiparts:		<none>
+Body:
+{
+    "id": null,
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@email.com",
+    "phone": "1234567890"
+}
+CustomerResourceReact.createCustomer() - customerDTO: CustomerDTO[id=null, firstName=John, lastName=Doe, email=john.doe@email.com, phone=1234567890]
+CustomerReactiveService.createCustomer() - customerDTO: CustomerDTO[id=null, firstName=John, lastName=Doe, email=john.doe@email.com, phone=1234567890]
+CustomerReactiveRepository.createCustomer() - customer: fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.Customer@4fe30260
+[Hibernate] 
+    select
+        nextval('CUSTOMERS_SEQ')
+[Hibernate] 
+    insert 
+    into
+        CUSTOMERS
+        (EMAIL, FIRST_NAME, LAST_NAME, PHONE, ID) 
+    values
+        ($1, $2, $3, $4, $5)
+2025-02-03 19:14:45,292 ERROR [io.qua.res.rea.jac.run.map.NativeInvalidDefinitionExceptionMapper] (vert.x-eventloop-thread-2) com.fasterxml.jackson.databind.exc.InvalidDefinitionException: No serializer found for class io.smallrye.mutiny.operators.uni.UniOnItemTransform and no properties discovered to create BeanSerializer (to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS)
+2025-02-03 19:14:45,322 ERROR [io.qua.ver.htt.run.QuarkusErrorHandler] (vert.x-eventloop-thread-1) HTTP Request to /orders-react failed, error id: a8c12322-3686-4615-a23f-a43395665dde-1: java.lang.IllegalStateException: No entities were attached to persistence unit 'default-reactive'. Did you forget to annotate your Panache Entity classes with '@Entity' or improperly configure the 'quarkus.hibernate-orm." default-reactive".packages' property?
+	at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.getSession(AbstractJpaOperations.java:86)
+	at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.getSession(AbstractJpaOperations.java:63)
+	at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.findAll(AbstractJpaOperations.java:298)
+	at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.streamAll(AbstractJpaOperations.java:317)
+	at fr.simplex_software.fifty_shades_of_rest.orders.repository.OrderRepository.streamAll(OrderRepository.java)
+	at fr.simplex_software.fifty_shades_of_rest.orders.repository.OrderRepository_ClientProxy.streamAll(Unknown Source)
+	at fr.simplex_software.fifty_shades_of_rest.orders.service.impl.OrderServiceImpl.getAllOrders(OrderServiceImpl.java:43)
+	at fr.simplex_software.fifty_shades_of_rest.orders.service.impl.OrderServiceImpl_ClientProxy.getAllOrders(Unknown Source)
+	at fr.simplex_software.fifty_shades_of_rest.orders.react.OrderResourceReact.lambda$getOrders$0(OrderResourceReact.java:33)
+	at io.smallrye.context.impl.wrappers.SlowContextualConsumer.accept(SlowContextualConsumer.java:21)
+	at io.smallrye.mutiny.operators.uni.builders.UniCreateWithEmitter.subscribe(UniCreateWithEmitter.java:22)
+	at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+	at io.smallrye.mutiny.groups.UniSubscribe.withSubscriber(UniSubscribe.java:51)
+	at io.smallrye.mutiny.groups.UniSubscribe.with(UniSubscribe.java:110)
+	at io.smallrye.mutiny.groups.UniSubscribe.with(UniSubscribe.java:88)
+	at org.jboss.resteasy.reactive.server.handlers.UniResponseHandler.handle(UniResponseHandler.java:21)
+	at io.quarkus.resteasy.reactive.server.runtime.QuarkusResteasyReactiveRequestContext.invokeHandler(QuarkusResteasyReactiveRequestContext.java:150)
+	at org.jboss.resteasy.reactive.common.core.AbstractResteasyReactiveContext.run(AbstractResteasyReactiveContext.java:147)
+	at org.jboss.resteasy.reactive.server.handlers.RestInitialHandler.beginProcessing(RestInitialHandler.java:48)
+	at org.jboss.resteasy.reactive.server.vertx.ResteasyReactiveVertxHandler.handle(ResteasyReactiveVertxHandler.java:23)
+	at org.jboss.resteasy.reactive.server.vertx.ResteasyReactiveVertxHandler.handle(ResteasyReactiveVertxHandler.java:10)
+	at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+	at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+	at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+	at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$1.handle(HttpServerCommonHandlers.java:62)
+	at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$1.handle(HttpServerCommonHandlers.java:40)
+	at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+	at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+	at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+	at io.quarkus.resteasy.reactive.server.runtime.ResteasyReactiveRecorder$13.handle(ResteasyReactiveRecorder.java:359)
+	at io.quarkus.resteasy.reactive.server.runtime.ResteasyReactiveRecorder$13.handle(ResteasyReactiveRecorder.java:348)
+	at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+	at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+	at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+	at io.vertx.ext.web.impl.RoutingContextImpl.route(RoutingContextImpl.java:94)
+	at io.vertx.ext.web.impl.RouterImpl.handle(RouterImpl.java:69)
+	at io.vertx.ext.web.impl.RouterImpl.handle(RouterImpl.java:37)
+	at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$2.handle(HttpServerCommonHandlers.java:86)
+	at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$2.handle(HttpServerCommonHandlers.java:69)
+	at io.quarkus.vertx.http.runtime.VertxHttpRecorder$1.handle(VertxHttpRecorder.java:183)
+	at io.quarkus.vertx.http.runtime.VertxHttpRecorder$1.handle(VertxHttpRecorder.java:159)
+	at io.vertx.core.impl.ContextImpl.emit(ContextImpl.java:342)
+	at io.vertx.core.impl.DuplicatedContext.emit(DuplicatedContext.java:163)
+	at io.vertx.core.http.impl.Http1xServerConnection.handleMessage(Http1xServerConnection.java:174)
+	at io.vertx.core.net.impl.ConnectionBase.read(ConnectionBase.java:159)
+	at io.vertx.core.net.impl.VertxHandler.channelRead(VertxHandler.java:153)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.vertx.core.http.impl.Http1xUpgradeToH2CHandler.channelRead(Http1xUpgradeToH2CHandler.java:124)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:289)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.netty.handler.codec.ByteToMessageDecoder.fireChannelRead(ByteToMessageDecoder.java:346)
+	at io.netty.handler.codec.ByteToMessageDecoder.channelRead(ByteToMessageDecoder.java:318)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.vertx.core.http.impl.Http1xOrH2CHandler.end(Http1xOrH2CHandler.java:61)
+	at io.vertx.core.http.impl.Http1xOrH2CHandler.channelRead(Http1xOrH2CHandler.java:38)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:289)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1357)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:440)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:868)
+	at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:166)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:788)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:724)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:650)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:562)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:997)
+	at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+
+[Hibernate] 
+    select
+        c1_0.ID,
+        c1_0.EMAIL,
+        c1_0.FIRST_NAME,
+        c1_0.LAST_NAME,
+        c1_0.PHONE 
+    from
+        CUSTOMERS c1_0
+2025-02-03 19:14:45,534 ERROR [io.qua.ver.htt.run.QuarkusErrorHandler] (vert.x-eventloop-thread-2) HTTP Request to /customers-react failed, error id: a8c12322-3686-4615-a23f-a43395665dde-2: java.lang.IllegalStateException: HR000069: Detected use of the reactive Session from a different Thread than the one which was used to open the reactive Session - this suggests an invalid integration; original thread [146]: 'vert.x-eventloop-thread-2' current Thread [138]: 'executor-thread-1'
+	at org.hibernate.reactive.common.InternalStateAssertions.assertCurrentThreadMatches(InternalStateAssertions.java:46)
+	at org.hibernate.reactive.session.impl.ReactiveSessionImpl.threadCheck(ReactiveSessionImpl.java:185)
+	at org.hibernate.reactive.session.impl.ReactiveSessionImpl.checkOpen(ReactiveSessionImpl.java:1667)
+	at org.hibernate.internal.AbstractSharedSessionContract.checkOpenOrWaitingForAutoClose(AbstractSharedSessionContract.java:535)
+	at org.hibernate.internal.SessionImpl.checkOpenOrWaitingForAutoClose(SessionImpl.java:622)
+	at org.hibernate.internal.SessionImpl.closeWithoutOpenChecks(SessionImpl.java:412)
+	at org.hibernate.internal.SessionImpl.close(SessionImpl.java:395)
+	at org.hibernate.reactive.session.impl.ReactiveSessionImpl.reactiveClose(ReactiveSessionImpl.java:1619)
+	at io.smallrye.context.impl.wrappers.SlowContextualSupplier.get(SlowContextualSupplier.java:21)
+	at io.smallrye.mutiny.operators.uni.builders.UniCreateFromCompletionStage.subscribe(UniCreateFromCompletionStage.java:24)
+	at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+	at io.smallrye.mutiny.operators.uni.UniRunSubscribeOn.lambda$subscribe$0(UniRunSubscribeOn.java:27)
+	at org.hibernate.reactive.context.impl.VertxContext.execute(VertxContext.java:91)
+	at io.smallrye.mutiny.operators.uni.UniRunSubscribeOn.subscribe(UniRunSubscribeOn.java:25)
+	at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+	at io.smallrye.mutiny.operators.uni.UniOnTermination.subscribe(UniOnTermination.java:21)
+	at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+	at io.smallrye.mutiny.operators.uni.UniOnItemOrFailureFlatMap.subscribe(UniOnItemOrFailureFlatMap.java:27)
+	at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+	at io.smallrye.mutiny.operators.uni.UniOnItemOrFailureFlatMap$UniOnItemOrFailureFlatMapProcessor.performInnerSubscription(UniOnItemOrFailureFlatMap.java:99)
+	at io.smallrye.mutiny.operators.uni.UniOnItemOrFailureFlatMap$UniOnItemOrFailureFlatMapProcessor.onItem(UniOnItemOrFailureFlatMap.java:54)
+	at io.smallrye.mutiny.operators.uni.UniOnItemTransformToUni$UniOnItemTransformToUniProcessor.onItem(UniOnItemTransformToUni.java:60)
+	at io.smallrye.mutiny.operators.uni.UniEmitOn$UniEmitOnProcessor.lambda$onItem$0(UniEmitOn.java:34)
+	at io.quarkus.vertx.core.runtime.VertxCoreRecorder$15.runWith(VertxCoreRecorder.java:637)
+	at org.jboss.threads.EnhancedQueueExecutor$Task.doRunWith(EnhancedQueueExecutor.java:2675)
+	at org.jboss.threads.EnhancedQueueExecutor$Task.run(EnhancedQueueExecutor.java:2654)
+	at org.jboss.threads.EnhancedQueueExecutor.runThreadBody(EnhancedQueueExecutor.java:1627)
+	at org.jboss.threads.EnhancedQueueExecutor$ThreadBody.run(EnhancedQueueExecutor.java:1594)
+	at org.jboss.threads.DelegatingRunnable.run(DelegatingRunnable.java:11)
+	at org.jboss.threads.ThreadLocalResettingRunnable.run(ThreadLocalResettingRunnable.java:11)
+	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+
+2025-02-03 19:14:45,545 ERROR [io.qua.res.rea.jac.run.map.NativeInvalidDefinitionExceptionMapper] (vert.x-eventloop-thread-1) com.fasterxml.jackson.databind.exc.InvalidDefinitionException: No serializer found for class io.smallrye.mutiny.operators.uni.UniOnItemTransform and no properties discovered to create BeanSerializer (to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS)
+2025-02-03 19:14:45,565 ERROR [io.qua.res.rea.jac.run.map.NativeInvalidDefinitionExceptionMapper] (vert.x-eventloop-thread-2) com.fasterxml.jackson.databind.exc.InvalidDefinitionException: No serializer found for class io.smallrye.mutiny.operators.uni.UniOnItemTransform and no properties discovered to create BeanSerializer (to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS)
+2025-02-03 19:14:45,575 ERROR [io.qua.res.rea.jac.run.map.NativeInvalidDefinitionExceptionMapper] (vert.x-eventloop-thread-1) com.fasterxml.jackson.databind.exc.InvalidDefinitionException: No serializer found for class io.smallrye.mutiny.operators.uni.UniOnItemTransform and no properties discovered to create BeanSerializer (to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS)
+2025-02-03 19:14:45,583 ERROR [io.qua.ver.htt.run.QuarkusErrorHandler] (vert.x-eventloop-thread-2) HTTP Request to /orders-react failed, error id: a8c12322-3686-4615-a23f-a43395665dde-3: java.lang.IllegalStateException: No entities were attached to persistence unit 'default-reactive'. Did you forget to annotate your Panache Entity classes with '@Entity' or improperly configure the 'quarkus.hibernate-orm." default-reactive".packages' property?
+	at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.getSession(AbstractJpaOperations.java:86)
+	at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.getSession(AbstractJpaOperations.java:63)
+	at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.findAll(AbstractJpaOperations.java:298)
+	at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.streamAll(AbstractJpaOperations.java:317)
+	at fr.simplex_software.fifty_shades_of_rest.orders.repository.OrderRepository.streamAll(OrderRepository.java)
+	at fr.simplex_software.fifty_shades_of_rest.orders.repository.OrderRepository_ClientProxy.streamAll(Unknown Source)
+	at fr.simplex_software.fifty_shades_of_rest.orders.service.impl.OrderServiceImpl.getAllOrders(OrderServiceImpl.java:43)
+	at fr.simplex_software.fifty_shades_of_rest.orders.service.impl.OrderServiceImpl_ClientProxy.getAllOrders(Unknown Source)
+	at fr.simplex_software.fifty_shades_of_rest.orders.react.OrderResourceReact.lambda$getOrders$0(OrderResourceReact.java:33)
+	at io.smallrye.context.impl.wrappers.SlowContextualConsumer.accept(SlowContextualConsumer.java:21)
+	at io.smallrye.mutiny.operators.uni.builders.UniCreateWithEmitter.subscribe(UniCreateWithEmitter.java:22)
+	at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+	at io.smallrye.mutiny.groups.UniSubscribe.withSubscriber(UniSubscribe.java:51)
+	at io.smallrye.mutiny.groups.UniSubscribe.with(UniSubscribe.java:110)
+	at io.smallrye.mutiny.groups.UniSubscribe.with(UniSubscribe.java:88)
+	at org.jboss.resteasy.reactive.server.handlers.UniResponseHandler.handle(UniResponseHandler.java:21)
+	at io.quarkus.resteasy.reactive.server.runtime.QuarkusResteasyReactiveRequestContext.invokeHandler(QuarkusResteasyReactiveRequestContext.java:150)
+	at org.jboss.resteasy.reactive.common.core.AbstractResteasyReactiveContext.run(AbstractResteasyReactiveContext.java:147)
+	at org.jboss.resteasy.reactive.server.handlers.RestInitialHandler.beginProcessing(RestInitialHandler.java:48)
+	at org.jboss.resteasy.reactive.server.vertx.ResteasyReactiveVertxHandler.handle(ResteasyReactiveVertxHandler.java:23)
+	at org.jboss.resteasy.reactive.server.vertx.ResteasyReactiveVertxHandler.handle(ResteasyReactiveVertxHandler.java:10)
+	at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+	at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+	at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+	at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$1.handle(HttpServerCommonHandlers.java:62)
+	at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$1.handle(HttpServerCommonHandlers.java:40)
+	at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+	at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+	at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+	at io.quarkus.resteasy.reactive.server.runtime.ResteasyReactiveRecorder$13.handle(ResteasyReactiveRecorder.java:359)
+	at io.quarkus.resteasy.reactive.server.runtime.ResteasyReactiveRecorder$13.handle(ResteasyReactiveRecorder.java:348)
+	at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+	at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+	at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+	at io.vertx.ext.web.impl.RoutingContextImpl.route(RoutingContextImpl.java:94)
+	at io.vertx.ext.web.impl.RouterImpl.handle(RouterImpl.java:69)
+	at io.vertx.ext.web.impl.RouterImpl.handle(RouterImpl.java:37)
+	at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$2.handle(HttpServerCommonHandlers.java:86)
+	at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$2.handle(HttpServerCommonHandlers.java:69)
+	at io.quarkus.vertx.http.runtime.VertxHttpRecorder$1.handle(VertxHttpRecorder.java:183)
+	at io.quarkus.vertx.http.runtime.VertxHttpRecorder$1.handle(VertxHttpRecorder.java:159)
+	at io.vertx.core.impl.ContextImpl.emit(ContextImpl.java:342)
+	at io.vertx.core.impl.DuplicatedContext.emit(DuplicatedContext.java:163)
+	at io.vertx.core.http.impl.Http1xServerConnection.handleMessage(Http1xServerConnection.java:174)
+	at io.vertx.core.net.impl.ConnectionBase.read(ConnectionBase.java:159)
+	at io.vertx.core.net.impl.VertxHandler.channelRead(VertxHandler.java:153)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.vertx.core.http.impl.Http1xUpgradeToH2CHandler.channelRead(Http1xUpgradeToH2CHandler.java:124)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:289)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.netty.handler.codec.ByteToMessageDecoder.fireChannelRead(ByteToMessageDecoder.java:346)
+	at io.netty.handler.codec.ByteToMessageDecoder.channelRead(ByteToMessageDecoder.java:318)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.vertx.core.http.impl.Http1xOrH2CHandler.end(Http1xOrH2CHandler.java:61)
+	at io.vertx.core.http.impl.Http1xOrH2CHandler.channelRead(Http1xOrH2CHandler.java:38)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:289)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+	at io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1357)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:440)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+	at io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:868)
+	at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:166)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:788)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:724)
+	at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:650)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:562)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:997)
+	at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+
+2025-02-03 19:14:45,594 ERROR [io.qua.res.rea.jac.run.map.NativeInvalidDefinitionExceptionMapper] (vert.x-eventloop-thread-1) com.fasterxml.jackson.databind.exc.InvalidDefinitionException: No serializer found for class io.smallrye.mutiny.operators.uni.UniOnItemTransform and no properties discovered to create BeanSerializer (to avoid exception, disable SerializationFeature.FAIL_ON_EMPTY_BEANS)
+[ERROR] Tests run: 9, Failures: 8, Errors: 0, Skipped: 0, Time elapsed: 8.006 s <<< FAILURE! -- in fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT
+[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT.testCreateOrder -- Time elapsed: 0.053 s <<< FAILURE!
+java.lang.AssertionError: 
+1 expectation failed.
+Expected status code <200> but was <500>.
+
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.codehaus.groovy.reflection.CachedConstructor.invoke(CachedConstructor.java:73)
+	at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:108)
+	at org.codehaus.groovy.runtime.callsite.CallSiteArray.defaultCallConstructor(CallSiteArray.java:57)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callConstructor(AbstractCallSite.java:263)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callConstructor(AbstractCallSite.java:277)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure.validate(ResponseSpecificationImpl.groovy:512)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure$validate$1.call(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.validateResponseIfRequired(ResponseSpecificationImpl.groovy:696)
+	at io.restassured.internal.ResponseSpecificationImpl.this$2$validateResponseIfRequired(ResponseSpecificationImpl.groovy)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.runtime.callsite.PlainObjectMetaMethodSite.doInvoke(PlainObjectMetaMethodSite.java:43)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite$PogoCachedMethodSiteNoUnwrapNoCoerce.invoke(PogoMetaMethodSite.java:198)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite.callCurrent(PogoMetaMethodSite.java:62)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:185)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:135)
+	at io.restassured.specification.ResponseSpecification$statusCode$0.callCurrent(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:143)
+	at io.restassured.internal.ValidatableResponseOptionsImpl.statusCode(ValidatableResponseOptionsImpl.java:89)
+	at fr.simplex_software.fifty_shades_of_rest.orders_test.OrdersBaseTest.testCreateOrder(OrdersBaseTest.java:41)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at io.quarkus.test.junit.QuarkusTestExtension.runExtensionMethod(QuarkusTestExtension.java:967)
+	at io.quarkus.test.junit.QuarkusTestExtension.interceptTestMethod(QuarkusTestExtension.java:817)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT.testGetOrders -- Time elapsed: 0.020 s <<< FAILURE!
+java.lang.AssertionError: 
+1 expectation failed.
+Expected status code <200> but was <500>.
+
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.codehaus.groovy.reflection.CachedConstructor.invoke(CachedConstructor.java:73)
+	at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:108)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callConstructor(AbstractCallSite.java:277)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure.validate(ResponseSpecificationImpl.groovy:512)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure$validate$1.call(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.validateResponseIfRequired(ResponseSpecificationImpl.groovy:696)
+	at io.restassured.internal.ResponseSpecificationImpl.this$2$validateResponseIfRequired(ResponseSpecificationImpl.groovy)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.runtime.callsite.PlainObjectMetaMethodSite.doInvoke(PlainObjectMetaMethodSite.java:43)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite$PogoCachedMethodSiteNoUnwrapNoCoerce.invoke(PogoMetaMethodSite.java:198)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite.callCurrent(PogoMetaMethodSite.java:62)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:185)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:135)
+	at io.restassured.specification.ResponseSpecification$statusCode$0.callCurrent(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:143)
+	at io.restassured.internal.ValidatableResponseOptionsImpl.statusCode(ValidatableResponseOptionsImpl.java:89)
+	at fr.simplex_software.fifty_shades_of_rest.orders_test.OrdersBaseTest.testGetOrders(OrdersBaseTest.java:51)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at io.quarkus.test.junit.QuarkusTestExtension.runExtensionMethod(QuarkusTestExtension.java:967)
+	at io.quarkus.test.junit.QuarkusTestExtension.interceptTestMethod(QuarkusTestExtension.java:817)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.IllegalStateException: No entities were attached to persistence unit 'default-reactive'. Did you forget to annotate your Panache Entity classes with '@Entity' or improperly configure the 'quarkus.hibernate-orm." default-reactive".packages' property?
+		at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.getSession(AbstractJpaOperations.java:86)
+		at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.getSession(AbstractJpaOperations.java:63)
+		at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.findAll(AbstractJpaOperations.java:298)
+		at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.streamAll(AbstractJpaOperations.java:317)
+		at fr.simplex_software.fifty_shades_of_rest.orders.repository.OrderRepository.streamAll(OrderRepository.java)
+		at fr.simplex_software.fifty_shades_of_rest.orders.repository.OrderRepository_ClientProxy.streamAll(Unknown Source)
+		at fr.simplex_software.fifty_shades_of_rest.orders.service.impl.OrderServiceImpl.getAllOrders(OrderServiceImpl.java:43)
+		at fr.simplex_software.fifty_shades_of_rest.orders.service.impl.OrderServiceImpl_ClientProxy.getAllOrders(Unknown Source)
+		at fr.simplex_software.fifty_shades_of_rest.orders.react.OrderResourceReact.lambda$getOrders$0(OrderResourceReact.java:33)
+		at io.smallrye.context.impl.wrappers.SlowContextualConsumer.accept(SlowContextualConsumer.java:21)
+		at io.smallrye.mutiny.operators.uni.builders.UniCreateWithEmitter.subscribe(UniCreateWithEmitter.java:22)
+		at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+		at io.smallrye.mutiny.groups.UniSubscribe.withSubscriber(UniSubscribe.java:51)
+		at io.smallrye.mutiny.groups.UniSubscribe.with(UniSubscribe.java:110)
+		at io.smallrye.mutiny.groups.UniSubscribe.with(UniSubscribe.java:88)
+		at org.jboss.resteasy.reactive.server.handlers.UniResponseHandler.handle(UniResponseHandler.java:21)
+		at io.quarkus.resteasy.reactive.server.runtime.QuarkusResteasyReactiveRequestContext.invokeHandler(QuarkusResteasyReactiveRequestContext.java:150)
+		at org.jboss.resteasy.reactive.common.core.AbstractResteasyReactiveContext.run(AbstractResteasyReactiveContext.java:147)
+		at org.jboss.resteasy.reactive.server.handlers.RestInitialHandler.beginProcessing(RestInitialHandler.java:48)
+		at org.jboss.resteasy.reactive.server.vertx.ResteasyReactiveVertxHandler.handle(ResteasyReactiveVertxHandler.java:23)
+		at org.jboss.resteasy.reactive.server.vertx.ResteasyReactiveVertxHandler.handle(ResteasyReactiveVertxHandler.java:10)
+		at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+		at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+		at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+		at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$1.handle(HttpServerCommonHandlers.java:62)
+		at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$1.handle(HttpServerCommonHandlers.java:40)
+		at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+		at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+		at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+		at io.quarkus.resteasy.reactive.server.runtime.ResteasyReactiveRecorder$13.handle(ResteasyReactiveRecorder.java:359)
+		at io.quarkus.resteasy.reactive.server.runtime.ResteasyReactiveRecorder$13.handle(ResteasyReactiveRecorder.java:348)
+		at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+		at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+		at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+		at io.vertx.ext.web.impl.RoutingContextImpl.route(RoutingContextImpl.java:94)
+		at io.vertx.ext.web.impl.RouterImpl.handle(RouterImpl.java:69)
+		at io.vertx.ext.web.impl.RouterImpl.handle(RouterImpl.java:37)
+		at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$2.handle(HttpServerCommonHandlers.java:86)
+		at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$2.handle(HttpServerCommonHandlers.java:69)
+		at io.quarkus.vertx.http.runtime.VertxHttpRecorder$1.handle(VertxHttpRecorder.java:183)
+		at io.quarkus.vertx.http.runtime.VertxHttpRecorder$1.handle(VertxHttpRecorder.java:159)
+		at io.vertx.core.impl.ContextImpl.emit(ContextImpl.java:342)
+		at io.vertx.core.impl.DuplicatedContext.emit(DuplicatedContext.java:163)
+		at io.vertx.core.http.impl.Http1xServerConnection.handleMessage(Http1xServerConnection.java:174)
+		at io.vertx.core.net.impl.ConnectionBase.read(ConnectionBase.java:159)
+		at io.vertx.core.net.impl.VertxHandler.channelRead(VertxHandler.java:153)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.vertx.core.http.impl.Http1xUpgradeToH2CHandler.channelRead(Http1xUpgradeToH2CHandler.java:124)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:289)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.netty.handler.codec.ByteToMessageDecoder.fireChannelRead(ByteToMessageDecoder.java:346)
+		at io.netty.handler.codec.ByteToMessageDecoder.channelRead(ByteToMessageDecoder.java:318)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.vertx.core.http.impl.Http1xOrH2CHandler.end(Http1xOrH2CHandler.java:61)
+		at io.vertx.core.http.impl.Http1xOrH2CHandler.channelRead(Http1xOrH2CHandler.java:38)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:289)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1357)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:440)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:868)
+		at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:166)
+		at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:788)
+		at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:724)
+		at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:650)
+		at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:562)
+		at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:997)
+		at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+		at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+		at java.base/java.lang.Thread.run(Thread.java:1583)
+
+[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT.testGetCustomers -- Time elapsed: 0.207 s <<< FAILURE!
+java.lang.AssertionError: 
+1 expectation failed.
+Expected status code <200> but was <500>.
+
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.codehaus.groovy.reflection.CachedConstructor.invoke(CachedConstructor.java:73)
+	at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:108)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callConstructor(AbstractCallSite.java:277)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure.validate(ResponseSpecificationImpl.groovy:512)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure$validate$1.call(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.validateResponseIfRequired(ResponseSpecificationImpl.groovy:696)
+	at io.restassured.internal.ResponseSpecificationImpl.this$2$validateResponseIfRequired(ResponseSpecificationImpl.groovy)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.runtime.callsite.PlainObjectMetaMethodSite.doInvoke(PlainObjectMetaMethodSite.java:43)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite$PogoCachedMethodSiteNoUnwrapNoCoerce.invoke(PogoMetaMethodSite.java:198)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite.callCurrent(PogoMetaMethodSite.java:62)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:185)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:135)
+	at io.restassured.specification.ResponseSpecification$statusCode$0.callCurrent(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:143)
+	at io.restassured.internal.ValidatableResponseOptionsImpl.statusCode(ValidatableResponseOptionsImpl.java:89)
+	at fr.simplex_software.fifty_shades_of_rest.orders_test.OrdersBaseTest.testGetCustomers(OrdersBaseTest.java:60)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at io.quarkus.test.junit.QuarkusTestExtension.runExtensionMethod(QuarkusTestExtension.java:967)
+	at io.quarkus.test.junit.QuarkusTestExtension.interceptTestMethod(QuarkusTestExtension.java:817)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.IllegalStateException: HR000069: Detected use of the reactive Session from a different Thread than the one which was used to open the reactive Session - this suggests an invalid integration; original thread [146]: 'vert.x-eventloop-thread-2' current Thread [138]: 'executor-thread-1'
+		at org.hibernate.reactive.common.InternalStateAssertions.assertCurrentThreadMatches(InternalStateAssertions.java:46)
+		at org.hibernate.reactive.session.impl.ReactiveSessionImpl.threadCheck(ReactiveSessionImpl.java:185)
+		at org.hibernate.reactive.session.impl.ReactiveSessionImpl.checkOpen(ReactiveSessionImpl.java:1667)
+		at org.hibernate.internal.AbstractSharedSessionContract.checkOpenOrWaitingForAutoClose(AbstractSharedSessionContract.java:535)
+		at org.hibernate.internal.SessionImpl.checkOpenOrWaitingForAutoClose(SessionImpl.java:622)
+		at org.hibernate.internal.SessionImpl.closeWithoutOpenChecks(SessionImpl.java:412)
+		at org.hibernate.internal.SessionImpl.close(SessionImpl.java:395)
+		at org.hibernate.reactive.session.impl.ReactiveSessionImpl.reactiveClose(ReactiveSessionImpl.java:1619)
+		at io.smallrye.context.impl.wrappers.SlowContextualSupplier.get(SlowContextualSupplier.java:21)
+		at io.smallrye.mutiny.operators.uni.builders.UniCreateFromCompletionStage.subscribe(UniCreateFromCompletionStage.java:24)
+		at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+		at io.smallrye.mutiny.operators.uni.UniRunSubscribeOn.lambda$subscribe$0(UniRunSubscribeOn.java:27)
+		at org.hibernate.reactive.context.impl.VertxContext.execute(VertxContext.java:91)
+		at io.smallrye.mutiny.operators.uni.UniRunSubscribeOn.subscribe(UniRunSubscribeOn.java:25)
+		at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+		at io.smallrye.mutiny.operators.uni.UniOnTermination.subscribe(UniOnTermination.java:21)
+		at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+		at io.smallrye.mutiny.operators.uni.UniOnItemOrFailureFlatMap.subscribe(UniOnItemOrFailureFlatMap.java:27)
+		at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+		at io.smallrye.mutiny.operators.uni.UniOnItemOrFailureFlatMap$UniOnItemOrFailureFlatMapProcessor.performInnerSubscription(UniOnItemOrFailureFlatMap.java:99)
+		at io.smallrye.mutiny.operators.uni.UniOnItemOrFailureFlatMap$UniOnItemOrFailureFlatMapProcessor.onItem(UniOnItemOrFailureFlatMap.java:54)
+		at io.smallrye.mutiny.operators.uni.UniOnItemTransformToUni$UniOnItemTransformToUniProcessor.onItem(UniOnItemTransformToUni.java:60)
+		at io.smallrye.mutiny.operators.uni.UniEmitOn$UniEmitOnProcessor.lambda$onItem$0(UniEmitOn.java:34)
+		at io.quarkus.vertx.core.runtime.VertxCoreRecorder$15.runWith(VertxCoreRecorder.java:637)
+		at org.jboss.threads.EnhancedQueueExecutor$Task.doRunWith(EnhancedQueueExecutor.java:2675)
+		at org.jboss.threads.EnhancedQueueExecutor$Task.run(EnhancedQueueExecutor.java:2654)
+		at org.jboss.threads.EnhancedQueueExecutor.runThreadBody(EnhancedQueueExecutor.java:1627)
+		at org.jboss.threads.EnhancedQueueExecutor$ThreadBody.run(EnhancedQueueExecutor.java:1594)
+		at org.jboss.threads.DelegatingRunnable.run(DelegatingRunnable.java:11)
+		at org.jboss.threads.ThreadLocalResettingRunnable.run(ThreadLocalResettingRunnable.java:11)
+		at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+		at java.base/java.lang.Thread.run(Thread.java:1583)
+
+[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT.testUpdateCustomer -- Time elapsed: 0.009 s <<< FAILURE!
+java.lang.AssertionError: 
+1 expectation failed.
+Expected status code <200> but was <500>.
+
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.codehaus.groovy.reflection.CachedConstructor.invoke(CachedConstructor.java:73)
+	at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:108)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callConstructor(AbstractCallSite.java:277)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure.validate(ResponseSpecificationImpl.groovy:512)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure$validate$1.call(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.validateResponseIfRequired(ResponseSpecificationImpl.groovy:696)
+	at io.restassured.internal.ResponseSpecificationImpl.this$2$validateResponseIfRequired(ResponseSpecificationImpl.groovy)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.runtime.callsite.PlainObjectMetaMethodSite.doInvoke(PlainObjectMetaMethodSite.java:43)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite$PogoCachedMethodSiteNoUnwrapNoCoerce.invoke(PogoMetaMethodSite.java:198)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite.callCurrent(PogoMetaMethodSite.java:62)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:185)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:135)
+	at io.restassured.specification.ResponseSpecification$statusCode$0.callCurrent(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:143)
+	at io.restassured.internal.ValidatableResponseOptionsImpl.statusCode(ValidatableResponseOptionsImpl.java:89)
+	at fr.simplex_software.fifty_shades_of_rest.orders_test.OrdersBaseTest.testUpdateCustomer(OrdersBaseTest.java:69)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at io.quarkus.test.junit.QuarkusTestExtension.runExtensionMethod(QuarkusTestExtension.java:967)
+	at io.quarkus.test.junit.QuarkusTestExtension.interceptTestMethod(QuarkusTestExtension.java:817)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT.testGetCustomer -- Time elapsed: 0.018 s <<< FAILURE!
+java.lang.AssertionError: 
+1 expectation failed.
+Expected status code <200> but was <500>.
+
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.codehaus.groovy.reflection.CachedConstructor.invoke(CachedConstructor.java:73)
+	at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:108)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callConstructor(AbstractCallSite.java:277)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure.validate(ResponseSpecificationImpl.groovy:512)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure$validate$1.call(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.validateResponseIfRequired(ResponseSpecificationImpl.groovy:696)
+	at io.restassured.internal.ResponseSpecificationImpl.this$2$validateResponseIfRequired(ResponseSpecificationImpl.groovy)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.runtime.callsite.PlainObjectMetaMethodSite.doInvoke(PlainObjectMetaMethodSite.java:43)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite$PogoCachedMethodSiteNoUnwrapNoCoerce.invoke(PogoMetaMethodSite.java:198)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite.callCurrent(PogoMetaMethodSite.java:62)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:185)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:135)
+	at io.restassured.specification.ResponseSpecification$statusCode$0.callCurrent(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:143)
+	at io.restassured.internal.ValidatableResponseOptionsImpl.statusCode(ValidatableResponseOptionsImpl.java:89)
+	at fr.simplex_software.fifty_shades_of_rest.orders_test.OrdersBaseTest.testGetCustomer(OrdersBaseTest.java:86)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at io.quarkus.test.junit.QuarkusTestExtension.runExtensionMethod(QuarkusTestExtension.java:967)
+	at io.quarkus.test.junit.QuarkusTestExtension.interceptTestMethod(QuarkusTestExtension.java:817)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT.testGetOrderByCustomer -- Time elapsed: 0.008 s <<< FAILURE!
+java.lang.AssertionError: 
+1 expectation failed.
+Expected status code <200> but was <500>.
+
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.codehaus.groovy.reflection.CachedConstructor.invoke(CachedConstructor.java:73)
+	at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:108)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callConstructor(AbstractCallSite.java:277)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure.validate(ResponseSpecificationImpl.groovy:512)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure$validate$1.call(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.validateResponseIfRequired(ResponseSpecificationImpl.groovy:696)
+	at io.restassured.internal.ResponseSpecificationImpl.this$2$validateResponseIfRequired(ResponseSpecificationImpl.groovy)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.runtime.callsite.PlainObjectMetaMethodSite.doInvoke(PlainObjectMetaMethodSite.java:43)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite$PogoCachedMethodSiteNoUnwrapNoCoerce.invoke(PogoMetaMethodSite.java:198)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite.callCurrent(PogoMetaMethodSite.java:62)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:185)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:135)
+	at io.restassured.specification.ResponseSpecification$statusCode$0.callCurrent(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:143)
+	at io.restassured.internal.ValidatableResponseOptionsImpl.statusCode(ValidatableResponseOptionsImpl.java:89)
+	at fr.simplex_software.fifty_shades_of_rest.orders_test.OrdersBaseTest.testGetOrderByCustomer(OrdersBaseTest.java:96)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at io.quarkus.test.junit.QuarkusTestExtension.runExtensionMethod(QuarkusTestExtension.java:967)
+	at io.quarkus.test.junit.QuarkusTestExtension.interceptTestMethod(QuarkusTestExtension.java:817)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT.testDeleteOrder -- Time elapsed: 0.009 s <<< FAILURE!
+java.lang.AssertionError: 
+1 expectation failed.
+Expected status code <200> but was <500>.
+
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.codehaus.groovy.reflection.CachedConstructor.invoke(CachedConstructor.java:73)
+	at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:108)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callConstructor(AbstractCallSite.java:277)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure.validate(ResponseSpecificationImpl.groovy:512)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure$validate$1.call(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.validateResponseIfRequired(ResponseSpecificationImpl.groovy:696)
+	at io.restassured.internal.ResponseSpecificationImpl.this$2$validateResponseIfRequired(ResponseSpecificationImpl.groovy)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.runtime.callsite.PlainObjectMetaMethodSite.doInvoke(PlainObjectMetaMethodSite.java:43)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite$PogoCachedMethodSiteNoUnwrapNoCoerce.invoke(PogoMetaMethodSite.java:198)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite.callCurrent(PogoMetaMethodSite.java:62)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:185)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:135)
+	at io.restassured.specification.ResponseSpecification$statusCode$0.callCurrent(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:143)
+	at io.restassured.internal.ValidatableResponseOptionsImpl.statusCode(ValidatableResponseOptionsImpl.java:89)
+	at fr.simplex_software.fifty_shades_of_rest.orders_test.OrdersBaseTest.testDeleteOrder(OrdersBaseTest.java:119)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at io.quarkus.test.junit.QuarkusTestExtension.runExtensionMethod(QuarkusTestExtension.java:967)
+	at io.quarkus.test.junit.QuarkusTestExtension.interceptTestMethod(QuarkusTestExtension.java:817)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Suppressed: java.lang.IllegalStateException: No entities were attached to persistence unit 'default-reactive'. Did you forget to annotate your Panache Entity classes with '@Entity' or improperly configure the 'quarkus.hibernate-orm." default-reactive".packages' property?
+		at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.getSession(AbstractJpaOperations.java:86)
+		at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.getSession(AbstractJpaOperations.java:63)
+		at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.findAll(AbstractJpaOperations.java:298)
+		at io.quarkus.hibernate.orm.panache.common.runtime.AbstractJpaOperations.streamAll(AbstractJpaOperations.java:317)
+		at fr.simplex_software.fifty_shades_of_rest.orders.repository.OrderRepository.streamAll(OrderRepository.java)
+		at fr.simplex_software.fifty_shades_of_rest.orders.repository.OrderRepository_ClientProxy.streamAll(Unknown Source)
+		at fr.simplex_software.fifty_shades_of_rest.orders.service.impl.OrderServiceImpl.getAllOrders(OrderServiceImpl.java:43)
+		at fr.simplex_software.fifty_shades_of_rest.orders.service.impl.OrderServiceImpl_ClientProxy.getAllOrders(Unknown Source)
+		at fr.simplex_software.fifty_shades_of_rest.orders.react.OrderResourceReact.lambda$getOrders$0(OrderResourceReact.java:33)
+		at io.smallrye.context.impl.wrappers.SlowContextualConsumer.accept(SlowContextualConsumer.java:21)
+		at io.smallrye.mutiny.operators.uni.builders.UniCreateWithEmitter.subscribe(UniCreateWithEmitter.java:22)
+		at io.smallrye.mutiny.operators.AbstractUni.subscribe(AbstractUni.java:36)
+		at io.smallrye.mutiny.groups.UniSubscribe.withSubscriber(UniSubscribe.java:51)
+		at io.smallrye.mutiny.groups.UniSubscribe.with(UniSubscribe.java:110)
+		at io.smallrye.mutiny.groups.UniSubscribe.with(UniSubscribe.java:88)
+		at org.jboss.resteasy.reactive.server.handlers.UniResponseHandler.handle(UniResponseHandler.java:21)
+		at io.quarkus.resteasy.reactive.server.runtime.QuarkusResteasyReactiveRequestContext.invokeHandler(QuarkusResteasyReactiveRequestContext.java:150)
+		at org.jboss.resteasy.reactive.common.core.AbstractResteasyReactiveContext.run(AbstractResteasyReactiveContext.java:147)
+		at org.jboss.resteasy.reactive.server.handlers.RestInitialHandler.beginProcessing(RestInitialHandler.java:48)
+		at org.jboss.resteasy.reactive.server.vertx.ResteasyReactiveVertxHandler.handle(ResteasyReactiveVertxHandler.java:23)
+		at org.jboss.resteasy.reactive.server.vertx.ResteasyReactiveVertxHandler.handle(ResteasyReactiveVertxHandler.java:10)
+		at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+		at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+		at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+		at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$1.handle(HttpServerCommonHandlers.java:62)
+		at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$1.handle(HttpServerCommonHandlers.java:40)
+		at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+		at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+		at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+		at io.quarkus.resteasy.reactive.server.runtime.ResteasyReactiveRecorder$13.handle(ResteasyReactiveRecorder.java:359)
+		at io.quarkus.resteasy.reactive.server.runtime.ResteasyReactiveRecorder$13.handle(ResteasyReactiveRecorder.java:348)
+		at io.vertx.ext.web.impl.RouteState.handleContext(RouteState.java:1281)
+		at io.vertx.ext.web.impl.RoutingContextImplBase.iterateNext(RoutingContextImplBase.java:177)
+		at io.vertx.ext.web.impl.RoutingContextImpl.next(RoutingContextImpl.java:145)
+		at io.vertx.ext.web.impl.RoutingContextImpl.route(RoutingContextImpl.java:94)
+		at io.vertx.ext.web.impl.RouterImpl.handle(RouterImpl.java:69)
+		at io.vertx.ext.web.impl.RouterImpl.handle(RouterImpl.java:37)
+		at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$2.handle(HttpServerCommonHandlers.java:86)
+		at io.quarkus.vertx.http.runtime.options.HttpServerCommonHandlers$2.handle(HttpServerCommonHandlers.java:69)
+		at io.quarkus.vertx.http.runtime.VertxHttpRecorder$1.handle(VertxHttpRecorder.java:183)
+		at io.quarkus.vertx.http.runtime.VertxHttpRecorder$1.handle(VertxHttpRecorder.java:159)
+		at io.vertx.core.impl.ContextImpl.emit(ContextImpl.java:342)
+		at io.vertx.core.impl.DuplicatedContext.emit(DuplicatedContext.java:163)
+		at io.vertx.core.http.impl.Http1xServerConnection.handleMessage(Http1xServerConnection.java:174)
+		at io.vertx.core.net.impl.ConnectionBase.read(ConnectionBase.java:159)
+		at io.vertx.core.net.impl.VertxHandler.channelRead(VertxHandler.java:153)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.vertx.core.http.impl.Http1xUpgradeToH2CHandler.channelRead(Http1xUpgradeToH2CHandler.java:124)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:289)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.netty.handler.codec.ByteToMessageDecoder.fireChannelRead(ByteToMessageDecoder.java:346)
+		at io.netty.handler.codec.ByteToMessageDecoder.channelRead(ByteToMessageDecoder.java:318)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.vertx.core.http.impl.Http1xOrH2CHandler.end(Http1xOrH2CHandler.java:61)
+		at io.vertx.core.http.impl.Http1xOrH2CHandler.channelRead(Http1xOrH2CHandler.java:38)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.netty.handler.timeout.IdleStateHandler.channelRead(IdleStateHandler.java:289)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:442)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+		at io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1357)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:440)
+		at io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+		at io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:868)
+		at io.netty.channel.nio.AbstractNioByteChannel$NioByteUnsafe.read(AbstractNioByteChannel.java:166)
+		at io.netty.channel.nio.NioEventLoop.processSelectedKey(NioEventLoop.java:788)
+		at io.netty.channel.nio.NioEventLoop.processSelectedKeysOptimized(NioEventLoop.java:724)
+		at io.netty.channel.nio.NioEventLoop.processSelectedKeys(NioEventLoop.java:650)
+		at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:562)
+		at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:997)
+		at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+		at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+		at java.base/java.lang.Thread.run(Thread.java:1583)
+
+[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT.testDeleteCustomer -- Time elapsed: 0.009 s <<< FAILURE!
+java.lang.AssertionError: 
+1 expectation failed.
+Expected status code <200> but was <500>.
+
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at org.codehaus.groovy.reflection.CachedConstructor.invoke(CachedConstructor.java:73)
+	at org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce.callConstructor(ConstructorSite.java:108)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callConstructor(AbstractCallSite.java:277)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure.validate(ResponseSpecificationImpl.groovy:512)
+	at io.restassured.internal.ResponseSpecificationImpl$HamcrestAssertionClosure$validate$1.call(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.validateResponseIfRequired(ResponseSpecificationImpl.groovy:696)
+	at io.restassured.internal.ResponseSpecificationImpl.this$2$validateResponseIfRequired(ResponseSpecificationImpl.groovy)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.runtime.callsite.PlainObjectMetaMethodSite.doInvoke(PlainObjectMetaMethodSite.java:43)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite$PogoCachedMethodSiteNoUnwrapNoCoerce.invoke(PogoMetaMethodSite.java:198)
+	at org.codehaus.groovy.runtime.callsite.PogoMetaMethodSite.callCurrent(PogoMetaMethodSite.java:62)
+	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callCurrent(AbstractCallSite.java:185)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:135)
+	at io.restassured.specification.ResponseSpecification$statusCode$0.callCurrent(Unknown Source)
+	at io.restassured.internal.ResponseSpecificationImpl.statusCode(ResponseSpecificationImpl.groovy:143)
+	at io.restassured.internal.ValidatableResponseOptionsImpl.statusCode(ValidatableResponseOptionsImpl.java:89)
+	at fr.simplex_software.fifty_shades_of_rest.orders_test.OrdersBaseTest.testDeleteCustomer(OrdersBaseTest.java:110)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at io.quarkus.test.junit.QuarkusTestExtension.runExtensionMethod(QuarkusTestExtension.java:967)
+	at io.quarkus.test.junit.QuarkusTestExtension.interceptTestMethod(QuarkusTestExtension.java:817)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+2025-02-03 19:14:45,626 INFO  [io.quarkus] (main) orders-reactive stopped in 0.026s
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Failures: 
+[ERROR]   OrdersReactRestAssuredClientIT>OrdersBaseTest.testCreateOrder:41 1 expectation failed.
+Expected status code <200> but was <500>.
+
+[ERROR]   OrdersReactRestAssuredClientIT>OrdersBaseTest.testDeleteCustomer:110 1 expectation failed.
+Expected status code <200> but was <500>.
+
+[ERROR]   OrdersReactRestAssuredClientIT>OrdersBaseTest.testDeleteOrder:119 1 expectation failed.
+Expected status code <200> but was <500>.
+
+[ERROR]   OrdersReactRestAssuredClientIT>OrdersBaseTest.testGetCustomer:86 1 expectation failed.
+Expected status code <200> but was <500>.
+
+[ERROR]   OrdersReactRestAssuredClientIT>OrdersBaseTest.testGetCustomers:60 1 expectation failed.
+Expected status code <200> but was <500>.
+
+[ERROR]   OrdersReactRestAssuredClientIT>OrdersBaseTest.testGetOrderByCustomer:96 1 expectation failed.
+Expected status code <200> but was <500>.
+
+[ERROR]   OrdersReactRestAssuredClientIT>OrdersBaseTest.testGetOrders:51 1 expectation failed.
+Expected status code <200> but was <500>.
+
+[ERROR]   OrdersReactRestAssuredClientIT>OrdersBaseTest.testUpdateCustomer:69 1 expectation failed.
+Expected status code <200> but was <500>.
+
+[INFO] 
+[ERROR] Tests run: 9, Failures: 8, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.514 s
+[INFO] Finished at: 2025-02-03T19:14:45+01:00
+[INFO] ------------------------------------------------------------------------
