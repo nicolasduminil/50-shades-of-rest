@@ -1,10 +1,9 @@
 package fr.simplex_software.fifty_shades_of_rest.orders.react;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
-import fr.simplex_software.fifty_shades_of_rest.orders.service.*;
+import fr.simplex_software.fifty_shades_of_rest.orders.service.reactive.*;
 import io.quarkus.hibernate.reactive.panache.common.*;
 import io.smallrye.mutiny.*;
-import io.smallrye.mutiny.infrastructure.*;
 import jakarta.enterprise.context.*;
 import jakarta.inject.*;
 import jakarta.ws.rs.*;
@@ -12,7 +11,6 @@ import jakarta.ws.rs.core.*;
 
 import java.net.*;
 import java.nio.charset.*;
-import java.util.*;
 
 @ApplicationScoped
 @Path("customers-react")
@@ -22,8 +20,6 @@ public class CustomerResourceReact
 {
   @Inject
   CustomerReactiveService customerService;
-  @Inject
-  OrderReactiveService orderService;
 
   @GET
   @WithSession
@@ -50,16 +46,9 @@ public class CustomerResourceReact
   @WithSession
   public Uni<Response> getCustomerByEmail(@PathParam("email") String email)
   {
-    System.out.println("CustomerResourceReact.getCustomerByEmail() - email: " + email);
-    /*return Uni.createFrom()
-      .item(() -> email)
-      .map(customerDto -> Response.ok()
-        .entity(customerService.getCustomerByEmail(URLDecoder.decode(email, StandardCharsets.UTF_8)))
-        .build());*/
     return Uni.createFrom()
       .item(() -> URLDecoder.decode(email, StandardCharsets.UTF_8))
       .chain(decodedEmail -> customerService.getCustomerByEmail(decodedEmail))
-      //.chain(customerDTO -> orderService.getOrdersForCustomer(customerDTO.id()))
       .map(orders -> Response.ok(orders).build());
   }
 
@@ -78,13 +67,12 @@ public class CustomerResourceReact
 
 
   @PUT
-  @Path("/{id}")
   @WithTransaction
-  public Uni<Response> updateCustomer(@PathParam("id") Long id, CustomerDTO customerDTO)
+  public Uni<Response> updateCustomer(CustomerDTO customerDTO)
   {
     return Uni.createFrom()
       .item(customerDTO)
-      .flatMap(dto -> customerService.updateCustomer(id, dto)
+      .flatMap(dto -> customerService.updateCustomer(dto)
       .map (n -> Response.accepted()
         .entity(n)
         .build()));
@@ -94,10 +82,6 @@ public class CustomerResourceReact
   @WithTransaction
   public Uni<Response> deleteCustomer(CustomerDTO customerDTO)
   {
-    return Uni.createFrom()
-      .<Response>emitter(em -> {
-        customerService.deleteCustomer(customerDTO.id());
-        em.complete(Response.noContent().build());
-      });
-  }
+    return customerService.deleteCustomer(customerDTO.id())
+      .map(ignored -> Response.noContent().build());  }
 }

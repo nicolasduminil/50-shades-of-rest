@@ -1,11 +1,11 @@
-package fr.simplex_software.fifty_shades_of_rest.orders.service.impl;
+package fr.simplex_software.fifty_shades_of_rest.orders.service.reactive.impl;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
-import fr.simplex_software.fifty_shades_of_rest.orders.repository.*;
-import fr.simplex_software.fifty_shades_of_rest.orders.service.*;
-import fr.simplex_software.fifty_shades_of_rest.orders.service.exceptions.*;
-import fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.*;
+import fr.simplex_software.fifty_shades_of_rest.orders.repository.reactive.*;
+import fr.simplex_software.fifty_shades_of_rest.orders.service.reactive.*;
+import fr.simplex_software.fifty_shades_of_rest.orders.service.reactive.exceptions.*;
+import fr.simplex_software.fifty_shades_of_rest.orders.service.reactive.mapping.*;
 import io.smallrye.mutiny.*;
 import jakarta.enterprise.context.*;
 import jakarta.inject.*;
@@ -25,16 +25,14 @@ public class OrderReactiveServiceImpl implements OrderReactiveService
   @Override
   public Uni<OrderDTO> createOrder(OrderDTO orderDTO)
   {
-    return customerService.findCustomerById(orderDTO.customerId())
-      .map(customer -> orderMapper.toEntity(orderDTO, customer))
-      .chain(order -> orderRepository.persist(order))
-      .map(order -> orderMapper.fromEntity(order));
+    return orderMapper.toEntity(orderDTO)
+      .chain(order -> orderRepository.createOrder(order))
+      .map(orderMapper::fromEntity);
   }
 
   @Override
   public Uni<List<OrderDTO>> getOrdersForCustomer(Long customerId)
   {
-    System.out.println("OrderReactiveServiceImpl.getOrdersForCustomer() - customerId: " + customerId);
     return orderRepository.findByCustomerId(customerId)
       .map(orders -> orders.stream()
         .map(orderMapper::fromEntity)

@@ -15,15 +15,15 @@ public class Customer
   @Id
   @SequenceGenerator(name="CUSTOMERS_SEQ_GEN", sequenceName="CUSTOMERS_SEQ", allocationSize=1)
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="CUSTOMERS_SEQ_GEN")
-  @Column(name = "ID", nullable = false)
+  @Column(name = "ID", nullable = false, unique = true)
   private Long id;
   @Column(name = "FIRST_NAME", nullable = false, length = 40)
   private String firstName;
   @Column(name = "LAST_NAME", nullable = false, length = 40)
   private String lastName;
-  @Column(name = "EMAIL", nullable = false, length = 40)
+  @Column(name = "EMAIL", nullable = false, length = 40, unique = true)
   private String email;
-  @Column(name = "PHONE", nullable = false, length = 40)
+  @Column(name = "PHONE", nullable = false, length = 40, unique = true)
   private String phone;
   @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
   @OnDelete(action = OnDeleteAction.CASCADE)

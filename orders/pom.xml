@@ -21,6 +21,8 @@
     <module>orders-infrastructure</module>
     <module>orders-async</module>
     <module>orders-reactive</module>
+    <module>orders-reactive-repository</module>
+    <module>orders-reactive-service</module>
   </modules>
   <dependencyManagement>
     <dependencies>

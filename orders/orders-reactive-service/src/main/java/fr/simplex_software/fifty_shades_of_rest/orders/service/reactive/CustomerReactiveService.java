@@ -1,4 +1,4 @@
-package fr.simplex_software.fifty_shades_of_rest.orders.service;
+package fr.simplex_software.fifty_shades_of_rest.orders.service.reactive;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
@@ -12,7 +12,7 @@ public interface CustomerReactiveService
   Uni<CustomerDTO> getCustomer(Long id);
   Uni<CustomerDTO> getCustomerByEmail(String email);
   Uni<CustomerDTO> createCustomer(CustomerDTO customerDTO);
-  Uni<Integer> updateCustomer(Long id, CustomerDTO customerDTO);
+  Uni<CustomerDTO> updateCustomer(CustomerDTO customerDTO);
   Uni<Boolean> deleteCustomer(Long id);
   Uni<Customer> findCustomerById(Long id);
 }

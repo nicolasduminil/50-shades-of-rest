@@ -1,4 +1,4 @@
-package fr.simplex_software.fifty_shades_of_rest.orders.repository;
+package fr.simplex_software.fifty_shades_of_rest.orders.repository.reactive;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
 import io.quarkus.hibernate.reactive.panache.*;
@@ -17,7 +17,6 @@ public class CustomerReactiveRepository implements PanacheRepository<Customer>
 
   public Uni<Customer> createCustomer(Customer customer)
   {
-    System.out.println("CustomerReactiveRepository.createCustomer() - customer: " + customer.toString());
     return persist(customer)
       .map(ignored -> customer);
   }

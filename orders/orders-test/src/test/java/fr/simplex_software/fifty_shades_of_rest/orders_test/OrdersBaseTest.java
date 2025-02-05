@@ -50,7 +50,7 @@ public abstract class OrdersBaseTest
       .statusCode(HttpStatus.SC_CREATED);
   }
 
-  /*@Test
+  @Test
   @Order(30)
   public void testGetOrders()
   {
@@ -150,5 +150,5 @@ public abstract class OrdersBaseTest
       .contentType(ContentType.JSON).delete(ordersUrl)
       .then().log().ifValidationFails()
       .statusCode(HttpStatus.SC_NO_CONTENT);
-  }*/
+  }
 }

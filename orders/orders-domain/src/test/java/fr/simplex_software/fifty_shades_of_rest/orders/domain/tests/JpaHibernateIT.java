@@ -37,8 +37,8 @@ public class JpaHibernateIT
   @Test
   public void testOrder()
   {
-    Customer customer = new Customer("John", "Doe",
-      "john.doe@email.com", "222-786453");
+    Customer customer = new Customer("Jane", "Doe",
+      "jane.doe@email.com", "222-786460");
     Order order = new Order("miItem1", new BigDecimal("210.76"), customer);
     customer.addOrder(order);
     em.persist(customer);

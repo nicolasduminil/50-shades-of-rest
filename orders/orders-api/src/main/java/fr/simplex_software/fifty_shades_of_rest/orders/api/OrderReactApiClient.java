@@ -4,7 +4,7 @@ import jakarta.ws.rs.*;
 import org.eclipse.microprofile.rest.client.inject.*;
 
 @RegisterRestClient(configKey = "base_uri")
-@Path("customers-react")
+@Path("orders-react")
 public interface OrderReactApiClient extends BaseOrderApiClient
 {
 }

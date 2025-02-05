@@ -1,7 +1,7 @@
 package fr.simplex_software.fifty_shades_of_rest.orders.react;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
-import fr.simplex_software.fifty_shades_of_rest.orders.service.*;
+import fr.simplex_software.fifty_shades_of_rest.orders.service.reactive.*;
 import io.quarkus.hibernate.reactive.panache.common.*;
 import io.smallrye.mutiny.*;
 import jakarta.enterprise.context.*;
@@ -28,8 +28,8 @@ public class OrderResourceReact
   @WithSession
   public Uni<Response> getOrders()
   {
-    return customerService.getCustomers()
-      .map(customers -> Response.ok(customers).build());
+    return orderService.getAllOrders()
+      .map(orders -> Response.ok(orders).build());
   }
 
   @GET
@@ -43,6 +43,16 @@ public class OrderResourceReact
         .entity(orderService.getOrder(orderId))
         .build());
   }
+
+  @GET
+  @Path("/customer/{customerId}")
+  @WithSession
+  public Uni<Response> getOrdersByCustomer(@PathParam("customerId") Long customerId)
+  {
+    return orderService.getOrdersForCustomer(customerId)
+      .map(orders -> Response.ok(orders).build());
+  }
+
 
   @GET
   @Path("/email/{email}")
@@ -60,12 +70,6 @@ public class OrderResourceReact
   @WithTransaction
   public Uni<Response> createOrder(OrderDTO orderDTO)
   {
-    System.out.println ("OrderResourceReact.createOrder() - orderDTO: " + orderDTO.toString());
-    /*return Uni.createFrom()
-      .item(() -> orderDTO)
-      .map(dto -> Response.created(URI.create("/orders/" + dto.id()))
-        .entity(orderService.createOrder(dto))
-        .build());*/
     return orderService.createOrder(orderDTO)
       .map(createdOrderDTO -> Response
         .created(URI.create("/orders/" + createdOrderDTO.id()))
@@ -90,11 +94,7 @@ public class OrderResourceReact
   @WithTransaction
   public Uni<Response> deleteOrder(OrderDTO orderDTO)
   {
-    return Uni.createFrom()
-      .emitter(em ->
-      {
-        orderService.deleteOrder(orderDTO.id());
-        em.complete(Response.noContent().build());
-      });
+     return orderService.deleteOrder(orderDTO.id())
+      .map(ignored -> Response.noContent().build());
   }
 }

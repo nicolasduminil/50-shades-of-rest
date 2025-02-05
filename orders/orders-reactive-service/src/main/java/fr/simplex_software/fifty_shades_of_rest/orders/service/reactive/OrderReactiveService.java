@@ -1,4 +1,4 @@
-package fr.simplex_software.fifty_shades_of_rest.orders.service;
+package fr.simplex_software.fifty_shades_of_rest.orders.service.reactive;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;

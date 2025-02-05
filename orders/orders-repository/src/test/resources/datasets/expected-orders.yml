@@ -1,10 +1,10 @@
-customers:
-  - first_name: "John"
-    last_name: "Doe"
-    email: "john.doe@email.com"
-    phone: "555-1234"
-orders:
-  - item: "myItem1"
-    price: 100.25
-  - item: "myItem2"
-    price: 200.25
+CUSTOMERS:
+  - FIRST_NAME: "John"
+    LAST_NAME: "Doe"
+    EMAIL: "john.doe@email.com"
+    PHONE: "555-1234"
+ORDERS:
+  - ITEM: "myItem1"
+    PRICE: 100.25
+  - ITEM: "myItem2"
+    PRICE: 200.25

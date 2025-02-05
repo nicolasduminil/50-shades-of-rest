@@ -49,7 +49,7 @@
     </dependency>
     <dependency>
       <groupId>fr.simplex-software.workshop</groupId>
-      <artifactId>orders-service</artifactId>
+      <artifactId>orders-reactive-service</artifactId>
     </dependency>
     <dependency>
       <groupId>fr.simplex-software.workshop</groupId>

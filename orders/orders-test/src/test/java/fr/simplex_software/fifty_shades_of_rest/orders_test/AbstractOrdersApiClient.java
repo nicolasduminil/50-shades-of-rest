@@ -35,9 +35,10 @@ public abstract class AbstractOrdersApiClient
     assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_OK);
     CustomerDTO customerDTO = response.readEntity(CustomerDTO.class);
     assertThat(customerDTO).isNotNull();
-    OrderDTO order = new OrderDTO("myItem01",
+    assertThat(customerDTO.email()).isEqualTo("john.doe@email.com");
+    OrderDTO orderDTO = new OrderDTO("myItem01",
       new BigDecimal("100.25"), customerDTO.id());
-    assertThat(getOrderApiClient().createOrder(order).getStatus())
+    assertThat(getOrderApiClient().createOrder(orderDTO).getStatus())
       .isEqualTo(HttpStatus.SC_CREATED);
   }
 

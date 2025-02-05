@@ -40,7 +40,11 @@ public class CustomerRepositoryIT
   @ExpectedDataSet(value = "expected-orders.yml")
   public void testPersist()
   {
-    customerRepository.persist(getCustomer());
+    Customer customer = new Customer("Jane", "Doe",
+      "jane.doe@email.com", "555-1240");
+    customer.addOrder(new Order("myItem1", new BigDecimal("100.25"), customer));
+    customer.addOrder(new Order("myItem2", new BigDecimal("200.25"), customer));
+    customerRepository.persist(customer);
   }
 
   @Test
@@ -131,21 +135,13 @@ public class CustomerRepositoryIT
     assertThat(customers.getFirst().getOrders()).hasSize(2);
   }
 
-  @Test  @DataSet(value = "orders.yml", cleanAfter = true)
+  @Test
+  @DataSet(value = "orders.yml", cleanAfter = true)
   public void testListCustomersWithOrders()
   {
     List<Customer> customers = customerRepository.listCustomersWithOrders();
     assertThat(customers).isNotNull();
     assertThat(customers).hasSize(2);
     assertThat(customers.getFirst().getOrders()).hasSize(2);
-  }
-
-  private Customer getCustomer()
-  {
-    Customer customer = new Customer("John", "Doe",
-      "john.doe@email.com", "555-1234");
-    customer.addOrder(new Order("myItem1", new BigDecimal("100.25"), customer));
-    customer.addOrder(new Order("myItem2", new BigDecimal("200.25"), customer));
-    return customer;
   }
 }

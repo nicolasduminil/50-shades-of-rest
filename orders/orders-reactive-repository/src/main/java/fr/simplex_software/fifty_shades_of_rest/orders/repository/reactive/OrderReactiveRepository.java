@@ -1,4 +1,4 @@
-package fr.simplex_software.fifty_shades_of_rest.orders.repository;
+package fr.simplex_software.fifty_shades_of_rest.orders.repository.reactive;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.jpa.*;
 import io.quarkus.hibernate.reactive.panache.*;
