@@ -105,7 +105,7 @@
           <version>${surefire-plugin.version}</version>
           <configuration>
             <argLine>-XX:+EnableDynamicAgentLoading</argLine>
-            <argLine>-javaagent:${org.mockito:mockito-core:jar}</argLine>
+            <argLine>-javaagent:${user.home}/.m2/repository/org/mockito/mockito-core/5.14.2/mockito-core-5.14.2.jar -Xshare:off</argLine>
             <systemPropertyVariables>
               <quarkus.hibernate-orm.enabled>false</quarkus.hibernate-orm.enabled>
               <quarkus.arc.exclude-types>io.agroal.**</quarkus.arc.exclude-types>
@@ -119,6 +119,7 @@
           <version>${surefire-plugin.version}</version>
           <configuration>
             <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+            <argLine>-javaagent:${user.home}/.m2/repository/org/mockito/mockito-core/5.14.2/mockito-core-5.14.2.jar -Xshare:off</argLine>
             <systemPropertyVariables>
               <quarkus.datasource.devservices.enabled>true</quarkus.datasource.devservices.enabled>
               <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
