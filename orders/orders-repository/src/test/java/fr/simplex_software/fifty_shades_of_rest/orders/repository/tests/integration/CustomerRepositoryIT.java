@@ -40,8 +40,8 @@ public class CustomerRepositoryIT
   @ExpectedDataSet(value = "expected-orders.yml")
   public void testPersist()
   {
-    Customer customer = new Customer("Jane", "Doe",
-      "jane.doe@email.com", "555-1240");
+    Customer customer = new Customer("John", "Doe",
+      "john.doe@email.com", "555-1234");
     customer.addOrder(new Order("myItem1", new BigDecimal("100.25"), customer));
     customer.addOrder(new Order("myItem2", new BigDecimal("200.25"), customer));
     customerRepository.persist(customer);
@@ -112,16 +112,16 @@ public class CustomerRepositoryIT
   public void testUpdateCustomer()
   {
     Customer customer = customerRepository.findById(1L);
-    customer.setFirstName("Jane");
-    customer.setEmail("jane.doe@email.com");
-    customer.setPhone("777-1234");
+    customer.setFirstName("Mike");
+    customer.setEmail("mike.doe@email.com");
+    customer.setPhone("777-1220");
     customerRepository.updateById(1L, customer);
     Customer updatedCustomer = customerRepository.findById(1L);
     assertThat(updatedCustomer).isNotNull();
-    assertThat(updatedCustomer.getFirstName()).isEqualTo("Jane");
+    assertThat(updatedCustomer.getFirstName()).isEqualTo("Mike");
     assertThat(updatedCustomer.getLastName()).isEqualTo("Doe");
-    assertThat(updatedCustomer.getEmail()).isEqualTo("jane.doe@email.com");
-    assertThat(updatedCustomer.getPhone()).isEqualTo("777-1234");
+    assertThat(updatedCustomer.getEmail()).isEqualTo("mike.doe@email.com");
+    assertThat(updatedCustomer.getPhone()).isEqualTo("777-1220");
     assertThat(updatedCustomer.getOrders()).hasSize(2);
   }
 

@@ -35,7 +35,7 @@
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.domain.tests.JpaHibernateIT
-2025-02-05 19:19:54,558 WARN  [org.hib.orm.con.pooling] (JPA Startup Thread) HHH10001002: Using built-in connection pool (not intended for production use)
+2025-02-06 15:36:42,430 WARN  [org.hib.orm.con.pooling] (JPA Startup Thread) HHH10001002: Using built-in connection pool (not intended for production use)
 Hibernate: 
     drop table if exists CUSTOMERS cascade 
 Hibernate: 
@@ -119,84 +119,22 @@ Hibernate:
         (EMAIL, FIRST_NAME, LAST_NAME, PHONE, ID) 
     values
         (?, ?, ?, ?, ?)
-2025-02-05 19:19:55,385 WARN  [org.hib.eng.jdb.spi.SqlExceptionHelper] (main) SQL Error: 23505, SQLState: 23505
-2025-02-05 19:19:55,385 ERROR [org.hib.eng.jdb.spi.SqlExceptionHelper] (main) Unique index or primary key violation: "PUBLIC.CONSTRAINT_INDEX_6 ON PUBLIC.CUSTOMERS(EMAIL NULLS FIRST) VALUES ( /* 1 */ 'john.doe@email.com' )"; SQL statement:
-insert into CUSTOMERS (EMAIL,FIRST_NAME,LAST_NAME,PHONE,ID) values (?,?,?,?,?) [23505-230]
-[ERROR] Tests run: 2, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 4.376 s <<< FAILURE! -- in fr.simplex_software.fifty_shades_of_rest.orders.domain.tests.JpaHibernateIT
-[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.domain.tests.JpaHibernateIT.testCustomer -- Time elapsed: 0.010 s <<< ERROR!
-org.hibernate.exception.ConstraintViolationException: 
-could not execute statement [Unique index or primary key violation: "PUBLIC.CONSTRAINT_INDEX_6 ON PUBLIC.CUSTOMERS(EMAIL NULLS FIRST) VALUES ( /* 1 */ 'john.doe@email.com' )"; SQL statement:
-insert into CUSTOMERS (EMAIL,FIRST_NAME,LAST_NAME,PHONE,ID) values (?,?,?,?,?) [23505-230]] [insert into CUSTOMERS (EMAIL,FIRST_NAME,LAST_NAME,PHONE,ID) values (?,?,?,?,?)]
-	at org.hibernate.dialect.H2Dialect.lambda$buildSQLExceptionConversionDelegate$3(H2Dialect.java:759)
-	at org.hibernate.exception.internal.StandardSQLExceptionConverter.convert(StandardSQLExceptionConverter.java:58)
-	at org.hibernate.engine.jdbc.spi.SqlExceptionHelper.convert(SqlExceptionHelper.java:108)
-	at org.hibernate.engine.jdbc.internal.ResultSetReturnImpl.executeUpdate(ResultSetReturnImpl.java:197)
-	at org.hibernate.engine.jdbc.mutation.internal.AbstractMutationExecutor.performNonBatchedMutation(AbstractMutationExecutor.java:134)
-	at org.hibernate.engine.jdbc.mutation.internal.MutationExecutorSingleNonBatched.performNonBatchedOperations(MutationExecutorSingleNonBatched.java:55)
-	at org.hibernate.engine.jdbc.mutation.internal.AbstractMutationExecutor.execute(AbstractMutationExecutor.java:55)
-	at org.hibernate.persister.entity.mutation.InsertCoordinatorStandard.doStaticInserts(InsertCoordinatorStandard.java:194)
-	at org.hibernate.persister.entity.mutation.InsertCoordinatorStandard.coordinateInsert(InsertCoordinatorStandard.java:132)
-	at org.hibernate.persister.entity.mutation.InsertCoordinatorStandard.insert(InsertCoordinatorStandard.java:104)
-	at org.hibernate.action.internal.EntityInsertAction.execute(EntityInsertAction.java:110)
-	at org.hibernate.engine.spi.ActionQueue.executeActions(ActionQueue.java:644)
-	at org.hibernate.engine.spi.ActionQueue.executeActions(ActionQueue.java:511)
-	at org.hibernate.event.internal.AbstractFlushingEventListener.performExecutions(AbstractFlushingEventListener.java:414)
-	at org.hibernate.event.internal.DefaultFlushEventListener.onFlush(DefaultFlushEventListener.java:41)
-	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:127)
-	at org.hibernate.internal.SessionImpl.doFlush(SessionImpl.java:1429)
-	at org.hibernate.internal.SessionImpl.flush(SessionImpl.java:1415)
-	at io.quarkus.hibernate.orm.runtime.session.TransactionScopedSession.flush(TransactionScopedSession.java:235)
-	at org.hibernate.engine.spi.SessionLazyDelegator.flush(SessionLazyDelegator.java:83)
-	at org.hibernate.Session_ezLSRLJ-TR8CmZvftUcZnZhAtx8_Synthetic_ClientProxy.flush(Unknown Source)
-	at fr.simplex_software.fifty_shades_of_rest.orders.domain.tests.JpaHibernateIT.testCustomer(JpaHibernateIT.java:28)
-	at fr.simplex_software.fifty_shades_of_rest.orders.domain.tests.JpaHibernateIT_Subclass.testCustomer$$superforward(Unknown Source)
-	at fr.simplex_software.fifty_shades_of_rest.orders.domain.tests.JpaHibernateIT_Subclass$$function$$1.apply(Unknown Source)
-	at io.quarkus.arc.impl.AroundInvokeInvocationContext.proceed(AroundInvokeInvocationContext.java:73)
-	at io.quarkus.arc.impl.AroundInvokeInvocationContext.proceed(AroundInvokeInvocationContext.java:62)
-	at io.quarkus.narayana.jta.runtime.interceptor.TransactionalInterceptorBase.invokeInOurTx(TransactionalInterceptorBase.java:136)
-	at io.quarkus.narayana.jta.runtime.interceptor.TransactionalInterceptorBase.invokeInOurTx(TransactionalInterceptorBase.java:107)
-	at io.quarkus.narayana.jta.runtime.interceptor.TransactionalInterceptorRequired.doIntercept(TransactionalInterceptorRequired.java:38)
-	at io.quarkus.narayana.jta.runtime.interceptor.TransactionalInterceptorBase.intercept(TransactionalInterceptorBase.java:61)
-	at io.quarkus.narayana.jta.runtime.interceptor.TransactionalInterceptorRequired.intercept(TransactionalInterceptorRequired.java:32)
-	at io.quarkus.narayana.jta.runtime.interceptor.TransactionalInterceptorRequired_Bean.intercept(Unknown Source)
-	at io.quarkus.arc.impl.InterceptorInvocation.invoke(InterceptorInvocation.java:42)
-	at io.quarkus.arc.impl.AroundInvokeInvocationContext.perform(AroundInvokeInvocationContext.java:30)
-	at io.quarkus.arc.impl.InvocationContexts.performAroundInvoke(InvocationContexts.java:27)
-	at fr.simplex_software.fifty_shades_of_rest.orders.domain.tests.JpaHibernateIT_Subclass.testCustomer(Unknown Source)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at io.quarkus.test.junit.QuarkusTestExtension.runExtensionMethod(QuarkusTestExtension.java:967)
-	at io.quarkus.test.junit.QuarkusTestExtension.interceptTestMethod(QuarkusTestExtension.java:817)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-Caused by: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: Unique index or primary key violation: "PUBLIC.CONSTRAINT_INDEX_6 ON PUBLIC.CUSTOMERS(EMAIL NULLS FIRST) VALUES ( /* 1 */ 'john.doe@email.com' )"; SQL statement:
-insert into CUSTOMERS (EMAIL,FIRST_NAME,LAST_NAME,PHONE,ID) values (?,?,?,?,?) [23505-230]
-	at org.h2.message.DbException.getJdbcSQLException(DbException.java:520)
-	at org.h2.message.DbException.getJdbcSQLException(DbException.java:489)
-	at org.h2.message.DbException.get(DbException.java:223)
-	at org.h2.message.DbException.get(DbException.java:199)
-	at org.h2.index.Index.getDuplicateKeyException(Index.java:523)
-	at org.h2.mvstore.db.MVSecondaryIndex.checkUnique(MVSecondaryIndex.java:223)
-	at org.h2.mvstore.db.MVSecondaryIndex.add(MVSecondaryIndex.java:184)
-	at org.h2.mvstore.db.MVTable.addRow(MVTable.java:518)
-	at org.h2.command.dml.Insert.insertRows(Insert.java:174)
-	at org.h2.command.dml.Insert.update(Insert.java:135)
-	at org.h2.command.dml.DataChangeStatement.update(DataChangeStatement.java:74)
-	at org.h2.command.CommandContainer.update(CommandContainer.java:139)
-	at org.h2.command.Command.executeUpdate(Command.java:304)
-	at org.h2.command.Command.executeUpdate(Command.java:248)
-	at org.h2.jdbc.JdbcPreparedStatement.executeUpdateInternal(JdbcPreparedStatement.java:213)
-	at org.h2.jdbc.JdbcPreparedStatement.executeUpdate(JdbcPreparedStatement.java:172)
-	at org.hibernate.engine.jdbc.internal.ResultSetReturnImpl.executeUpdate(ResultSetReturnImpl.java:194)
-	... 37 more
-
+Hibernate: 
+    select
+        c1_0.ID,
+        c1_0.EMAIL,
+        c1_0.FIRST_NAME,
+        c1_0.LAST_NAME,
+        c1_0.PHONE 
+    from
+        CUSTOMERS c1_0 
+    where
+        c1_0.ID=?
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.547 s -- in fr.simplex_software.fifty_shades_of_rest.orders.domain.tests.JpaHibernateIT
 [INFO] 
 [INFO] Results:
 [INFO] 
-[ERROR] Errors: 
-[ERROR]   JpaHibernateIT.testCustomer:28 » ConstraintViolation could not execute statement [Unique index or primary key violation: "PUBLIC.CONSTRAINT_INDEX_6 ON PUBLIC.CUSTOMERS(EMAIL NULLS FIRST) VALUES ( /* 1 */ 'john.doe@email.com' )"; SQL statement:
-insert into CUSTOMERS (EMAIL,FIRST_NAME,LAST_NAME,PHONE,ID) values (?,?,?,?,?) [23505-230]] [insert into CUSTOMERS (EMAIL,FIRST_NAME,LAST_NAME,PHONE,ID) values (?,?,?,?,?)]
-[INFO] 
-[ERROR] Tests run: 2, Failures: 0, Errors: 1, Skipped: 0
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] 
 [INFO] -----------< fr.simplex-software.workshop:orders-repository >-----------
@@ -211,12 +149,42 @@ insert into CUSTOMERS (EMAIL,FIRST_NAME,LAST_NAME,PHONE,ID) values (?,?,?,?,?) [
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT
-2025-02-05 19:20:01,265 WARN  [com.git.dat.rid.cor.dat.DataSetExecutorImpl] (main) Database will not be populated because no dataset has been provided.
-2025-02-05 19:20:01,358 WARN  [org.hib.eng.jdb.spi.SqlExceptionHelper] (main) SQL Error: 23505, SQLState: 23505
-2025-02-05 19:20:01,358 ERROR [org.hib.eng.jdb.spi.SqlExceptionHelper] (main) Unique index or primary key violation: "PUBLIC.CONSTRAINT_INDEX_6 ON PUBLIC.CUSTOMERS(EMAIL NULLS FIRST) VALUES ( /* 2 */ 'jane.doe@email.com' )"; SQL statement:
+2025-02-06 15:36:49,166 WARN  [com.git.dat.rid.cor.dat.DataSetExecutorImpl] (main) Database will not be populated because no dataset has been provided.
+2025-02-06 15:36:49,269 WARN  [org.hib.eng.jdb.spi.SqlExceptionHelper] (main) SQL Error: 23505, SQLState: 23505
+2025-02-06 15:36:49,269 ERROR [org.hib.eng.jdb.spi.SqlExceptionHelper] (main) Unique index or primary key violation: "PUBLIC.CONSTRAINT_INDEX_6 ON PUBLIC.CUSTOMERS(EMAIL NULLS FIRST) VALUES ( /* 2 */ 'jane.doe@email.com' )"; SQL statement:
 update CUSTOMERS set EMAIL=?,FIRST_NAME=?,LAST_NAME=?,PHONE=? where ID=? [23505-230]
-[ERROR] Tests run: 10, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 5.379 s <<< FAILURE! -- in fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT
-[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT.testUpdateCustomer -- Time elapsed: 0.047 s <<< ERROR!
+[ERROR] Tests run: 10, Failures: 1, Errors: 1, Skipped: 0, Time elapsed: 5.324 s <<< FAILURE! -- in fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT
+[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT.testPersist -- Time elapsed: 0.039 s <<< FAILURE!
+org.dbunit.assertion.DbComparisonFailure[value (table=CUSTOMERS, row=0, col=EMAIL)expected:<john.doe@email.com>but was:<jane.doe@email.com>]
+	at org.dbunit.assertion.DefaultFailureHandler$DefaultFailureFactory.createFailure(DefaultFailureHandler.java:323)
+	at org.dbunit.assertion.DefaultFailureHandler.createFailure(DefaultFailureHandler.java:105)
+	at org.dbunit.assertion.DefaultFailureHandler.handle(DefaultFailureHandler.java:240)
+	at com.github.database.rider.core.assertion.DataSetAssert.compareData(DataSetAssert.java:128)
+	at com.github.database.rider.core.assertion.DataSetAssert.compareData(DataSetAssert.java:142)
+	at org.dbunit.assertion.DbUnitAssertBase.compareData(DbUnitAssertBase.java:561)
+	at org.dbunit.assertion.DbUnitAssertBase.assertWithValueComparer(DbUnitAssertBase.java:439)
+	at org.dbunit.assertion.DbUnitAssert.assertEquals(DbUnitAssert.java:300)
+	at org.dbunit.assertion.DbUnitAssert.assertEquals(DbUnitAssert.java:268)
+	at org.dbunit.assertion.DbUnitAssert.assertEquals(DbUnitAssert.java:227)
+	at org.dbunit.assertion.DbUnitAssert.assertEqualsIgnoreCols(DbUnitAssert.java:103)
+	at com.github.database.rider.core.assertion.DataSetAssertion.assertEqualsIgnoreCols(DataSetAssertion.java:17)
+	at com.github.database.rider.core.dataset.DataSetExecutorImpl.compareClassic(DataSetExecutorImpl.java:880)
+	at com.github.database.rider.core.dataset.DataSetExecutorImpl.compareCurrentDataSetWith(DataSetExecutorImpl.java:838)
+	at com.github.database.rider.cdi.DataSetProcessor.compareCurrentDataSetWith(DataSetProcessor.java:154)
+	at com.github.database.rider.cdi.DataSetProcessor_ClientProxy.compareCurrentDataSetWith(Unknown Source)
+	at com.github.database.rider.cdi.DBUnitInterceptorImpl.intercept(DBUnitInterceptorImpl.java:94)
+	at com.github.database.rider.cdi.DBUnitInterceptorImpl_Bean.intercept(Unknown Source)
+	at io.quarkus.arc.impl.InterceptorInvocation.invoke(InterceptorInvocation.java:42)
+	at io.quarkus.arc.impl.AroundInvokeInvocationContext.perform(AroundInvokeInvocationContext.java:30)
+	at io.quarkus.arc.impl.InvocationContexts.performAroundInvoke(InvocationContexts.java:27)
+	at fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT_Subclass.testPersist(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at io.quarkus.test.junit.QuarkusTestExtension.runExtensionMethod(QuarkusTestExtension.java:967)
+	at io.quarkus.test.junit.QuarkusTestExtension.interceptTestMethod(QuarkusTestExtension.java:817)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+[ERROR] fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT.testUpdateCustomer -- Time elapsed: 0.051 s <<< ERROR!
 org.hibernate.exception.ConstraintViolationException: 
 could not execute statement [Unique index or primary key violation: "PUBLIC.CONSTRAINT_INDEX_6 ON PUBLIC.CUSTOMERS(EMAIL NULLS FIRST) VALUES ( /* 2 */ 'jane.doe@email.com' )"; SQL statement:
 update CUSTOMERS set EMAIL=?,FIRST_NAME=?,LAST_NAME=?,PHONE=? where ID=? [23505-230]] [update CUSTOMERS set EMAIL=?,FIRST_NAME=?,LAST_NAME=?,PHONE=? where ID=?]
@@ -247,7 +215,7 @@ update CUSTOMERS set EMAIL=?,FIRST_NAME=?,LAST_NAME=?,PHONE=? where ID=? [23505-
 	at fr.simplex_software.fifty_shades_of_rest.orders.repository.CustomerRepository.update(CustomerRepository.java)
 	at fr.simplex_software.fifty_shades_of_rest.orders.repository.CustomerRepository.updateById(CustomerRepository.java:45)
 	at fr.simplex_software.fifty_shades_of_rest.orders.repository.CustomerRepository_ClientProxy.updateById(Unknown Source)
-	at fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT.testUpdateCustomer(CustomerRepositoryIT.java:114)
+	at fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT.testUpdateCustomer(CustomerRepositoryIT.java:118)
 	at fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT_Subclass.testUpdateCustomer$$superforward(Unknown Source)
 	at fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.CustomerRepositoryIT_Subclass$$function$$10.apply(Unknown Source)
 	at io.quarkus.arc.impl.AroundInvokeInvocationContext.proceed(AroundInvokeInvocationContext.java:73)
@@ -296,16 +264,18 @@ update CUSTOMERS set EMAIL=?,FIRST_NAME=?,LAST_NAME=?,PHONE=? where ID=? [23505-
 	... 48 more
 
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.OrderRepositoryIT
-2025-02-05 19:20:01,460 WARN  [com.git.dat.rid.cor.dat.DataSetExecutorImpl] (main) Database will not be populated because no dataset has been provided.
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.121 s -- in fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.OrderRepositoryIT
+2025-02-06 15:36:49,371 WARN  [com.git.dat.rid.cor.dat.DataSetExecutorImpl] (main) Database will not be populated because no dataset has been provided.
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.110 s -- in fr.simplex_software.fifty_shades_of_rest.orders.repository.tests.integration.OrderRepositoryIT
 [INFO] 
 [INFO] Results:
 [INFO] 
+[ERROR] Failures: 
+[ERROR]   CustomerRepositoryIT.testPersist value (table=CUSTOMERS, row=0, col=EMAIL) expected:<john.doe@email.com> but was:<jane.doe@email.com>
 [ERROR] Errors: 
-[ERROR]   CustomerRepositoryIT.testUpdateCustomer:114 » ConstraintViolation could not execute statement [Unique index or primary key violation: "PUBLIC.CONSTRAINT_INDEX_6 ON PUBLIC.CUSTOMERS(EMAIL NULLS FIRST) VALUES ( /* 2 */ 'jane.doe@email.com' )"; SQL statement:
+[ERROR]   CustomerRepositoryIT.testUpdateCustomer:118 » ConstraintViolation could not execute statement [Unique index or primary key violation: "PUBLIC.CONSTRAINT_INDEX_6 ON PUBLIC.CUSTOMERS(EMAIL NULLS FIRST) VALUES ( /* 2 */ 'jane.doe@email.com' )"; SQL statement:
 update CUSTOMERS set EMAIL=?,FIRST_NAME=?,LAST_NAME=?,PHONE=? where ID=? [23505-230]] [update CUSTOMERS set EMAIL=?,FIRST_NAME=?,LAST_NAME=?,PHONE=? where ID=?]
 [INFO] 
-[ERROR] Tests run: 19, Failures: 0, Errors: 1, Skipped: 0
+[ERROR] Tests run: 19, Failures: 1, Errors: 1, Skipped: 0
 [INFO] 
 [INFO] 
 [INFO] --------------< fr.simplex-software.workshop:orders-api >---------------
@@ -327,9 +297,9 @@ update CUSTOMERS set EMAIL=?,FIRST_NAME=?,LAST_NAME=?,PHONE=? where ID=? [23505-
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests.integration.CustomerMapperIT
-[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.006 s -- in fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests.integration.CustomerMapperIT
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.004 s -- in fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests.integration.CustomerMapperIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests.integration.CustomerServiceIT
-[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.385 s -- in fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests.integration.CustomerServiceIT
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.374 s -- in fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests.integration.CustomerServiceIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests.integration.OrderMapperIT
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s -- in fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests.integration.OrderMapperIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.service.mapping.tests.integration.OrderServiceIT
@@ -359,28 +329,28 @@ update CUSTOMERS set EMAIL=?,FIRST_NAME=?,LAST_NAME=?,PHONE=? where ID=? [23505-
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJava8BlockingClientIT
-2025-02-05 19:20:15,263 INFO  [io.qua.dev.h2.dep.H2DevServicesProcessor] (build-28) Dev Services for H2 started.
-2025-02-05 19:20:15,269 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] (build-28) Dev Services for default datasource (h2) started
-2025-02-05 19:20:17,607 INFO  [io.quarkus] (main) orders-classic 1.0-SNAPSHOT on JVM (powered by Quarkus 3.17.2) started in 3.784s. Listening on: http://localhost:8081
-2025-02-05 19:20:17,608 INFO  [io.quarkus] (main) Profile test activated. 
-2025-02-05 19:20:17,608 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, hibernate-orm-panache, jdbc-h2, jdbc-postgresql, narayana-jta, reactive-routes, rest, rest-client, rest-client-jackson, rest-jackson, smallrye-context-propagation, smallrye-fault-tolerance, smallrye-health, smallrye-metrics, smallrye-openapi, swagger-ui, vertx]
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.732 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJava8BlockingClientIT
+2025-02-06 15:37:02,965 INFO  [io.qua.dev.h2.dep.H2DevServicesProcessor] (build-15) Dev Services for H2 started.
+2025-02-06 15:37:02,970 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] (build-15) Dev Services for default datasource (h2) started
+2025-02-06 15:37:05,255 INFO  [io.quarkus] (main) orders-classic 1.0-SNAPSHOT on JVM (powered by Quarkus 3.17.2) started in 3.668s. Listening on: http://localhost:8081
+2025-02-06 15:37:05,263 INFO  [io.quarkus] (main) Profile test activated. 
+2025-02-06 15:37:05,263 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, hibernate-orm-panache, jdbc-h2, jdbc-postgresql, narayana-jta, reactive-routes, rest, rest-client, rest-client-jackson, rest-jackson, smallrye-context-propagation, smallrye-fault-tolerance, smallrye-health, smallrye-metrics, smallrye-openapi, swagger-ui, vertx]
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.421 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJava8BlockingClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJava8NonBlockingClientIT
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.099 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJava8NonBlockingClientIT
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.053 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJava8NonBlockingClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs20BlockingClientIT
-[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.243 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs20BlockingClientIT
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.150 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs20BlockingClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs20NonBlockingClientIT
-[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.161 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs20NonBlockingClientIT
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.113 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs20NonBlockingClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs21BlockingClientIT
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.057 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs21BlockingClientIT
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.043 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs21BlockingClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs21NonBlockingClientIT
-[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.055 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs21NonBlockingClientIT
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.048 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersAsyncJaxRs21NonBlockingClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncJakartaClientIT
-[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.113 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncJakartaClientIT
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.096 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncJakartaClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncJava11ClientIT
-[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.395 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncJava11ClientIT
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.387 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncJava11ClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncMpClientIT
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.104 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncMpClientIT
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.087 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncMpClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncRestAssuredClientIT
 Request method:	POST
 Request URI:	http://localhost:8081/customers
@@ -574,8 +544,8 @@ Body:
     "email": "jane.doe@email.com",
     "phone": "0987654321"
 }
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.761 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncRestAssuredClientIT
-2025-02-05 19:20:20,909 INFO  [io.quarkus] (main) orders-classic stopped in 0.022s
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.801 s -- in fr.simplex_software.fifty_shades_of_rest.orders.provider.tests.OrdersSyncRestAssuredClientIT
+2025-02-06 15:37:08,226 INFO  [io.quarkus] (main) orders-classic stopped in 0.021s
 [INFO] 
 [INFO] Results:
 [INFO] 
@@ -602,13 +572,13 @@ Body:
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs20MpClientIT
-2025-02-05 19:20:25,591 INFO  [io.qua.dev.h2.dep.H2DevServicesProcessor] (build-10) Dev Services for H2 started.
-2025-02-05 19:20:25,597 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] (build-10) Dev Services for default datasource (h2) started
-2025-02-05 19:20:25,600 INFO  [io.qua.hib.orm.dep.dev.HibernateOrmDevServicesProcessor] (build-3) Setting quarkus.hibernate-orm.database.generation=drop-and-create to initialize Dev Services managed database
-2025-02-05 19:20:27,773 INFO  [io.quarkus] (main) orders-async 1.0-SNAPSHOT on JVM (powered by Quarkus 3.17.2) started in 3.602s. Listening on: http://localhost:8081
-2025-02-05 19:20:27,774 INFO  [io.quarkus] (main) Profile test activated. 
-2025-02-05 19:20:27,774 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, hibernate-orm-panache, jdbc-h2, narayana-jta, rest, rest-client, rest-client-jackson, rest-jackson, smallrye-context-propagation, vertx]
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.482 s -- in fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs20MpClientIT
+2025-02-06 15:37:12,574 INFO  [io.qua.dev.h2.dep.H2DevServicesProcessor] (build-22) Dev Services for H2 started.
+2025-02-06 15:37:12,578 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] (build-22) Dev Services for default datasource (h2) started
+2025-02-06 15:37:12,581 INFO  [io.qua.hib.orm.dep.dev.HibernateOrmDevServicesProcessor] (build-20) Setting quarkus.hibernate-orm.database.generation=drop-and-create to initialize Dev Services managed database
+2025-02-06 15:37:14,744 INFO  [io.quarkus] (main) orders-async 1.0-SNAPSHOT on JVM (powered by Quarkus 3.17.2) started in 3.469s. Listening on: http://localhost:8081
+2025-02-06 15:37:14,745 INFO  [io.quarkus] (main) Profile test activated. 
+2025-02-06 15:37:14,745 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, hibernate-orm-panache, jdbc-h2, narayana-jta, rest, rest-client, rest-client-jackson, rest-jackson, smallrye-context-propagation, vertx]
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.158 s -- in fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs20MpClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs20RestAssuredClientIT
 Request method:	POST
 Request URI:	http://localhost:8081/customers-async
@@ -802,9 +772,9 @@ Body:
     "email": "jane.doe@email.com",
     "phone": "0987654321"
 }
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.901 s -- in fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs20RestAssuredClientIT
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.882 s -- in fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs20RestAssuredClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs21MpClientIT
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.115 s -- in fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs21MpClientIT
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.110 s -- in fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs21MpClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs21RestAssuredClientIT
 Request method:	POST
 Request URI:	http://localhost:8081/customers-async21
@@ -998,8 +968,8 @@ Body:
     "email": "jane.doe@email.com",
     "phone": "0987654321"
 }
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.194 s -- in fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs21RestAssuredClientIT
-2025-02-05 19:20:30,308 INFO  [io.quarkus] (main) orders-async stopped in 0.020s
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.186 s -- in fr.simplex_software.fifty_shades_of_rest.orders.async.tests.OrdersAsyncJaxRs21RestAssuredClientIT
+2025-02-06 15:37:17,286 INFO  [io.quarkus] (main) orders-async stopped in 0.023s
 [INFO] 
 [INFO] Results:
 [INFO] 
@@ -1032,28 +1002,27 @@ Body:
 [INFO]  T E S T S
 [INFO] -------------------------------------------------------
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactMpClientIT
-2025-02-05 19:20:35,002 INFO  [org.tes.DockerClientFactory] (build-29) Testcontainers version: 1.20.4
-2025-02-05 19:20:35,143 INFO  [org.tes.doc.DockerClientProviderStrategy] (build-29) Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
-2025-02-05 19:20:35,381 INFO  [org.tes.doc.DockerClientProviderStrategy] (build-29) Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
-2025-02-05 19:20:35,383 INFO  [org.tes.DockerClientFactory] (build-29) Docker host IP address is localhost
-2025-02-05 19:20:35,398 INFO  [org.tes.DockerClientFactory] (build-29) Connected to docker: 
+2025-02-06 15:37:21,801 INFO  [org.tes.DockerClientFactory] (build-30) Testcontainers version: 1.20.4
+2025-02-06 15:37:21,926 INFO  [org.tes.doc.DockerClientProviderStrategy] (build-30) Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+2025-02-06 15:37:22,254 INFO  [org.tes.doc.DockerClientProviderStrategy] (build-30) Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
+2025-02-06 15:37:22,255 INFO  [org.tes.DockerClientFactory] (build-30) Docker host IP address is localhost
+2025-02-06 15:37:22,271 INFO  [org.tes.DockerClientFactory] (build-30) Connected to docker: 
   Server Version: 27.2.0
   API Version: 1.47
   Operating System: Ubuntu 24.04.1 LTS
   Total Memory: 31733 MB
-2025-02-05 19:20:35,409 INFO  [org.tes.ima.PullPolicy] (build-29) Image pull policy will be performed by: DefaultPullPolicy()
-2025-02-05 19:20:35,411 INFO  [org.tes.uti.ImageNameSubstitutor] (build-29) Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
-2025-02-05 19:20:35,415 INFO  [org.tes.DockerClientFactory] (build-29) Checking the system...
-2025-02-05 19:20:35,415 INFO  [org.tes.DockerClientFactory] (build-29) ✔︎ Docker server version should be at least 1.6.0
-2025-02-05 19:20:35,564 INFO  [tc.doc.io/postgres:17] (build-29) Creating container for image: docker.io/postgres:17
-2025-02-05 19:20:35,568 INFO  [org.tes.uti.RegistryAuthLocator] (build-29) Failure when attempting to lookup auth config. Please ignore if you don't have images in an authenticated registry. Details: (dockerImageName: docker.io/postgres:17, configFile: /home/nicolas/.docker/config.json, configEnv: DOCKER_AUTH_CONFIG). Falling back to docker-java default behaviour. Exception message: Status 404: No config supplied. Checked in order: /home/nicolas/.docker/config.json (file not found), DOCKER_AUTH_CONFIG (not set)
-2025-02-05 19:20:35,654 INFO  [tc.doc.io/postgres:17] (build-29) Reusing container with ID: 86015211a0b6b095d63fe40f2f9260542a37146e4d8055692670ca5ef9c4a422 and hash: b5f315d1fe435bc41660021acba6280cb00e7e5a
-2025-02-05 19:20:35,655 INFO  [tc.doc.io/postgres:17] (build-29) Reusing existing container (86015211a0b6b095d63fe40f2f9260542a37146e4d8055692670ca5ef9c4a422) and not creating a new one
-2025-02-05 19:20:35,851 INFO  [tc.doc.io/postgres:17] (build-29) Container docker.io/postgres:17 started in PT0.287144235S
-2025-02-05 19:20:35,852 INFO  [tc.doc.io/postgres:17] (build-29) Container is started (JDBC URL: jdbc:postgresql://localhost:9000/quarkus?loggerLevel=OFF)
-2025-02-05 19:20:35,852 INFO  [io.qua.dev.pos.dep.PostgresqlDevServicesProcessor] (build-29) Dev Services for PostgreSQL started.
-2025-02-05 19:20:35,854 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] (build-29) Dev Services for default datasource (postgresql) started - container ID is 86015211a0b6
-2025-02-05 19:20:37,134 INFO  [org.hib.rea.pro.imp.ReactiveIntegrator] (JPA Startup Thread) HR000001: Hibernate Reactive
+2025-02-06 15:37:22,281 INFO  [org.tes.ima.PullPolicy] (build-30) Image pull policy will be performed by: DefaultPullPolicy()
+2025-02-06 15:37:22,283 INFO  [org.tes.uti.ImageNameSubstitutor] (build-30) Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+2025-02-06 15:37:22,287 INFO  [org.tes.DockerClientFactory] (build-30) Checking the system...
+2025-02-06 15:37:22,288 INFO  [org.tes.DockerClientFactory] (build-30) ✔︎ Docker server version should be at least 1.6.0
+2025-02-06 15:37:22,399 INFO  [tc.doc.io/postgres:17] (build-30) Creating container for image: docker.io/postgres:17
+2025-02-06 15:37:22,403 INFO  [org.tes.uti.RegistryAuthLocator] (build-30) Failure when attempting to lookup auth config. Please ignore if you don't have images in an authenticated registry. Details: (dockerImageName: docker.io/postgres:17, configFile: /home/nicolas/.docker/config.json, configEnv: DOCKER_AUTH_CONFIG). Falling back to docker-java default behaviour. Exception message: Status 404: No config supplied. Checked in order: /home/nicolas/.docker/config.json (file not found), DOCKER_AUTH_CONFIG (not set)
+2025-02-06 15:37:22,553 INFO  [tc.doc.io/postgres:17] (build-30) Container docker.io/postgres:17 is starting: f7a8a0459f67bb4da1d3c0f9bbda33d0a280dce6f789f67fc0d804819f41ec09
+2025-02-06 15:37:24,084 INFO  [tc.doc.io/postgres:17] (build-30) Container docker.io/postgres:17 started in PT1.685368829S
+2025-02-06 15:37:24,084 INFO  [tc.doc.io/postgres:17] (build-30) Container is started (JDBC URL: jdbc:postgresql://localhost:9000/quarkus?loggerLevel=OFF)
+2025-02-06 15:37:24,085 INFO  [io.qua.dev.pos.dep.PostgresqlDevServicesProcessor] (build-30) Dev Services for PostgreSQL started.
+2025-02-06 15:37:24,086 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] (build-30) Dev Services for default datasource (postgresql) started - container ID is f7a8a0459f67
+2025-02-06 15:37:25,741 INFO  [org.hib.rea.pro.imp.ReactiveIntegrator] (JPA Startup Thread) HR000001: Hibernate Reactive
 [Hibernate] 
     set client_min_messages = WARNING
 [Hibernate] 
@@ -1107,10 +1076,10 @@ Body:
        foreign key (CUSTOMER_ID) 
        references CUSTOMERS 
        on delete cascade
-2025-02-05 19:20:37,652 WARN  [io.qua.hib.orm.run.ser.QuarkusRuntimeInitDialectFactory] (JPA Startup Thread) Persistence unit default-reactive: Could not retrieve the database version to check it is at least 12.0.0
-2025-02-05 19:20:37,710 INFO  [io.quarkus] (main) orders-reactive 1.0-SNAPSHOT on JVM (powered by Quarkus 3.17.2) started in 4.017s. Listening on: http://localhost:8081
-2025-02-05 19:20:37,710 INFO  [io.quarkus] (main) Profile test activated. 
-2025-02-05 19:20:37,710 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, hibernate-orm-panache, hibernate-reactive, hibernate-reactive-panache, jdbc-postgresql, narayana-jta, reactive-pg-client, rest, rest-client, rest-client-jackson, rest-jackson, smallrye-context-propagation, vertx]
+2025-02-06 15:37:26,394 WARN  [io.qua.hib.orm.run.ser.QuarkusRuntimeInitDialectFactory] (JPA Startup Thread) Persistence unit default-reactive: Could not retrieve the database version to check it is at least 12.0.0
+2025-02-06 15:37:26,489 INFO  [io.quarkus] (main) orders-reactive 1.0-SNAPSHOT on JVM (powered by Quarkus 3.17.2) started in 5.986s. Listening on: http://localhost:8081
+2025-02-06 15:37:26,490 INFO  [io.quarkus] (main) Profile test activated. 
+2025-02-06 15:37:26,490 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, hibernate-orm-panache, hibernate-reactive, hibernate-reactive-panache, jdbc-postgresql, narayana-jta, reactive-pg-client, rest, rest-client, rest-client-jackson, rest-jackson, smallrye-context-propagation, vertx]
 [Hibernate] 
     select
         nextval('CUSTOMERS_SEQ')
@@ -1385,7 +1354,7 @@ Body:
         CUSTOMERS 
     where
         ID=$1
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.081 s -- in fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactMpClientIT
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.40 s -- in fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactMpClientIT
 [INFO] Running fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT
 Request method:	POST
 Request URI:	http://localhost:8081/customers-react
@@ -1825,8 +1794,8 @@ Body:
         CUSTOMERS 
     where
         ID=$1
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.990 s -- in fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT
-2025-02-05 19:20:40,217 INFO  [io.quarkus] (main) orders-reactive stopped in 0.026s
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.975 s -- in fr.simplex_software.fifty_shades_of_rest.orders.react.tests.OrdersReactRestAssuredClientIT
+2025-02-06 15:37:29,451 INFO  [io.quarkus] (main) orders-reactive stopped in 0.025s
 [INFO] 
 [INFO] Results:
 [INFO] 
@@ -1835,21 +1804,21 @@ Body:
 [INFO] ------------------------------------------------------------------------
 [INFO] Reactor Summary for 50 Shades of REST :: the orders master POM 1.0-SNAPSHOT:
 [INFO] 
-[INFO] 50 Shades of REST :: the orders master POM ......... SUCCESS [  0.202 s]
-[INFO] 50 Shades of REST :: the domain module ............. SUCCESS [  5.144 s]
-[INFO] 50 Shades of REST :: the repository module ......... SUCCESS [  6.691 s]
-[INFO] 50 Shades of REST :: the API module ................ SUCCESS [  0.191 s]
-[INFO] 50 Shades of REST :: the service module ............ SUCCESS [  7.848 s]
-[INFO] 50 Shades of REST :: the orders management base test module SUCCESS [  0.046 s]
-[INFO] 50 Shades of REST :: the classic module ............ SUCCESS [ 10.723 s]
-[INFO] 50 Shades of REST :: the infrastructure module ..... SUCCESS [  0.026 s]
-[INFO] 50 Shades of REST :: the async module .............. SUCCESS [  9.374 s]
-[INFO] 50 Shades of REST :: the reactive repository module  SUCCESS [  0.053 s]
+[INFO] 50 Shades of REST :: the orders master POM ......... SUCCESS [  0.261 s]
+[INFO] 50 Shades of REST :: the domain module ............. SUCCESS [  5.444 s]
+[INFO] 50 Shades of REST :: the repository module ......... SUCCESS [  6.647 s]
+[INFO] 50 Shades of REST :: the API module ................ SUCCESS [  0.218 s]
+[INFO] 50 Shades of REST :: the service module ............ SUCCESS [  7.752 s]
+[INFO] 50 Shades of REST :: the orders management base test module SUCCESS [  0.057 s]
+[INFO] 50 Shades of REST :: the classic module ............ SUCCESS [ 10.256 s]
+[INFO] 50 Shades of REST :: the infrastructure module ..... SUCCESS [  0.028 s]
+[INFO] 50 Shades of REST :: the async module .............. SUCCESS [  9.021 s]
+[INFO] 50 Shades of REST :: the reactive repository module  SUCCESS [  0.060 s]
 [INFO] 50 Shades of REST :: the reactive service module ... SUCCESS [  0.042 s]
-[INFO] 50 Shades of REST :: the reactive module ........... SUCCESS [  9.818 s]
+[INFO] 50 Shades of REST :: the reactive module ........... SUCCESS [ 12.070 s]
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  51.133 s
-[INFO] Finished at: 2025-02-05T19:20:40+01:00
+[INFO] Total time:  52.842 s
+[INFO] Finished at: 2025-02-06T15:37:29+01:00
 [INFO] ------------------------------------------------------------------------
