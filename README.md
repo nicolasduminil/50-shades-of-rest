@@ -3833,6 +3833,27 @@ asynchronous, blocking or non-blocking.
 
 ## Reactive RESTfull services
 
+The [ReactiveX](http://reactivex.io) website defines the reactive programming as follows:
+
+> **_NOTE:_** Reactive programming combines functional programming, the observer
+> pattern and the iterable pattern.
+
+While this definition captures some core elements of the reactive programming,
+like the observer and the iterator patterns, I found it somewhat incomplete. A
+more consistent one is provided by Amazon Q:
+
+> **_NOTE:_** Reactive programming is a programming paradigm focused on asynchronous
+> data streams and their transformations over time, combining both push and pull
+> models through the observer and iterator patterns, while incorporating functional
+> programming principles. It includes built-in mechanisms for handling backpressure
+> and provides tools for building responsive, resilient, and elastic systems.
+
+As opposed to other JVM based programming languages like Scala and Clojure, Java
+wasn't initially a native *reactive* programming language. But this changed since
+Java 9 which introduced, in 2017, the [Flow](https://shorturl.at/PlKNg) API. However,
+using this API explicitly has been proved complicated in the wake of its
+complexity, verbosity and low level. 
+
 Reactive programming is a different programming paradigm, which contrasts to the
 imperative one, more common, by promoting the asynchronous executions. Instead 
 of providing a sequence of ordered steps like imperative programming does, reactive
@@ -3874,6 +3895,12 @@ operation, calling a long-running external process might be one use case where
 reactive programming could be required, even with RESTful services, and not only
 for its asynchronous capabilities.
 
+Several libraries, like [RxJava](https://github.com/ReactiveX/RxJava), [Reactor](https://projectreactor.io/),
+or [Mutiny](https://smallrye.io/smallrye-mutiny), have emerged throughout the years
+aiming at facilitating the use of the `Flow` API, by providing lots of
+ready-to-used operators for transforming, combining and manipulating streams,
+as well as sophisticated methods for mapping, filtering and error handling.
+
 Quarkus is said as being built, from the ground up, on the top of [Eclipse VertX](https://vertx.io/), one 
 of the most known reactive engine. Consequently, it exposes to the developer a reactive API named [Mutiny](https://smallrye.io/smallrye-mutiny/).
 It provides a set of dedicated classes to facilitate nonblocking, event-driven
@@ -3886,3 +3913,210 @@ while simple in appearance as articulated around one class and four interfaces
 only, the Reactive Streams specifications turn out to be quite complex when used
 directly. Since its 2nd release, the Mutiny API implements a variant of the 
 Reactive Streams specifications.
+
+Quarkus integrates with Mutiny. This
+library was designed several years later than RxJava or Reactor and, hence, it
+benefits of a more simplified operator and method set. It provides two types
+that are used almost everywhere:
+
+- `Uni` which handles stream of 0..1 items
+- `Multi` which handles streams of 0..* items.
+
+Both `Uni` and `Multi` handle completion and failure events. However, their compliance with the
+*publisher* concept, as defined by the `Reactive Streams` specifications, is only
+partial, in the sense that, in order to get a computation result, a *sunscription*
+is required.
+
+Being designed several years after its competitors, Mutiny is based on the idea
+that, given the inherent complexity of the *reactive programming*, having the 
+simplest possible API was crucial. Consequently, as opposed to other *reactive 
+programming* APIs, Mutiny provides only these two mentioned types. Programmers 
+use them to define reactive *pipelines*, i.e. a sequence of ordered processing 
+*stages*, or  *continuations*, which run one after the other. Events are flowing
+through the *pipeline* as *items* and each *stage* is able to create new ones or 
+filter or drop them. It's important to note that such a *pipeline* doesn't do 
+anything before consumers subscribe to it.
+
+*Reactive programming* doesn't concern specifically the RESTful services, it is
+a much broader category dealing with the way that the I/O operations are processed.
+Quarkus takes advantage of VertX, its reactive engine and, thanks to it,
+provides a set of features like nonblocking I/O, eventloop threads or asynchronous
+APIs, such as Mutiny. But while these reactive features aren't the specific province
+of the RESTful services, they may represent a huge benefit to them.
+
+RESTful services and, in general, HTTP ones, are utterly blocking, synchronous
+and non-reactive. However, powered by VertX, Quarkus HTTP services and, in 
+particular, RESTful ones, are non-blocking and highly efficient and concurrent.
+As opposed to classical Jakarta RESTful Web Services specifications, like Jersey,
+Apache CXF, RESTeasy or OpenLiberty, as well as to Spring REST, where the chain
+of responsibility that handles the requests and the responses is executed on the
+*worker thread*, Quarkus invokes and runs it on the *I/O thread*. 
+
+> **_NOTE:_**  For the records, a *worker thread* is a thread dedicated to CPU-bound
+> operations and general processing tasks while a *I/O thread* is designed to 
+> manage I/O operations and operates using event loops and completions.
+
+By offloading request from workers threads to I/O ones, the application embraces
+the reactive principles, becomes more responsive and its throughput gets increased.
+
+Teaching *Reactive Programming* in general and Mutiny in particular is something 
+that fall largely outside the scope of this modest booklet. Books like [Reactive
+Programming with RxJava](https://shorturl.at/DN0de) or [Reactive Systems in Java]
+(https://shorturl.at/VCi1h) may help the readers interested in acquiring all the
+subtleties of these topics. What you're seeing here is just a short introduction
+to some basic concepts and, in order to illustrate them, lets look at some code.
+
+### Making reactive the Order Management service
+
+The listing below shows a fragment of the `CustomerResourceReact` class, which is
+the reactive version of the customer service. The complete code can be found in 
+the `orders-reactive` module of our project.
+
+    @ApplicationScoped
+    @Path("customers-react")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public class CustomerResourceReact
+    {
+      @Inject
+      CustomerReactiveService customerService;
+
+      @GET
+      @WithSession
+      public Uni<Response> getCustomers()
+      {
+        return customerService.getCustomers()
+          .map(customers -> Response.ok(customers).build());
+      }
+
+      @GET
+      @Path("/{id}")
+      @WithSession
+      public Uni<Response> getCustomer(@PathParam("id") Long id)
+      {
+        return Uni.createFrom()
+          .item(() -> id)
+          .map(customerId -> Response.ok()
+          .entity(customerService.getCustomer(customerId))
+          .build());
+      }
+      ...
+
+      @POST
+      @WithTransaction
+      public Uni<Response> createCustomer(CustomerDTO customerDTO)
+      {
+        return Uni.createFrom()
+          .item(customerDTO)
+          .flatMap(dto -> customerService.createCustomer(dto))
+          .map(customer -> Response.created(URI.create("/customers/" + customer.id()))
+          .entity(customer)
+          .build());
+      }
+      ...
+
+      @PUT
+      @WithTransaction
+      public Uni<Response> updateCustomer(CustomerDTO customerDTO)
+      {
+        return Uni.createFrom()
+          .item(customerDTO)
+          .flatMap(dto -> customerService.updateCustomer(dto)
+          .map (updated -> Response.accepted()
+          .entity(updated)
+          .build()));
+      }
+
+      @DELETE
+      @WithTransaction
+      public Uni<Response> deleteCustomer(CustomerDTO customerDTO)
+      {
+        return customerService.deleteCustomer(customerDTO.id())
+          .map(ignored -> Response.noContent().build());
+      }
+      ...
+    }
+
+The code above is a complete example demonstrating how to process, in a reactive
+way, `GET`, `POST`, `PUT` and `DELETE` HTTP requests. The first thing to notice
+is that the method signature has changed, from `Response<T>` to `Uni<Response<T>>`.
+And as already mentioned, an `Uni` instance represents an asynchronous computation
+that may not have produced a result yet. When the endpoints in the listing above
+return `Uni` instances, then Quarkus subscribes to them and, when they emit a 
+result, this result is written in the HTTP response. If, on the opposite, an 
+`Uni` instance emits a failure, then this failure is converted into an HTTP 500,
+HTTP 405 or HTTP 400 error, depending on the failure type. But the essential idea
+to bear in mind is that, while waiting for the `Uni` outcome, the same I/O thread
+can be used to handle other requests. This is as opposed to the *classical* 
+version of the same service where a worker thread was exclusively dedicated to
+each request, potentially leading to a *thread starvation* phenomenon, in the 
+context of highly demanding applications, handling thousands of requests.
+
+Testing this new reactive version of our RESTful services is easy: the same tests
+that we used previously for the classical or the asynchronous version, are used 
+again here. Which demonstrates that the internal implementation strategy of the
+RESTful producers is completely transparent to their consumers. And in order to
+make evident this transparency, our integration tests in the `orders-reactive` 
+project are extension of the same base test classes as used to be the ones in the
+`orders-classic` or `orders-async` modules.
+
+For example, a `RESTassured` based integration test is as simple as:
+
+    @QuarkusTest
+    public class OrdersReactRestAssuredClientIT extends OrdersBaseTest
+    {
+      @BeforeAll
+      public static void beforeAll()
+      {
+        customersUrl = "/customers-react";
+        ordersUrl = "/orders-react";
+      }
+
+      @AfterAll
+      public static void afterAll()
+      {
+        customersUrl = null;
+        ordersUrl = null;
+      }
+    }
+
+while an Eclipse MP Rest Client based one looks like:
+
+    @QuarkusTest
+    public class OrdersReactMpClientIT extends AbstractOrdersApiClient
+    {
+      @Inject
+      @RestClient
+      CustomerReactApiClient customerApiClient;
+      @Inject
+      @RestClient
+      OrderReactApiClient orderApiClient;
+
+      @Override
+      protected BaseCustomerApiClient getCustomerApiClient()
+      {
+        return customerApiClient;
+      }
+
+      @Override
+      protected BaseOrderApiClient getOrderApiClient()
+      {
+        return orderApiClient;
+      }
+    }
+
+> **_NOTE:_** The kinematic of the `OrderBaseTest` and `AbstractOrderApiClient`
+> classes, located in the `orders-test` shared module, has already been explained
+> in the previous section.
+
+And as you certainly noticed, our MP Rest Client interfaces changed and are now
+`CustomerReactApiClient` and `OrderReactApiClient` such that to align with the 
+new endpoints' signature. They are located in the same `orders-api` shared module
+as their predecessors. 
+
+Now, you can run the integration tests as follows:
+
+    $ cd orders
+    $ mvn -DskipTests clean install
+    $ cd orders-reactive
+    $ mvn test failsafe:integration-test

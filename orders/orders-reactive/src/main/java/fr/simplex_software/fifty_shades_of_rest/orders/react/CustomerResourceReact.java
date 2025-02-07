@@ -73,8 +73,8 @@ public class CustomerResourceReact
     return Uni.createFrom()
       .item(customerDTO)
       .flatMap(dto -> customerService.updateCustomer(dto)
-      .map (n -> Response.accepted()
-        .entity(n)
+      .map (updated -> Response.accepted()
+        .entity(updated)
         .build()));
   }
 
