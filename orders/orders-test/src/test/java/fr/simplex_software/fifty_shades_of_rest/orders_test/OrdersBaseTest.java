@@ -2,6 +2,7 @@ package fr.simplex_software.fifty_shades_of_rest.orders_test;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
 import io.restassured.http.*;
+import io.restassured.specification.*;
 import org.apache.http.*;
 import org.junit.jupiter.api.*;
 
@@ -28,7 +29,8 @@ public abstract class OrdersBaseTest
   {
     CustomerDTO customer = new CustomerDTO("John", "Doe",
       "john.doe@email.com", "1234567890");
-    given().body(customer).contentType(ContentType.JSON)
+    getRequestSpec()
+      .body(customer)
       .when().log().all().post(customersUrl).then().log().ifValidationFails()
       .statusCode(HttpStatus.SC_CREATED);
   }
@@ -37,7 +39,8 @@ public abstract class OrdersBaseTest
   @Order(20)
   public void testCreateOrder()
   {
-    CustomerDTO customerDTO = given().basePath(customersUrl).when().log().all()
+    CustomerDTO customerDTO = getRequestSpec()
+      .basePath(customersUrl).when().log().all()
       .pathParam("email", JOHN_EMAIL)
       .get("/email/{email}").then()
       .log().ifValidationFails()
@@ -54,7 +57,7 @@ public abstract class OrdersBaseTest
   @Order(30)
   public void testGetOrders()
   {
-    assertThat(given().when()
+    assertThat(getRequestSpec().when()
       .log().all().get(ordersUrl).then().log().ifValidationFails()
       .statusCode(HttpStatus.SC_OK).extract().body().as(OrderDTO[].class))
       .hasSize(1);
@@ -64,7 +67,7 @@ public abstract class OrdersBaseTest
   @Order(40)
   public void testGetCustomers()
   {
-    assertThat(given().when().log().all()
+    assertThat(getRequestSpec().when().log().all()
       .get(customersUrl).then()
       .log().ifValidationFails()
       .statusCode(HttpStatus.SC_OK).extract().body()
@@ -75,7 +78,8 @@ public abstract class OrdersBaseTest
   @Order(50)
   public void testUpdateCustomer()
   {
-    CustomerDTO customerDTO = given().basePath(customersUrl).pathParam("email", JOHN_EMAIL)
+    CustomerDTO customerDTO = getRequestSpec()
+      .basePath(customersUrl).pathParam("email", JOHN_EMAIL)
       .when().log().all()
       .get("/email/{email}").then()
       .log().ifValidationFails()
@@ -84,7 +88,7 @@ public abstract class OrdersBaseTest
     assertThat(customerDTO).isNotNull();
     CustomerDTO updatedCustomer = new CustomerDTO(customerDTO.id(), "Jane", "Doe",
       "jane.doe@email.com", "0987654321");
-    assertThat(given().body(updatedCustomer).contentType(ContentType.JSON).when()
+    assertThat(getRequestSpec().body(updatedCustomer).contentType(ContentType.JSON).when()
       .log().all()
       .put(customersUrl).then()
       .log().ifValidationFails()
@@ -96,7 +100,8 @@ public abstract class OrdersBaseTest
   @Order(60)
   public void testGetCustomer()
   {
-    assertThat(given().basePath(customersUrl).pathParam("email", JANE_EMAIL).when()
+    assertThat(getRequestSpec()
+      .basePath(customersUrl).pathParam("email", JANE_EMAIL).when()
       .log().all()
       .get("/email/{email}").then()
       .log().ifValidationFails()
@@ -108,12 +113,14 @@ public abstract class OrdersBaseTest
   @Order(70)
   public void testGetOrderByCustomer()
   {
-    CustomerDTO customerDTO = given().basePath(customersUrl).pathParam("email", JANE_EMAIL)
+    CustomerDTO customerDTO = getRequestSpec()
+      .basePath(customersUrl).pathParam("email", JANE_EMAIL)
       .when().log().all().get("/email/{email}")
       .then().log().ifValidationFails()
       .statusCode(HttpStatus.SC_OK).extract().body().as(CustomerDTO.class);
     assertThat(customerDTO.firstName()).isEqualTo("Jane");
-    OrderDTO orderDTO = given().basePath(ordersUrl).pathParam("id", customerDTO.id()).when()
+    OrderDTO orderDTO = getRequestSpec()
+      .basePath(ordersUrl).pathParam("id", customerDTO.id()).when()
       .log().all()
       .get("/customer/{id}")
       .then().log().ifValidationFails()
@@ -125,11 +132,13 @@ public abstract class OrdersBaseTest
   @Order(90)
   public void testDeleteCustomer()
   {
-    CustomerDTO customerDTO = given().basePath(customersUrl).pathParam("email", JANE_EMAIL)
+    CustomerDTO customerDTO = getRequestSpec()
+      .basePath(customersUrl).pathParam("email", JANE_EMAIL)
       .when().log().all().get("/email/{email}")
       .then().log().ifValidationFails()
       .statusCode(HttpStatus.SC_OK).extract().body().as(CustomerDTO.class);
-    given().body(customerDTO).contentType(ContentType.JSON).when()
+    getRequestSpec()
+      .body(customerDTO).contentType(ContentType.JSON).when()
       .log().all()
       .delete(customersUrl).then()
       .log().ifValidationFails()
@@ -140,15 +149,22 @@ public abstract class OrdersBaseTest
   @Order(80)
   public void testDeleteOrder()
   {
-    OrderDTO[] orders = given().when().log().all()
+    OrderDTO[] orders = getRequestSpec()
+      .when().log().all()
       .get(ordersUrl).then().log().ifValidationFails()
       .statusCode(HttpStatus.SC_OK)
       .extract().body().as(OrderDTO[].class);
     assertThat(orders).hasSize(1);
     OrderDTO orderDTO = orders[0];
-    given().body(orderDTO).when().log().all()
+    getRequestSpec().body(orderDTO).when().log().all()
       .contentType(ContentType.JSON).delete(ordersUrl)
       .then().log().ifValidationFails()
       .statusCode(HttpStatus.SC_NO_CONTENT);
+  }
+
+  protected RequestSpecification getRequestSpec()
+  {
+    return given()
+      .contentType(ContentType.JSON);
   }
 }

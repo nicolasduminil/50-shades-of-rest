@@ -23,6 +23,7 @@
     <module>orders-reactive</module>
     <module>orders-reactive-repository</module>
     <module>orders-reactive-service</module>
+    <module>orders-oidc</module>
   </modules>
   <dependencyManagement>
     <dependencies>
