@@ -1,25 +1,24 @@
-package fr.simplex_software.fifty_shades_of_rest.orders.oidc.tests;
+package fr.simplex_software.fifty_shades_of_rest.orders.jwt.tests;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
 import fr.simplex_software.fifty_shades_of_rest.orders_test.*;
 import io.quarkus.test.junit.*;
-import io.quarkus.test.keycloak.client.*;
 import io.restassured.http.*;
 import io.restassured.specification.*;
+import io.smallrye.jwt.build.*;
+import org.eclipse.microprofile.jwt.*;
 import org.junit.jupiter.api.*;
 
 import static io.restassured.RestAssured.*;
 
 @QuarkusTest
-public class OrdersSecRestAssuredClientIT extends OrdersBaseTest
+public class OrdersJwtRestAssuredClientIT extends OrdersBaseTest
 {
-  private static KeycloakTestClient keycloakClient;
-
   @BeforeAll
   public static void beforeAll()
   {
-    customersUrl = "/customers-sec";
-    ordersUrl = "/orders-sec";
+    customersUrl = "/customers-jwt";
+    ordersUrl = "/orders-jwt";
   }
 
   @AfterAll
@@ -30,11 +29,10 @@ public class OrdersSecRestAssuredClientIT extends OrdersBaseTest
   }
 
   @Override
-  protected RequestSpecification getRequestSpec()
-  {
+  protected RequestSpecification getRequestSpec() {
     return given().contentType(ContentType.JSON)
       .auth()
-      .oauth2(getAccessToken("alice"));
+      .oauth2(getAccessToken("Admin"));
   }
 
   @Test
@@ -44,16 +42,18 @@ public class OrdersSecRestAssuredClientIT extends OrdersBaseTest
       "nick.doe@email.com", "1234567899");
     given().contentType(ContentType.JSON)
       .auth()
-      .oauth2(getAccessToken("bob"))
+      .oauth2(getAccessToken("User"))
       .body(customer)
       .when().log().all().post(customersUrl).then().log().ifValidationFails()
       .statusCode(403);
   }
 
-  private String getAccessToken(String userName)
+  private String getAccessToken(String role)
   {
-    if (keycloakClient == null)
-      keycloakClient = new KeycloakTestClient();
-    return keycloakClient.getAccessToken(userName);
+    return Jwt.upn("jdoe@quarkus.io")
+      .issuer("https://example.com/issuer")
+      .groups(role)
+      .claim(Claims.birthdate.name(), "2001-07-13")
+      .sign();
   }
 }
