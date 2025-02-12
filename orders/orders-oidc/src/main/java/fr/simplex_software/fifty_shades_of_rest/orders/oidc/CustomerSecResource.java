@@ -21,8 +21,6 @@ public class CustomerSecResource implements CustomerApi
 {
   @Inject
   CustomerService customerService;
-  @Inject
-
 
   @Override
   @GET

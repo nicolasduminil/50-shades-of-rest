@@ -1,0 +1,66 @@
+{
+  "realm": "orders-realm",
+  "enabled": true,
+  "users": [
+    {
+      "username": "tom",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "tom-pwd"
+        }
+      ],
+      "realmRoles": ["user"],
+      "clientRoles": {
+        "orders-client": ["user-client-role"]
+      }
+    },
+    {
+      "username": "dick",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dick-pwd"
+        }
+      ],
+      "realmRoles": ["user", "admin"],
+      "clientRoles": {
+        "orders-client": ["user-client-role", "admin-client-role"]
+      }
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "orders-client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "test-client-secret",
+      "redirectUris": ["*"]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "User role"
+      },
+      {
+        "name": "admin",
+        "description": "User role"
+      }
+    ],
+    "client": {
+      "orders-client": [
+        {
+          "name": "order-client-role",
+          "description": "Orders client role"
+        }
+      ]
+    }
+  }
+}

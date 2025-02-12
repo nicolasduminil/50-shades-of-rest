@@ -46,7 +46,7 @@ public abstract class OrdersBaseTest
       .log().ifValidationFails()
       .statusCode(HttpStatus.SC_OK).extract().body().as(CustomerDTO.class);
     OrderDTO order = new OrderDTO("myItem01", new BigDecimal("100.25"), customerDTO.id());
-    given().body(order).contentType(ContentType.JSON).when()
+    getRequestSpec().body(order).contentType(ContentType.JSON).when()
       .log().all()
       .post(ordersUrl).then()
       .log().ifValidationFails()

@@ -1,10 +1,11 @@
 package fr.simplex_software.fifty_shades_of_rest.orders.oidc.tests;
 
+import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
 import fr.simplex_software.fifty_shades_of_rest.orders_test.*;
 import io.quarkus.test.junit.*;
+import io.quarkus.test.keycloak.client.*;
 import io.restassured.http.*;
 import io.restassured.specification.*;
-import org.eclipse.microprofile.config.inject.*;
 import org.junit.jupiter.api.*;
 
 import static io.restassured.RestAssured.*;
@@ -12,14 +13,7 @@ import static io.restassured.RestAssured.*;
 @QuarkusTest
 public class OrdersSecRestAssuredClientIT extends OrdersBaseTest
 {
-  @ConfigProperty(name = "quarkus.oidc.client-id")
-  String clientId;
-  @ConfigProperty(name = "quarkus.oidc.credentials.secret")
-  String secret;
-  @ConfigProperty(name = "quarkus.keycloak.devservices.users.john")
-  String userName;
-  @ConfigProperty(name = "quarkus.keycloak.devservices.users.john")
-  String johnPwd;
+  private static KeycloakTestClient keycloakClient;
 
   @BeforeAll
   public static void beforeAll()
@@ -37,15 +31,28 @@ public class OrdersSecRestAssuredClientIT extends OrdersBaseTest
 
   @Override
   protected RequestSpecification getRequestSpec() {
-    return given()
+    return given().contentType(ContentType.JSON)
       .auth()
-      .preemptive()
-      .basic(clientId, secret)
-      .param("client_id", clientId)
-      .param("username", "john")
-      .param("password", johnPwd)
-      .param("grant_type", "password")
-      .header("Accept", ContentType.JSON.getAcceptHeader())
-      .contentType(ContentType.JSON);
+      .oauth2(getAccessToken("alice"));
+  }
+
+  @Test
+  public void testCreateCustomerFails()
+  {
+    CustomerDTO customer = new CustomerDTO("Nick", "Doe",
+      "nick.doe@email.com", "1234567899");
+    given().contentType(ContentType.JSON)
+      .auth()
+      .oauth2(getAccessToken("bob"))
+      .body(customer)
+      .when().log().all().post(customersUrl).then().log().ifValidationFails()
+      .statusCode(403);
+  }
+
+  private String getAccessToken(String userName)
+  {
+    if (keycloakClient == null)
+      keycloakClient = new KeycloakTestClient();
+    return keycloakClient.getAccessToken(userName);
   }
 }
