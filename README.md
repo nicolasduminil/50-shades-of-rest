@@ -4120,3 +4120,326 @@ Now, you can run the integration tests as follows:
     $ mvn -DskipTests clean install
     $ cd orders-reactive
     $ mvn test failsafe:integration-test
+
+# Securing RESTful services
+
+While illustrating different RESTful services use cases in the preceding sections,
+we have completely made abstraction of security. However, security is a crucial
+requirement of every enterprise grade application or service. In this section, 
+we will look at several approaches to effectively secure our Quarkus RESTful
+services, as follows:
+
+  - Securing Quarkus RESTful services with a IAM (*Identity and Access Manager*) like Keycloak.
+  - Securing Quarkus RESTful services with MicroProfil JWT (*Json Web Token*)
+  - Securing Quarkus RESTful services using HTTPS.
+
+## Securing RESTful services with Keycloak
+
+Keycloak is an IAM distributed tool with focus on modern applications like SPA 
+(*Single Page Application*), mobile applications and RESTful services.
+
+By using a distributed security system, in general, the client applications are
+delegating to it the responsibility of the authentication and authorization process.
+They don't need any more to worry about different authentication mechanisms or 
+how to safely store the passwords. This approach provides the highest level of 
+security to applications which don't have direct access to user credentials but 
+use instead security tokens.
+
+As one of the most unavoidable IAM open source server, [Keycloak](https://www.keycloak.org) builds on industry
+standard protocols like OAuth 2.0, Opend ID Connect and SAML 2.0. It comes with
+its own internal user database, which makes very easy to get started.
+
+But starting using Keycloak with Quarkus is even easier, thanks to the [Dev Services
+for Keycloak](https://quarkus.io/guides/security-openid-connect-dev-services). 
+We already have seen, in a previous section, the Dev Services for Databases, 
+hence the good news is that running Keycloak in dev or test environments is as
+easy as running databases. All we need is to include the following dependencies
+in the Maven building process:
+
+    ...
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-oidc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-keycloak-authorization</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-keycloak-admin-rest-client</artifactId>
+    </dependency>
+    ...
+
+Please look at the `pom.xml` file in the `orders-oidc` module. 
+
+Keycloak uses *realms* as security definition units. It provides its own realm,
+named `keycloak`, used for internal management and, while applications could use
+this same system realm, it is recommended that they create customized ones.
+
+Keycloak is a very complex IAM server and explaining exhaustively how it works
+would take a standalone book, accordingly, we won't insist here on its features
+and capabilities but, instead, we'll send the reader back to the product documentation.
+However, it's worth noting that the fundamental elements of a Keycloak realm are
+the clients, users groups and roles.
+
+The Quarkus Dev Services for Keycloak provide an automatically started Keycloak
+instance having, in addition to the system internal realm, a default customized
+one, named *quarkus*. This realm is provisioned with the following elements:
+
+  - two default clients having the IDs `quarkus` and, respectively, `quarkus-app` and the password `secret`;
+  - two users: `alice/alice` and `bob/bob`;
+  - two global roles: `user` and `admin`, with user `alice` given both and `bob` only `user`.
+
+This way, starting the Quarkus unit and integration tests, we take advantage of
+a Docker container running Keycloak through `testcontainers` and a realm providing
+some basic users and roles, allowing to implement RBAC (*Role Base Access Control*) policies.
+The `quarkus` realm can be further customized and enriched, by using properties,
+as explained in the Dev Services for Keycloak documentation.
+
+As for the RESTful services themselves, they need to be slightly modified, such
+that to take advantage of the Keycloak authentication and authorization features.
+For example, let's have a look at the `CustomerSecResource` service, in the 
+`orders-oidc` module:
+
+    ...
+    @Override
+    @GET
+    @RolesAllowed("user")
+    public Response getCustomers()
+    {
+      return Response.ok().entity(new GenericEntity<List<CustomerDTO>>(customerService.getCustomers()) {}).build();
+    }
+
+    @Override
+    @GET
+    @Path("/{id}")
+    @RolesAllowed("user")
+    public Response getCustomer(@PathParam("id") Long id)
+    {
+      return Response.ok().entity(customerService.getCustomer(id)).build();
+    }
+    ...
+    
+    @Override
+    @POST
+    @RolesAllowed("admin")
+    public Response createCustomer(CustomerDTO customerDTO)
+    {
+      return Response.created(URI.create("/customers/" + customerDTO.id())).entity(customerService.createCustomer(customerDTO)).build();
+    }
+
+    @Override
+    @PUT
+    @RolesAllowed("admin")
+    public Response updateCustomer(CustomerDTO customerDTO)
+    {
+      return Response.accepted().entity(customerService.updateCustomer(customerDTO)).build();
+    }
+    ...
+
+As you can see, we're using here the Jakarta EE `@RolesAllowed` annotation, in
+order to restrict the access to the service's endpoints, based on the consumer
+role. This way, read-write endpoints require the `admin` role, while for the
+`read-only` ones, the `user` role is enough.
+
+Then, our integration test, using RESTassured and extending, as usual, the 
+`OrderBaseTest` class, needs to override the `getRequestSpec()` method, such 
+that to configure the HTTP requests with the required OAuth 2.0 access token.
+
+    @QuarkusTest
+    public class OrdersSecRestAssuredClientIT extends OrdersBaseTest
+    {
+      private static KeycloakTestClient keycloakClient;
+
+      @BeforeAll
+      public static void beforeAll()
+      {
+        customersUrl = "/customers-sec";
+        ordersUrl = "/orders-sec";
+      }
+
+      @AfterAll
+      public static void afterAll()
+      {
+        customersUrl = null;
+        ordersUrl = null;
+      }
+
+      @Override
+      protected RequestSpecification getRequestSpec()
+      {
+        return given().contentType(ContentType.JSON)
+          .auth()
+          .oauth2(getAccessToken("alice"));
+      }
+
+      @Test
+      public void testCreateCustomerFails()
+      {
+        CustomerDTO customer = new CustomerDTO("Nick", "Doe",
+          "nick.doe@email.com", "1234567899");
+        given().contentType(ContentType.JSON)
+         .auth()
+         .oauth2(getAccessToken("bob"))
+         .body(customer)
+         .when().log().all().post(customersUrl).then().log().ifValidationFails()
+         .statusCode(403);
+      }
+
+      private String getAccessToken(String userName)
+      {
+        if (keycloakClient == null)
+          keycloakClient = new KeycloakTestClient();
+        return keycloakClient.getAccessToken(userName);
+      }
+    }
+
+Here, we're using the `KeyCloakClient` instance to get the OAuth 2.0 access token
+associated to a Keycloak user. The user `alice`, who has both `admin` and `user`
+roles, are able to call all the endpoints, while the user `bob` who only has the
+`user` role, get HTTP 403, while trying to invoke read-write endpoints like 
+`creatCustomer(...)`.
+
+The OAuth 2.0 protocols defines several *grant types*, as explained [here](https://oauth.net/2/grant-types/).
+In our test, we're using the `KeycloackTestClient` which gets an access token 
+using the *client credentials* grant type. This grant type is specifically 
+designed for server-to-server authentication scenarios where:
+
+  - There is no user interaction required.
+  - The application, in our case the JUnit test, authenticates via an Oauth 2.0 client using its own credentials: a client ID and an optional client secret.
+  - The application, in our case the JUnit test, receives an access token that allows or denies access to the protected resources, in our case the Quarkus RESTful service.
+  - This access token isn't specific to a given user but to the application, in our case the JUnit test, in its globality.
+
+Notice that the OAuth 2.0 client at stake here is automatically provided by the
+Keycloak default security realm, provisioned by the Dev Services for Keycloak. 
+In a production-ready case, this realm is created as a separate and specific
+step of the deployment process, by security engineers who have the responsibility
+to chose authentication and authorization algorithms, token delivery policies,
+grant types, and many others.
+
+In our simplified test case, the associated Keycloak realm uses a certain number
+of default options, probably not very suitable for real applications, among which
+the *client credentials* grant type, very common in service-to-service communication,
+where a client application needs to access protected resources on its own behalf,
+rather than on the behalf of a specific user.
+
+Another important point to note is that, regardless the OAuth 2.0 grant type,
+the type of the access token used here is the *bearer token*. This term indicates
+that the holder ("bearer") of this token can access the protected resources, 
+regardless of who they are. Hence, the token itself is sufficient for authentication.
+This is particularly relevant when it comes to protect RESTful services using the
+*client credentials* grant type because:
+
+  - The token represents the client application's identity and permissions.
+  - Anyone who possesses ("bears") the token can use it to access the protected resources.
+  - There is no user context associated with the token - it represents the client application itself.
+
+You can run this test as follows:
+
+    $ cd orders
+    $ mvn -DskipTests clean install
+    $ cd orders-oidc
+    $ mvn failsafe:integration-test
+
+You'll see `testcontainers` running and starting the Keycloak server, after which
+the integration test should be exceuted successfully. Alternatively, you can run
+the Quarkus application in dev mode, with `mvn quarkus:dev` and, once that the 
+Keycloak server has started, pressing `d`, you will se the Quarkus Dev UI. Here
+you have a pane titled `OIDC` and clicking on the `Keycloack adminstration` link,
+you'll get the to Keycloack administratin console. Then, after having logged in 
+with `admin/admin`, you'll be able to browse the realms and all the associated 
+elements like users, roles, clients, etc.
+
+## Securing RESTful services with MicroProfile JWT
+
+In the previous example, we illustrated how to use Keycloak to authenticate and
+authorize the access to our RESTful services, from JUnit based integration tests.
+And while the authentication and authorization clients used here were simple 
+integration tests, in real cases these clients might be other RESTfull services
+or different other standalone components.
+
+Whatever the category of these clients might be, the type of the access tokens 
+used to protect resources, i.e. endpoints, is the *bearer token* type, as explained
+above. However, *bearer tokens* alone are simplified security mechanisms based on
+exchanging potentially arbitrary strings. Any client in possession of a valid 
+*bearer token* can use it to get access to the associated protected resources,
+without having to demonstrate identity. In order to alleviate this potential 
+security hole, the Eclipse MicroProfile specifications proposes the JWT (*Jason 
+Web Tokens*) encoding standard for tokens. This encoding standard consists in 
+using signed and encrypted JSON formated tokens, instead of raw data, as it was
+the case of the *bearer tokens*.
+
+Based on this encoding standard, a JWT includes the following sections:
+
+  - Header: a Base64 encoded string consiting in two parts: the token type, which is `JWT`, and the hashing algorithm being used, such as HMAC, SHA256 or RSA.
+  - Payload: a Base64 encoded string containing the so-called *claims*. These are statements about users or groups, including additional metadata.
+  - Signature: used to confirm the payload authenticity.
+
+We can use Keycloak to provide JWTs as well and, this way, we can have a single 
+and unique realm configuration for both security models: *bearer token* based and
+JWT based. However, such a realm requires a quite complex configuration and a deep
+understanding of the Keycloak *modus operandi*. And since this booklet isn't on
+Keycloak but on Quarkus RESTful services, for simplicity’s sake, we chose to use 
+here self generated JWTs.
+
+Looking at the `OrdersJwtRestAssuredIT` integration test class, in the `orders-jwt`
+module, you can see the following method:
+
+    ...
+    private String getAccessToken(String role)
+    {
+      return Jwt.upn(upn)
+       .issuer(issuer)
+       .groups(role)
+       .sign();
+    }
+    ...
+
+This method is the simplest possible way to generate a JWT using the `quarkus-
+smallrye-jwt` extension. This is how the JWT claims above are configured:
+
+  - `upn` (*User Principal Name*): should match the configuration in the identity provider. If we have used Keycloak as the identity provider, this claim would have been the Keycloak user name, for example `alice` or `bob`. But there isn't any identity provide in our case, accordingly this value could be an arbitrary string, incliuding the empty string.
+  - `issuer`: should match the `mp.jwt.verify.issuer` property in the `application.properties` file.
+  - `groups`: this directly maps to the roles in `@RolesAllowed` annotation.
+
+So, this simple code sequence will generate a valid JWT for the user defined by
+the `upn` claim, empty in our case, belonging to one of the roles `Admin` or 
+`User`, depending on the value of the method's input parameter.
+
+Then the following method:
+
+    ...
+    @Override
+    protected RequestSpecification getRequestSpec() 
+    {
+      return given().contentType(ContentType.JSON)
+        .auth()
+        .oauth2(getAccessToken("Admin"));
+    }
+    ...
+
+will generate a JWT for an anonym user belonging to the `Admin` role and, 
+consequently, being able to invoke read-write endpoints, like `create*`, `update*`
+and `delete*`.
+
+As for the REStful services themselves, they are almost identical to the ones used 
+previously to illustrate the Keycloak based authentication and authorization. 
+The only difference is that the `@RolesAllowed` clause is, in this last case:
+
+    @RolesAllowed({"User", "Admin"})
+
+instead of 
+
+    @RolesAllowed("user")
+
+in the former one. This is because, the Keycloak default realm users, `alice` 
+and `bob` have both the `user` role. Accordingly, allowing the `user` role for
+the read-only endpoints, both users `alice` and `bob` are allowed access, meaning
+that both roles `admin` and `user` are allowed access as well. This contrasts with
+the JWT based authentication and authorization case where there aren't anymore
+users belonging to roles, but just groups that maps to roles and, consequently,
+these roles have to be, all of them, explictly mentioned, such that to be allowed access.
+
+
+

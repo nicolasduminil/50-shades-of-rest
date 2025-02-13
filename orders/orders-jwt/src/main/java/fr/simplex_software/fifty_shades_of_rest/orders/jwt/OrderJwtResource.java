@@ -9,22 +9,15 @@ import jakarta.enterprise.context.*;
 import jakarta.inject.*;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
-import org.eclipse.microprofile.jwt.*;
 
 import java.net.*;
 
-@RequestScoped
+@ApplicationScoped
 @Path("orders-jwt")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class OrderJwtResource implements OrderApi
 {
-  @Inject
-  JsonWebToken jwt;
-  @Inject
-  @Claim(standard = Claims.birthdate)
-  String birthdate;
-
   @Inject
   OrderService orderService;
 

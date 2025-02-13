@@ -6,7 +6,7 @@ import io.quarkus.test.junit.*;
 import io.restassured.http.*;
 import io.restassured.specification.*;
 import io.smallrye.jwt.build.*;
-import org.eclipse.microprofile.jwt.*;
+import org.eclipse.microprofile.config.inject.*;
 import org.junit.jupiter.api.*;
 
 import static io.restassured.RestAssured.*;
@@ -14,6 +14,11 @@ import static io.restassured.RestAssured.*;
 @QuarkusTest
 public class OrdersJwtRestAssuredClientIT extends OrdersBaseTest
 {
+  @ConfigProperty(name = "mp.jwt.verify.issuer")
+  String issuer;
+  @ConfigProperty(name = "mp.jwt.verify.upn")
+  String upn;
+
   @BeforeAll
   public static void beforeAll()
   {
@@ -50,10 +55,9 @@ public class OrdersJwtRestAssuredClientIT extends OrdersBaseTest
 
   private String getAccessToken(String role)
   {
-    return Jwt.upn("jdoe@quarkus.io")
-      .issuer("https://example.com/issuer")
+    return Jwt.upn(upn)
+      .issuer(issuer)
       .groups(role)
-      .claim(Claims.birthdate.name(), "2001-07-13")
       .sign();
   }
 }

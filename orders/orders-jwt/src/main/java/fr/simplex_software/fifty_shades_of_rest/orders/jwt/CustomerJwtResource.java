@@ -8,24 +8,17 @@ import jakarta.enterprise.context.*;
 import jakarta.inject.*;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
-import org.eclipse.microprofile.jwt.*;
 
 import java.net.*;
 import java.nio.charset.*;
 import java.util.*;
 
-@RequestScoped
+@ApplicationScoped
 @Path("customers-jwt")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class CustomerJwtResource implements CustomerApi
 {
-  @Inject
-  JsonWebToken jwt;
-  @Inject
-  @Claim(standard = Claims.birthdate)
-  String birthdate;
-
   @Inject
   CustomerService customerService;
 
