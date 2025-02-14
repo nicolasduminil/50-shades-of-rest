@@ -13,7 +13,19 @@ import static io.restassured.RestAssured.*;
 @QuarkusTest
 public class OrdersSecRestAssuredClientIT extends OrdersBaseTest
 {
+<<<<<<< HEAD
   private static KeycloakTestClient keycloakClient;
+=======
+  /*@ConfigProperty(name = "quarkus.oidc.client-id")
+  String clientId;
+  @ConfigProperty(name = "quarkus.oidc.credentials.secret")
+  String secret;
+  @ConfigProperty(name = "quarkus.keycloak.devservices.users.john")
+  String userName;
+  @ConfigProperty(name = "quarkus.keycloak.devservices.users.john")
+  String johnPwd;*/
+  private KeycloakTestClient keycloakClient = new KeycloakTestClient();
+>>>>>>> 61e05b4 (OIDC okay)
 
   @BeforeAll
   public static void beforeAll()
@@ -30,6 +42,7 @@ public class OrdersSecRestAssuredClientIT extends OrdersBaseTest
   }
 
   @Override
+<<<<<<< HEAD
   protected RequestSpecification getRequestSpec()
   {
     return given().contentType(ContentType.JSON)
@@ -55,5 +68,12 @@ public class OrdersSecRestAssuredClientIT extends OrdersBaseTest
     if (keycloakClient == null)
       keycloakClient = new KeycloakTestClient();
     return keycloakClient.getAccessToken(userName);
+=======
+  protected RequestSpecification getRequestSpec() {
+    return given()
+      .contentType(ContentType.JSON)
+      .auth()
+      .oauth2(keycloakClient.getAccessToken("alice"));
+>>>>>>> 61e05b4 (OIDC okay)
   }
 }

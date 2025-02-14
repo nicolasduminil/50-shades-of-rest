@@ -4,6 +4,7 @@ import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
 import fr.simplex_software.fifty_shades_of_rest.orders_test.*;
 import io.quarkus.test.junit.*;
 import io.restassured.*;
+import io.restassured.config.*;
 import io.restassured.http.*;
 import io.restassured.specification.*;
 import io.smallrye.jwt.build.*;
@@ -25,6 +26,8 @@ public class OrdersHttpsRestAssuredClientIT extends OrdersBaseTest
   {
     customersUrl = "/customers-https";
     ordersUrl = "/orders-https";
+      RestAssured.config = RestAssured.config()
+        .sslConfig(new SSLConfig().relaxedHTTPSValidation());
   }
 
   @AfterAll
@@ -35,7 +38,8 @@ public class OrdersHttpsRestAssuredClientIT extends OrdersBaseTest
   }
 
   @Override
-  protected RequestSpecification getRequestSpec() {
+  protected RequestSpecification getRequestSpec()
+  {
     return given().contentType(ContentType.JSON)
       .auth()
       .oauth2(getAccessToken("Admin"));

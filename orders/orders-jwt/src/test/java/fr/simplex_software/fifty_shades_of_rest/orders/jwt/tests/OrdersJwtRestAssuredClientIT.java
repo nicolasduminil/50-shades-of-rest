@@ -31,42 +31,6 @@ public class OrdersJwtRestAssuredClientIT extends OrdersBaseTest
   {
     customersUrl = "/customers-jwt";
     ordersUrl = "/orders-jwt";
-    SSLContext sslContext;
-    try
-    {
-      sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, new TrustManager[]{new X509TrustManager()
-      {
-        public void checkClientTrusted(X509Certificate[] x509Certificates, String s)
-        {
-        }
-
-        public void checkServerTrusted(X509Certificate[] x509Certificates, String s)
-        {
-        }
-
-        public X509Certificate[] getAcceptedIssuers()
-        {
-          return new X509Certificate[0];
-        }
-      }}, new SecureRandom());
-
-      // Configure REST Assured
-      RestAssured.config = RestAssured.config()
-        .sslConfig(new SSLConfig()
-          //.sslSocketFactory(sslContext.getSocketFactory())
-          .relaxedHTTPSValidation()
-          .allowAllHostnames());
-
-      RestAssured.port = 8443;
-      RestAssured.useRelaxedHTTPSValidation();
-      RestAssured.useRelaxedHTTPSValidation();
-      RestAssured.port = 8443;
-    }
-    catch (Exception e)
-    {
-      throw new RuntimeException(e);
-    }
   }
 
     @AfterAll
