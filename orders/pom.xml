@@ -25,6 +25,7 @@
     <module>orders-reactive-service</module>
     <module>orders-oidc</module>
     <module>orders-jwt</module>
+    <module>orders-https</module>
   </modules>
   <dependencyManagement>
     <dependencies>

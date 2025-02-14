@@ -1,25 +1,19 @@
-package fr.simplex_software.fifty_shades_of_rest.orders.jwt.tests;
+package fr.simplex_software.fifty_shades_of_rest.orders.https.tests;
 
 import fr.simplex_software.fifty_shades_of_rest.orders.domain.dto.*;
 import fr.simplex_software.fifty_shades_of_rest.orders_test.*;
 import io.quarkus.test.junit.*;
 import io.restassured.*;
-import io.restassured.config.*;
 import io.restassured.http.*;
 import io.restassured.specification.*;
 import io.smallrye.jwt.build.*;
 import org.eclipse.microprofile.config.inject.*;
 import org.junit.jupiter.api.*;
 
-import javax.net.ssl.*;
-
-import java.security.*;
-import java.security.cert.*;
-
 import static io.restassured.RestAssured.*;
 
 @QuarkusTest
-public class OrdersJwtRestAssuredClientIT extends OrdersBaseTest
+public class OrdersHttpsRestAssuredClientIT extends OrdersBaseTest
 {
   @ConfigProperty(name = "mp.jwt.verify.issuer")
   String issuer;
@@ -29,47 +23,11 @@ public class OrdersJwtRestAssuredClientIT extends OrdersBaseTest
   @BeforeAll
   public static void beforeAll()
   {
-    customersUrl = "/customers-jwt";
-    ordersUrl = "/orders-jwt";
-    SSLContext sslContext;
-    try
-    {
-      sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, new TrustManager[]{new X509TrustManager()
-      {
-        public void checkClientTrusted(X509Certificate[] x509Certificates, String s)
-        {
-        }
-
-        public void checkServerTrusted(X509Certificate[] x509Certificates, String s)
-        {
-        }
-
-        public X509Certificate[] getAcceptedIssuers()
-        {
-          return new X509Certificate[0];
-        }
-      }}, new SecureRandom());
-
-      // Configure REST Assured
-      RestAssured.config = RestAssured.config()
-        .sslConfig(new SSLConfig()
-          //.sslSocketFactory(sslContext.getSocketFactory())
-          .relaxedHTTPSValidation()
-          .allowAllHostnames());
-
-      RestAssured.port = 8443;
-      RestAssured.useRelaxedHTTPSValidation();
-      RestAssured.useRelaxedHTTPSValidation();
-      RestAssured.port = 8443;
-    }
-    catch (Exception e)
-    {
-      throw new RuntimeException(e);
-    }
+    customersUrl = "/customers-https";
+    ordersUrl = "/orders-https";
   }
 
-    @AfterAll
+  @AfterAll
   public static void afterAll()
   {
     customersUrl = null;
