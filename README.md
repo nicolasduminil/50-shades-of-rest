@@ -1,7 +1,7 @@
 ---
 title: 50 Shades of Quarkus RESTful Services
 author: Nicolas Duminil
-date: January 2025
+date: February 2025
 toc: false
 numbersections: true
 geometry: margin=2.5cm
@@ -11,6 +11,9 @@ header-includes: |
   \usepackage{listings}
   \usepackage{listings}
   \usepackage{xcolor}
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage{babel}
 
   \definecolor{codegreen}{rgb}{0,0.6,0}
   \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -73,7 +76,8 @@ abstract: |
 
 \maketitle
 
-# Quarkus: 50 Shades of RESTful Services
+
+\section{Introduction}
 
 REST is now 25 years old. The birth certificate of this almost impossible to 
 remember acronym (*REpresentational State Transfer*) is considered to be the Y2K
@@ -299,7 +303,7 @@ to communicate each-other, as well as with the external world.
 
 In this post series we'll examine all their 50 shades :-).
 
-# 101 RESTful services
+\section{101 RESTful services}
 
 As we've seen, RESTful services are services that follow the *Representation State 
 Transfer* principles. They are based on manipulating resources addressable via 
@@ -373,7 +377,7 @@ In order to use RESTeasy in your Quarkus application you need to include the
     ...
 \end{lstlisting}
 
-# Your first Quarkus RESTful service
+\section{Your first Quarkus RESTful service}
 
 The RESTeasy documentation, as well as the Jakarta RESTful Web Services specifications,
 are at your disposal for more details about the use of the classes, interfaces 
@@ -1299,7 +1303,7 @@ into/from the database, by delegating each CRUD operation to the `CustomerServic
 This is all what we can say about this service and the associated one,
 `OrderConsumer`, is very similar.
 
-## Testing RESTfull services
+\section{Testing RESTfull services}
 
 With Quarkus, testing has never been so easy. All you need is to include the
 `quarkus-junit5` extension in your Maven `pom.xml` file and to annotate your 
@@ -1352,7 +1356,7 @@ years for testing. Consequently, we provide the following test categories:
 All these test categories are integrated, of course, with JUnit 5. Let’s have now
 a look at them all.
 
-### Testing with RESTassured
+## Testing with RESTassured
 
 RESTassured, is a very well-known open source library that offers a light and 
 very practical Java DSL (*Domain Specific Language*) for testing.
@@ -1478,7 +1482,7 @@ In order to run the integration tests, proceed as follows:
 You'll see an output report stating that all the unit and integration tests have
 succeeded.
 
-### Testing with Eclipse MicroProfile REST Client
+## Testing with Eclipse MicroProfile REST Client
 
 As an important part of the general Eclipse MicroProfile specifications, REST 
 Client provides a typesafe approach, using proxies and annotations, to invoke 
@@ -1636,7 +1640,7 @@ To run these tests:
 
     $ mvn -Dquarkus.container-image.build clean install failsafe:integration-test
 
-### Testing with Jakarta RESTful Client
+## Testing with Jakarta RESTful Client
 
 Jakarta REST specifications include a client API that can be used for calling 
 endpoints. As opposed to other clients, like for example [Apache HTTP Client](https://hc.apache.org),
@@ -1814,7 +1818,7 @@ sure you understand what everything is about. As a matter of fact, Jakarta REST
 Client is a very important specification and, if you must know a single API in 
 order to invoke RESTful services, then this is the one.
 
-### Testing with Java 11 HTTP Client
+## Testing with Java 11 HTTP Client
 
 Historically, the only HTTP client that Java provided as a part of its JDK was 
 the `HttpUrlConnection` API. This API is a low-level one and, while it can be 
@@ -1925,7 +1929,7 @@ object of this array.
 Please spend a moment to carefully inspect how the other requests, `PUT` and 
 `DELETE` are processed by the Java 11 HTTP Client API.
 
-### Testing production-like
+## Testing production-like
 
 Now, once you made sure that your unit and integration tests work as expected, you 
 might want to run them *production like*, i.e. to perform end-to-end tests. In 
@@ -2100,7 +2104,7 @@ and you'll be presented with the Swager UI main window, as shown below:
 Using this graphical interface you can now fully exercise your API and test it 
 by combining all the possible scenarios.
 
-# Eclipse MicroProfile Health
+\section{Eclipse MicroProfile Health}
 
 As mentioned earlier, Quarkus, as an implementation of the [Eclipse MicroProfile](https://microprofile.io/) 
 specifications, supports the [MicroProfile Health](https://microprofile.io/specifications/health/) specifications.
@@ -2283,7 +2287,7 @@ Last but not least, querying the endpoint http://localhost:8080/q/health will
 display both the liveness and readiness checks. Additionally, in dev mode, all
 the health checks are available through the Health-UI, at http://localhost:8080/q/health-ui.
 
-# Eclipse MicroProfile Metrics
+\section{Eclipse MicroProfile Metrics}
 
 During the previous paragraph we've seen how Eclipse MicroProfile Health helps 
 us to monitor our applications and services status, by instrumenting checks. But
@@ -2306,7 +2310,9 @@ to include the following extension in your Maven build process:
     </dependency>
 \end{lstlisting}
 
-Then, in order to access the base metrics proceed as follows:
+## Basic metrics
+
+In order to access the base metrics proceed as follows:
 
 \begin{lstlisting}[caption=Testing for base metrics with `curl`]
     $ curl -H "Accept: application/json" http://localhost:8080/q/metrics/base
@@ -2334,7 +2340,11 @@ Then, in order to access the base metrics proceed as follows:
 \end{lstlisting}
 
 You got here the complete list of metrics that each MicroProfile Metrics implementation
-has to support. The listing below shows the Quarkus specific metrics:
+has to support. 
+
+## Quarkus specific metrics
+
+The listing below shows the Quarkus specific metrics:
 
 \begin{lstlisting}[caption=Testing for vendor metrics with `curl`]
     $ curl -H "Accept: application/json" http://localhost:8080/q/metrics/vendor
@@ -2654,7 +2664,7 @@ a file. Then, the `/customers/random` endpoint is invoked 5 times, please feel
 free to adjust this number to the value which makes sense for you and don't 
 hesitate to add requests to the 2nd endpoint, such that to activate `randomCustomerMeter`.
 
-# Eclipse MicroProfile Fault Tolerance
+\section{Eclipse MicroProfile Fault Tolerance}
 
 *Fault Tolerance* is probably the most important section of the Eclipse MicroProfile
 specifications because, as their name implies, they bring fault tolerance and 
@@ -2869,7 +2879,7 @@ headers, run the following `curl` command:
 This concludes our whirlwind tour to the Eclipse MicroProfile Fault Tolerance as
 implemented by Quarkus.
 
-# Asynchronous processing with REST services
+\section{Asynchronous processing with REST services}
 
 There are two levels of asynchronous processing as far as REST services are concerned:
 
@@ -2881,7 +2891,7 @@ with synchronous producers, asynchronous consumers with asynchronous producers
 and synchronous consumers with asynchronous producers. Let's examine them closer
 with the help of some examples.
 
-## Asynchronously invoking REST services
+## Asynchronous REST consumers
 
 Asynchronous REST services consumers have been introduced with the 2.0 release
 of the JAX-RS specifications, back in 2011. The idea is simple: the consumer
@@ -3508,7 +3518,7 @@ avoiding this way all the overhead of the "one thread per connection" model.
 JAS-RS 2.0, released in 2013, was the first release of the specs supporting server
 side asynchronous processing.
 
-### JAX-RS 2.0 asynchronous producers
+## JAX-RS 2.0 asynchronous producers
 
 To use REST JAX-RS 2.0 asynchronous producers requires to interact with the
 `AsynResponse` interface introduced by the version of the specs.
@@ -3795,7 +3805,7 @@ RESTassured test was synchronous while this one is asynchronous. This shows that
 the same RESTful asynchronous producer may be consumed via synchronous or 
 asynchronous consumers.
 
-### JAX-RS 2.1 asynchronous producers
+## JAX-RS 2.1 asynchronous producers
 
 In Chapter 7, when we discussed the RESTfull asynchronous consumers, we have 
 emphasized the new features that the JAX-RS 2.1 specifications brought, compared
@@ -3904,7 +3914,7 @@ synchronous or asynchronous, blocking or non-blocking, doesn't matter much from
 the point of view of the consumers, who may be indifferently synchronous, 
 asynchronous, blocking or non-blocking.
 
-## Reactive RESTfull services
+\section{Reactive RESTfull services}
 
 The [ReactiveX](http://reactivex.io) website defines the reactive programming as follows:
 
@@ -4039,7 +4049,7 @@ Programming with RxJava](https://shorturl.at/DN0de) or [Reactive Systems in Java
 subtleties of these topics. What you're seeing here is just a short introduction
 to some basic concepts and, in order to illustrate them, lets look at some code.
 
-### Making reactive the Order Management service
+## Making reactive the Order Management service
 
 The listing below shows a fragment of the `CustomerResourceReact` class, which is
 the reactive version of the customer service. The complete code can be found in 
@@ -4200,7 +4210,7 @@ Now, you can run the integration tests as follows:
     $ cd orders-reactive
     $ mvn test failsafe:integration-test
 
-# Securing RESTful services
+\section{Securing RESTful services}
 
 While illustrating different RESTful services use cases in the preceding sections,
 we have completely made abstraction of security. However, security is a crucial
@@ -4646,7 +4656,7 @@ you'll notice that, this time, the endpoints will be invoked using the
 https://localhost:8843 URL, which means that the information gets encrypted,
 end to end.
 
-# Conclusions
+\section{Conclusions}
 
 We have just reached the end of our foray into the field of the Quarkus RESTful services. 
 Yours truly sincerely hope that
