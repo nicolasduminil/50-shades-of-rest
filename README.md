@@ -42,6 +42,8 @@ header-includes: |
   \fancyfoot[L]{© Nicolas Duminil 2025}
   \fancyfoot[R]{\thepage}
   \fancyfoot[C]{}
+  \usepackage{chngcntr}
+  \AtBeginDocument{\counterwithin{lstlisting}{section}}
 abstract: |
   This booklet explores the diverse landscape of RESTful services implementation using
   Quarkus, a modern Kubernetes-native Java framework. Starting with a historical
@@ -360,13 +362,13 @@ and Quarkus are listed below:
 | `@Context` | Inject the context information |
 
 In order to use RESTeasy in your Quarkus application you need to include the 
-`quarkus-resteasy` extension in your Maven dependencies, as follows:
+`quarkus-rest` extension in your Maven dependencies, as follows:
 
 \begin{lstlisting}[language=XML, caption=Maven dependencies required to use RESTeasy with Quarkus]
     ...
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy</artifactId>
+      <artifactId>quarkus-rest</artifactId>
     </dependency>
     ...
 \end{lstlisting}
@@ -376,7 +378,7 @@ In order to use RESTeasy in your Quarkus application you need to include the
 The RESTeasy documentation, as well as the Jakarta RESTful Web Services specifications,
 are at your disposal for more details about the use of the classes, interfaces 
 and annotations summarized in the tables above. However, a more empiric approach,
-for unatients, is to look at an example.
+for unpatients, is to look at an example.
 
 Throughout this booklet, in order to illustrate the presented material, we'll be
 using a real world use case consisting in a simplified order management system.
@@ -1743,10 +1745,12 @@ In order to invoke the `createCustome(...)` endpoint of our REST service, we nee
 to send a `POST` request to it. As you've seen in the listing above, this is 
 done as follows using the Jakarta REST Client:
 
+\begin{lstlisting}[language=Java, caption=Sending a POST request to an endpoint]
     ...
     client.target(customerSrvUri).request()
       .post(Entity.entity(customer, MediaType.APPLICATION_JSON));
     ...
+\end{lstlisting}
 
 We need to obtain first an instance of `jakarta.ws.rs.Client` on the behalf of 
 which to submit the `POST` request, having in its body the instance of the class
@@ -1754,14 +1758,16 @@ which to submit the `POST` request, having in its body the instance of the class
 data, this instance of the class `CustomerDTO` has to be marshalled into JSON.
 And the good news is that this conversion is automatically done.
 
-To retrieve a customer identified ny its email address we use a `GET` request,
+To retrieve a customer identified by its email address we use a `GET` request,
 like this:
 
+\begin{lstlisting}[language=Java, caption=Getting a customer by his email address]
     ...
     CustomerDTO customerDTO = client.target(customerSrvUri)
       .path("email/{email}").resolveTemplate("email", JOHN_EMAIL)
       .request().get(CustomerDTO.class);
     ...
+\end{lstlisting}
 
 In this case, our endpoint is `customers/email/{email}` and you can see how to 
 use `resolveTemplate(...)` verb in order to build the associated URI. Then, the
@@ -1771,10 +1777,12 @@ appears as a part of the URI, it needs to be encoded.
 
 To update a customer we proceed in a similar way.
 
+\begin{lstlisting}[language=Java, caption=Updating a customer]
     ...
     Response response = client.target(customerSrvUri).request()
       .put(Entity.entity(updatedCustomer, MediaType.APPLICATION_JSON));
     ...
+\end{lstlisting}
 
 This is how a `PUT` request is performed, such that to update an existing 
 customer. The idea is the same as in the case of the `POST`: the request's body
@@ -1784,12 +1792,14 @@ parameter.
 
 Last but not least, the `DELETE` request is done as shown below:
 
+\begin{lstlisting}[language=Java, caption=Deleting a customer]
     ...
     Response response = client.target(customerSrvUri).request()
       .build("DELETE", 
         Entity.entity(customerDTO, MediaType.APPLICATION_JSON))
         .invoke();
     ...
+\end{lstListing}
 
 As you can see, the `DELETE` request doesn't obey to the same rules as `PUT` and
 `POST` because it doesn't directly accept a body. Instead, the generic `build(...)`
@@ -1856,11 +1866,13 @@ Then, we call its `send(...)` method by passing to it a `HttpRequest`, in our ca
 `POST`. This `HttpRequest` instance is created via its specialized builder, as 
 shown below:
 
+\begin{lstlisting}[language=Java, caption=Creating an `HttpRequest` instance]
     ...
     private HttpRequest.Builder builder =
       HttpRequest.newBuilder()
       .header("Content-Type", "application/json");
     ...
+\end{lstlisting}
 
 Here we're initializing the HTTP `Content-Type` header such that the RESTful 
 service accepts JSON payloads. The factory method `newBuilder(...)` may take as 
@@ -2195,6 +2207,7 @@ or fire your preferred browser.
 We just probed that our services are up and running, let's now try to write some
 readiness checks. Look at the class `DbHealthCheck` below:
 
+\begin{lstlisting}[language=Java, caption=Testing for readyness]
     @ApplicationScoped
     @Readiness
     public class DbHealthCheck implements HealthCheck
@@ -2227,6 +2240,7 @@ readiness checks. Look at the class `DbHealthCheck` below:
         new Socket(host, port).close();
       }
     }
+\end{lstlisting}
 
 This class is similar to the previous one, except that, instead of checking for
 liveness, it checks for readiness. In fact, it checks whether the PostgreSQL 
@@ -2243,6 +2257,7 @@ in the `docker-compose.yml` file.
 
 You can test the readiness checks as follows:
 
+\begin{lstlisting}[caption=Testing for readyness with `curl`]
     $ curl http://localhost:8080/q/health/ready
       {
         "status": "UP",
@@ -2262,6 +2277,7 @@ You can test the readiness checks as follows:
           }
         ]
       }
+\end{lstlisting}
 
 Last but not least, querying the endpoint http://localhost:8080/q/health will 
 display both the liveness and readiness checks. Additionally, in dev mode, all
@@ -2283,13 +2299,16 @@ The specification defines three categories of metrics:
 In order to use Eclipse MicroProfile Metrics in Quarkus applications, you need 
 to include the following extension in your Maven build process:
 
+\begin{lstlisting}[language=XML, caption=Maven dependencies for metrics]
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-metrics</artifactId>
     </dependency>
+\end{lstlisting}
 
 Then, in order to access the base metrics proceed as follows:
 
+\begin{lstlisting}[caption=Testing for base metrics with `curl`]
     $ curl -H "Accept: application/json" http://localhost:8080/q/metrics/base
     {
       "cpu.systemLoadAverage": 0.46,
@@ -2312,10 +2331,12 @@ Then, in order to access the base metrics proceed as follows:
       "gc.time;name=G1 Concurrent GC": 3,
       "gc.time;name=G1 Young Generation": 18
     }
+\end{lstlisting}
 
 You got here the complete list of metrics that each MicroProfile Metrics implementation
 has to support. The listing below shows the Quarkus specific metrics:
 
+\begin{lstlisting}[caption=Testing for vendor metrics with `curl`]
     $ curl -H "Accept: application/json" http://localhost:8080/q/metrics/vendor
     {
       "memoryPool.usage.max;name=G1 Survivor Space": 6410136,
@@ -2342,6 +2363,7 @@ has to support. The listing below shows the Quarkus specific metrics:
       "memory.maxNonHeap": -1,
       "memoryPool.usage.max;name=CodeHeap 'profiled nmethods'": 5071360
     }
+\end{lstlistings}
 
 Let's have a look now at the application metrics that interest us the most.
 
@@ -2358,6 +2380,7 @@ of application metrics:
 The following example, taken from the `CustomerResource` class, shows how to 
 use these metrics:
 
+\begin{lstlisting}[language=Java, caption=Using metrics]
     @GET
     @Path("/random")
     @Counted(name = "randomCustomerCounter",
@@ -2401,6 +2424,7 @@ use these metrics:
       return createdCustomers.get();
     }
     ...
+\end{lstlisting}
 
 The `CustmerResource` class has been enriched such that to add the 
 `getRandomCustmer(...)` and `getRandomCustomers(...)` methods. They call a public
@@ -2424,6 +2448,7 @@ Finally, a word about the public service `randomuser.me`. In order to call it,
 we use the Eclipse MicroProfile REST Client implementation provided by Quarkus.
 The interface `RandomCustomerClientApi` below describes the contract of service:
 
+\begin{lstlisting}[language=Java, caption=The interface `RandomCustomerClientApi`]
     @Path("/api")
     @RegisterRestClient(baseUri = "https://randomuser.me")
     public interface RandomCustomerApiClient
@@ -2437,6 +2462,7 @@ The interface `RandomCustomerClientApi` below describes the contract of service:
       @QueryParam("results")
       JsonObject getRandomCustomers(@QueryParam("results") int count);
     }
+\end{lstlisting}
 
 This interface exposes two endpoints associated to the operations provided by the
 service  `randomuser.me` available at the URL http://randomuser.me. Both endpoints
@@ -2448,6 +2474,7 @@ This interface is transformed, at build time, by the Quarkus enricher, in an
 operational implementation that can be used to access the target service as shown
 below:
 
+\begin{lstlisting}[language=Java, caption=Using the interface `RandomCustomerApiClient` to invoke endpoints]
     @ApplicationScoped
     public class RandomCustomerService
     {
@@ -2496,6 +2523,7 @@ below:
         );
       }
     }
+\end{lstlisting}
 
 We can resume the role of the code above by saying that it provides support for
 invoking the external public service `randomuser.me` as well for converting the 
@@ -2503,6 +2531,7 @@ JSON payload returned by the endpoint into instance of `CustomerDTO objects.`
 
 In order to test our application metrics, we need to proceed as follows:
 
+\begin{lstlisting}[caption=Testing application defined metrics with `curl`]
     $ cd orders
     $ mvn -Dquarkus.container-image.build clean install
     $ cd orders-infrastructure
@@ -2537,6 +2566,7 @@ In order to test our application metrics, we need to proceed as follows:
       "count": 0,
       "oneMinRate": 0.0
     }
+\end{lstlisting}
 
 Here we run the Maven build process by taking care to use the `Dquarkus.container-image.build`
 option which will build the Docker image named `nicolas/orders-classic:1.0-SNAPSHOT`.
@@ -2546,6 +2576,7 @@ Once all three containers have started, we execute the `bash` script
 `run.sh`containing the required `curl` commands to create a new customer by doing
 a POST request to http://localhost:8080/customers, with the following JSON payload:
 
+\begin{lstlisting}[caption=The JSON payload to define a customer]
     {
       "firstName": "Johhn",
       "lastName": "Doe",
@@ -2553,14 +2584,16 @@ a POST request to http://localhost:8080/customers, with the following JSON paylo
       "id": 0,
       "email": "john.doe@email.com"
     }
+\end{lstlisting}
 
 Notice that, given that the `Customer` JPA entity class uses automatically generated
 IDs, the payload above has `"id": 0`.
 
 After having created a new customer, the `run.sh` script calls several times one
-of the service endpoints, such that to generate some traffic. Then, tou can get the
+of the service endpoints, such that to generate some traffic. Then, you can get the
 application metrics:
 
+\begin{lstlisting}[caption=Getting the application defined metrics with `curl`]
     $ curl -H "Accept: application/json" http://localhost:8080/q/metrics/application
     {
       "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerTimer": 
@@ -2593,10 +2626,12 @@ application metrics:
          "oneMinRate": 0.0
        }
     }
+\end{lstlisting}
 
 Each execution environment being different, you may get slightly different values.
 The listing below shows the `run.sh` bash script.
 
+\begin{lstlisting}[caption=The `run.sh` script]
     #!/bin/bash
     curl -X POST \
       -H "Content-Type: application/json" \
@@ -2609,6 +2644,7 @@ The listing below shows the `run.sh` bash script.
       sleep 1
       curl http://localhost:8080/customers/random
     done
+\end{lstlisting}
 
 As you can see, in order to invoke the `/customers`endpoint of our RESTful service,
 you need to pass two HTTP headers in the `POST` request: `Accept` and `Content-Type`,
@@ -2657,6 +2693,7 @@ the former one has the following same states:
 
 Let's look at an example to understand how everything works:
 
+\begin{lstlisting}[language=Java, caption=An Eclipse MP Circuit Breaker example]    
     ...
     @GET
     @Path("/random/{count}")
@@ -2668,6 +2705,7 @@ Let's look at an example to understand how everything works:
       return Response.ok().entity(randomCustomers).build();
     }
     ...
+\end{lstlisting}
 
 The `@CircuitBreaker` annotation in the listing above says that if, within the 
 last 4 calls (`requestVolumeThreshold`), 50% of request have failed (`failUreRatio`),
@@ -2680,6 +2718,8 @@ be successful, it will switch back to the *close* state.
 Let's modify now our `/random/count` endpoint such that to illustrate the other
 MicroProfile Fault Tolerance annotations:
 
+\begin{lstlisting}[language=Java, caption=An Eclipse MP Fault Tolerance example]    
+    ...
     @GET
     @Path("/random/{count}")
     @Fallback(fallbackMethod = "getFallbackRandomCustomers")
@@ -2699,6 +2739,7 @@ MicroProfile Fault Tolerance annotations:
         .entity(customerDTO).build();
     }
     ...
+\end{lstlisting}
 
 The method `getRandomCustomers(...)` in the listing above calls an external public
 service. This service might not be available and, if this happens, instead of 
@@ -2748,6 +2789,8 @@ The class `FaultSimulator` in the `failures` module of our Maven project perform
 the operations described above. Looking at the code, you can see the
 following enum structure which defines all the failure types that can happen:
 
+\begin{lstlisting}[language=Java, caption=Simulating the failure types]
+    ...
     private enum Fault
     {
       NONE,
@@ -2755,6 +2798,8 @@ following enum structure which defines all the failure types that can happen:
       SERVICE_FAILURE,
       OUTBOUND_RESPONSE_LOSS
     }
+    ...
+\end{lstlisting}
 
 Here we have the following categories:
   - no failure (`NONE`)
@@ -2771,17 +2816,21 @@ and endpoint named `fail`. It takes the following query parameters:
 
 To run the simulator, you need first to start the Quarkus application, as usual:
 
+\begin{lstlisting}[caption=Running the failure simulator]
     $ cd 50-shades-of-rest
     $ mvn -Dquarkus.container-image.build -DskipTests clean install
     $ cd orders-infrastructure
     $ mvn docker-compose:up
+\end{lstlisting}
 
 This sequence of commands will start our three Docker containers. Then, use the
 `curl` command below in order to configure the `FaultSimulator` to lose 50% of 
 the incoming requests:
 
+\begin{lstlisting}[caption=Configuring the failure simulator to lose incoming requests]
     $ curl http://localhost:8080/fail?failure=INBOUND_REQUEST_LOSS
     Faults are enabled: fault = INBOUND_REQUEST_LOSS, failure rate = 0.5
+\end{lstlisting}
 
 Now, sending repetitively requests to the `/customers/random` or `/customers/random/{count}`
 endpoints and, if you're patient, you should see the circuit breaker opening and closing, 
@@ -2790,13 +2839,17 @@ the timeout firing, etc.
 If, instead of `INBOUND_REQUEST_LOSS`, you want to simulate `SERVICE_FAILURE` 
 then you need to run:
 
+\begin{lstlisting}[caption=Configuring the failure simulator to simulate service failures]
     $ curl http://localhost:8080/fail?failure=SERVICE_FAILURE
     Faults are enabled: fault = SERVICE_FAILURE, failure rate = 0.5
+\end{lstlisting}
 
 or
 
+\begin{lstlisting}[caption=Configuring the failure simulator to lose outbound responses]
     $ curl http://localhost:8080/fail?failure=OUTBOUND_RESPONSE_LOSS
     Faults are enabled: fault = OUTBOUND_RESPONSE_LOSS, failure rate = 0.5
+\end{lstlisting}
 
 if you want to experience `OUTBOUND_RESPONSE_LOSS`.
 
@@ -2808,8 +2861,10 @@ please double-check your numbers and make sure they are correlated each other.
 To cancel the `FaultSimulator` action of catching traffic and inserting HTTP
 headers, run the following `curl` command:
 
+\begin{lstlisting}[caption=Configuring the failure simulator to cancel failures simulation]
     $ curl http://localhost:8080/fail?failure=NONE
     Faults are enabled: fault = NONE, failure rate = 0.5
+\end{lstlisting}
 
 This concludes our whirlwind tour to the Eclipse MicroProfile Fault Tolerance as
 implemented by Quarkus.
@@ -2862,6 +2917,7 @@ The listing below shows a Quarkus integration test that invokes in a blocking
 while asynchronous mode the endpoint `/customers` of the `CustomerResource` REST
 service.
 
+\begin{lstlisting}[language=Java, caption=Invoking a blocking endpoint in a Quarkus integration test]
     ...
     @Test
     @Order(10)
@@ -2882,8 +2938,7 @@ service.
       }
     }
     ...
-
-<p style="text-align: center;">Listing 3.1: Using the JAX-RS 2.0 blocking client to asynchronously invoke endpoints</p>
+\end{lstlisting}
 
 This code may be found in the `OrdersJaxRs20BlockingIT` class of the `orders-classic` directory
 of the GitHub repository. Please notice the `async()` verb in the request definition.
@@ -2904,6 +2959,7 @@ Now let's look at a 2nd example implementing the same integration test but in a
 non-blocking way.
 
 
+\begin{lstlisting}[language=Java, caption=Invoking a non-blocking endpoint in a Quarkus integration test]
     ...
     @Test
     @Order(10)
@@ -2924,7 +2980,7 @@ non-blocking way.
         response.close();
       }
     }
-<p style="text-align: center;">Listing 3.2: Using the JAX-RS 2.0 non-blocking client to asynchronously invoke endpoints</p>
+\end{lstlisting}
 
 We're still using the `async()` method to invoke our endpoint but, this time,
 the `post(...)` method won't take anymore the type of the expected result as its
@@ -2942,6 +2998,7 @@ exception which prevented it to complete.
 
 Here is the `Callback` class:
 
+\begin{lstlisting}[language=Java, caption=Using callbacks with asynchronous services]
     public class Callback implements InvocationCallback<Response>
     {
       private final CountDownLatch latch;
@@ -2975,6 +3032,7 @@ Here is the `Callback` class:
         return resp;
       }
     }
+\end{lstlisting}
 
 Our callback is executed by a different thread than the one making the call.
 This thread, called *worker thread*, will be started automatically. In order
@@ -3043,6 +3101,7 @@ Have a look at the listing below, that you can found in the `OrdersAsyncJava8Blo
 In order to favor reuse, the body of this class has been factored in the abstract
 base class named `OrdersBaseJava8AsyncClient` which is extended by `OrdersAsyncJava8ClientIT`.
 
+\begin{lstlisting}[language=Java, caption=Asynchronously invoking a blocking endpoint with the Java 8 HTTP client]
     ...
     @Test
     @Order(10)
@@ -3085,8 +3144,7 @@ base class named `OrdersBaseJava8AsyncClient` which is extended by `OrdersAsyncJ
       }
     }
     ...
-
-<p style="text-align: center;">Listing 3.3: Using the Java 8 blocking client to asynchronously invoke endpoints</p>
+\end{lstlisting}
 
 What you see here is that the endpoint invocation is done now using
 `CompletableFuture.supplyAsync()` to which we provide the JAX-RS client request
@@ -3117,6 +3175,7 @@ The same similarities that we noticed above are also in effect as far as the
 non-blocking asynchronous invocation are concerned. Here is a code fragment from
 the class `OrdersAsyncJava8NonBlockingClientIT` found in the same directory:
 
+\begin{lstlisting}[language=Java, caption=Asynchronously invoking a non-blocking endpoint with Java 8 HTTP client]
     @Test
     @Order(10)
     @Timeout(5)
@@ -3165,7 +3224,7 @@ the class `OrdersAsyncJava8NonBlockingClientIT` found in the same directory:
           .get(5, TimeUnit.SECONDS);
       }  
     }
-<p style="text-align: center;">Listing 3.4: Using the Java 8 non-blocking client to asynchronously invoke endpoints</p>
+\end{lstlisting}
 
 If you compare this non-blocking version of our test client with the previous 
 blocking one, then you might be surprized to not find a significative difference.
@@ -3226,6 +3285,7 @@ In the listing below, using `rx()` returns a response of type `CompletionStage`.
 Then the method `toCompleteFuture()` will transform it is a `CompletionFuture<Response>`
 result, such that to execute `join()` in a blocking mode, on the same thread.
 
+\begin{lstlisting}[language=Java, caption=Asynchronously invoking a blocking endpoint using JAX-RS 2.1]
     ...
     public static CompletableFuture<Response> createCustomerRx(Client client, CustomerDTO customerDTO)
     {
@@ -3245,8 +3305,7 @@ result, such that to execute `join()` in a blocking mode, on the same thread.
         HttpStatus.SC_CREATED, "John");
     }
     ...
-
-<p style="text-align: center;">Listing 3.6 Using the JAX-RS 2.1 blocking client to asynchronously invoke endpoints</p>
+\end{lstlisting}
 
 As we've already seen previously, the call to `join()` will block the current thread until the operation
 completes.
@@ -3255,6 +3314,7 @@ completes.
 
 Let's have a look now at the non-blocking JAX-RS 2.1 asynchronous consumer:
 
+\begin{lstlisting}[language=Java, caption=Asynchronously invoking a non-blocking endpoint using JAX-RS 2.1]
     ...
     try (Client client = ClientBuilder.newClient())
     {
@@ -3270,7 +3330,7 @@ Let's have a look now at the non-blocking JAX-RS 2.1 asynchronous consumer:
         .get(5, TimeUnit.SECONDS);
     }
     ...
-<p style="text-align: center;">Listing 3.7 Using the JAX-RS 2.1 non-blocking client to asynchronously invoke endpoints</p>
+\end{lstlisting}
 
 In this example, after calling `createCustomerRx(...)`, as we already did with 
 the blocking consumer, we call now `thenApply(...)` and, consequently, 
@@ -3301,6 +3361,7 @@ As you probably remember from the `orders-api` Maven module, our MP REST Clients
 interfaces `CustomerApiClient` and `OrderApiClient`. These interfaces were defined
 such that to serve the synchronous invocation case, for example:
 
+\begin{lstlisting}[language=Java, caption=Synchronously invoking endpoints using MP REST Client]
     @RegisterRestClient(configKey = "base_uri")
     @Path("customers")
     public interface CustomerApiClient extends BaseCustomerApiClient
@@ -3325,13 +3386,14 @@ such that to serve the synchronous invocation case, for example:
       @DELETE
       Response deleteCustomer(CustomerDTO customerDTO);
     }
-<p style="text-align: center;">Listing 3.8 The synchronous MP REST Client interface</p>
+\end{lstlisting}
 
 Now we're demonstrating how to use the same producer as before, but with an async
 consumer. Hence, our MP REST Client interfaces are `CustomerAsyncApiClient` and
 `OrderAsyncApiClient`, in the same Maven module `orders-api`. Let's have a look
 at one of these interfaces:
 
+\begin{lstlisting}[language=Java, caption=Asynchronously invoking endpoints using MP REST Client]
     @RegisterRestClient(configKey = "base_uri")
     @Path("customers")
     public interface CustomerAsyncApiClient
@@ -3356,7 +3418,7 @@ at one of these interfaces:
       @DELETE
       CompletionStage<Response> deleteCustomer(CustomerDTO customerDTO);
     }
-<p style="text-align: center;">Listing 3.9 The asynchronous MP REST Client interface</p>
+\end{lstlisting}
 
 As you can see, our new MP REST Client interfaces don't return anymore directly
 the result, but a promise to this result as instances of `CompletionStage<Response>`.
@@ -3368,6 +3430,7 @@ Now, our new integration tests need to be adapted to the fact that the API endpo
 don't return any more instances of `Response`, but of `CompletableStage<Response>`. Look
 for example at the following fragment:
 
+\begin{lstlisting}[language=Java, caption=Using MP REST Client in integration tests]
     ...
     @Inject
     @RestClient
@@ -3401,11 +3464,11 @@ for example at the following fragment:
         HttpStatus.SC_CREATED, "myItem01");
     }
     ...
+\end{lstlisting}
 
 And everything works like before, as you can notice by executing the command:
 
     $ mvn -pl orders/orders-classic failsafe:integration-test
-<p style="text-align: center;">Listing 3.9 Running integration tests with Maven</p>
 
 Here above the `-pl` Maven option will first move to the project `orders-classic`
 before execute the Maven `integration-test` lifecycle. This is a convenient way to run
@@ -3455,12 +3518,12 @@ To use REST JAX-RS 2.0 asynchronous producers requires to interact with the
       boolean resume(Object response);
       boolean resume(Throwable response);
     }
-<p style="text-align: center;">Listing 4.1 The interface AsyncResponse introduced by JAX-RS 2.0</p>
 
 The subproject `orders-async` in the  GitHub repository
 shows an example to illustrate the use of the `AsyncResponse` interface. Here is
 an extract:
 
+\begin{lstlisting}[language=Java, caption=Using the `AsyncResponse` interface]
     ...
     @ApplicationScoped
     @Path("customers-async")
@@ -3521,13 +3584,14 @@ an extract:
       }
     }
     ...
-<p style="text-align: center;">Listing 4.2 Using the interface AsyncResponse introduced by JAX-RS 2.0</p>
+\end{lstlisting}
 
 The first thing to notice is that the interface implemented by the RESTful service
 above is different from the one previously implemented by the synchronous version
 of the same service. This is because the method signature has changed, as shown 
 in the listing below:
 
+\begin{lstlisting}[language=Java, caption=Asynchronously invoking endpoints using MP REST Client]
     @RegisterRestClient(configKey = "base_uri")
     @Path("customers-async")
     public interface CustomerAsyncApiClient
@@ -3552,6 +3616,7 @@ in the listing below:
       @DELETE
       CompletionStage<Response> deleteCustomer(CustomerDTO customerDTO);
     }
+\end{lstlisting}
 
 As you can see, this service interface is defined such that to return `CompletAbleStage<Response>`
 instances instead of `Response` ones, as the synchrounous version used to do. 
@@ -3576,6 +3641,7 @@ consumers with such a REST service. For example, the Quarkus test class
 `OrdersAsyncRestAssuredClientIT`, here below, demonstrates a RESTassured 
 asynchronous blocking consumer.
 
+\begin{lstlisting}[language=Java, caption=Extending the base class `OrderBaseTest` in integration tests]
     @QuarkusTest
     public class OrdersAsyncRestAssuredClientIT extends OrdersBaseTest
     {
@@ -3593,6 +3659,7 @@ asynchronous blocking consumer.
         ordersUrl = null;
       }
     }
+\end{lstlisting}
 
 We already explained the base class `OrdersBaseTest` which captures the RESTassured 
 common body of the blocking consumer used for tests. Extending this class by both 
@@ -3619,6 +3686,7 @@ Let's look however at an integration test invoking our asynchronous RESTful
 service endpoint using the Eclipse MicroProfile REST Client. First, we need to 
 define the interface from which the Quarkus augmentor will generate the client:
 
+\begin{lstlisting}[language=Java, caption=Using MP REST Client with asynchronous services]
     @RegisterRestClient(configKey = "base_uri")
     @Path("customers-async")
     public interface CustomerAsyncApiClient
@@ -3643,11 +3711,13 @@ define the interface from which the Quarkus augmentor will generate the client:
       @DELETE
       CompletionStage<Response> deleteCustomer(CustomerDTO customerDTO);
     }
+\end{lstlisting}
 
 Nothing new in this code, everything has already been seen formerly. And here 
 is a fragment of the integration tests which instruments the consumer that the
 Quarkus augmentor automatically generates from ths interface:
 
+\begin{lstlisting}[language=Java, caption=Invoking asynchronous endpoints using MP REST Client]
     @QuarkusTest
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     public class OrdersAsyncMpClientIT
@@ -3717,6 +3787,7 @@ Quarkus augmentor automatically generates from ths interface:
       }
       ...
     }
+\end{lstlisting}
 
 This code fragment demonstrates how to invoke the customers and orders RESTful 
 services endpoints such that to create customers and orders. The precedent 
@@ -3738,6 +3809,7 @@ producers.
 The listing below shows a fragment of the `CustomerResourceAsyncJaxRs21` class
 that implements the same customer RESTful service, using this technique.
 
+\begin{lstlisting}[language=Java, caption=Implementing asynchronous producers using JAX-RS 2.1]
     @ApplicationScoped
     @Path("customers-async21")
     @Produces(MediaType.APPLICATION_JSON)
@@ -3809,6 +3881,7 @@ that implements the same customer RESTful service, using this technique.
         });
       }
     }
+\end{lstlisting}
 
 Our new implementation od the asynchronous RESTful service for the customer 
 management defines endpoints which return a `CompletionStage<Response>` instance,
@@ -3972,6 +4045,7 @@ The listing below shows a fragment of the `CustomerResourceReact` class, which i
 the reactive version of the customer service. The complete code can be found in 
 the `orders-reactive` module of our project.
 
+\begin{lstlisting}[language=Java, caption=A reactive service]
     @ApplicationScoped
     @Path("customers-react")
     @Produces(MediaType.APPLICATION_JSON)
@@ -4036,6 +4110,7 @@ the `orders-reactive` module of our project.
       }
       ...
     }
+\end{lstlisting}
 
 The code above is a complete example demonstrating how to process, in a reactive
 way, `GET`, `POST`, `PUT` and `DELETE` HTTP requests. The first thing to notice
@@ -4062,6 +4137,7 @@ project are extension of the same base test classes as used to be the ones in th
 
 For example, a `RESTassured` based integration test is as simple as:
 
+\begin{lstlisting}[language=Java, caption=Testing a reactive service with RESTassured]
     @QuarkusTest
     public class OrdersReactRestAssuredClientIT extends OrdersBaseTest
     {
@@ -4079,9 +4155,11 @@ For example, a `RESTassured` based integration test is as simple as:
         ordersUrl = null;
       }
     }
+\end{lstlisting}
 
 while an Eclipse MP Rest Client based one looks like:
 
+\begin{lstlisting}[language=Java, caption=Testing a reactive service with MP REST Client]
     @QuarkusTest
     public class OrdersReactMpClientIT extends AbstractOrdersApiClient
     {
@@ -4104,6 +4182,7 @@ while an Eclipse MP Rest Client based one looks like:
         return orderApiClient;
       }
     }
+\end{lstlisting}
 
 > **_NOTE:_** The kinematic of the `OrderBaseTest` and `AbstractOrderApiClient`
 > classes, located in the `orders-test` shared module, has already been explained
@@ -4156,6 +4235,7 @@ hence the good news is that running Keycloak in dev or test environments is as
 easy as running databases. All we need is to include the following dependencies
 in the Maven building process:
 
+\begin{lstlisting}[language=XML, caption=Maven dependencies for Quarkus Keycloak extensions]
     ...
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -4170,6 +4250,7 @@ in the Maven building process:
       <artifactId>quarkus-keycloak-admin-rest-client</artifactId>
     </dependency>
     ...
+\end{lstlisting}
 
 Please look at the `pom.xml` file in the `orders-oidc` module. 
 
@@ -4202,6 +4283,7 @@ that to take advantage of the Keycloak authentication and authorization features
 For example, let's have a look at the `CustomerSecResource` service, in the 
 `orders-oidc` module:
 
+\begin{lstlisting}[language=Java, caption=Using Keycloak authentication and authorization]
     ...
     @Override
     @GET
@@ -4237,6 +4319,7 @@ For example, let's have a look at the `CustomerSecResource` service, in the
       return Response.accepted().entity(customerService.updateCustomer(customerDTO)).build();
     }
     ...
+\end{lstlisting}
 
 As you can see, we're using here the Jakarta EE `@RolesAllowed` annotation, in
 order to restrict the access to the service's endpoints, based on the consumer
@@ -4247,6 +4330,7 @@ Then, our integration test, using RESTassured and extending, as usual, the
 `OrderBaseTest` class, needs to override the `getRequestSpec()` method, such 
 that to configure the HTTP requests with the required OAuth 2.0 access token.
 
+\begin{lstlisting}[language=Java, caption=Modified version of the base `OrderBaseTest` class using Keycloak]
     @QuarkusTest
     public class OrdersSecRestAssuredClientIT extends OrdersBaseTest
     {
@@ -4294,6 +4378,7 @@ that to configure the HTTP requests with the required OAuth 2.0 access token.
         return keycloakClient.getAccessToken(userName);
       }
     }
+\end{lstlisting}
 
 Here, we're using the `KeyCloakClient` instance to get the OAuth 2.0 access token
 associated to a Keycloak user. The user `alice`, who has both `admin` and `user`
@@ -4386,6 +4471,7 @@ here self generated JWTs.
 Looking at the `OrdersJwtRestAssuredIT` integration test class, in the `orders-jwt`
 module, you can see the following method:
 
+\begin{lstlisting}[language=Java, caption=The simples possible way to generate a JWT]
     ...
     private String getAccessToken(String role)
     {
@@ -4395,6 +4481,7 @@ module, you can see the following method:
        .sign();
     }
     ...
+\end{lstlisting}
 
 This method is the simplest possible way to generate a JWT using the `quarkus-
 smallrye-jwt` extension. This is how the JWT claims above are configured:
@@ -4409,6 +4496,7 @@ the `upn` claim, empty in our case, belonging to one of the roles `Admin` or
 
 Then the following method:
 
+\begin{lstlisting}[language=Java, caption=Using JWT based authentication and authorization]
     ...
     @Override
     protected RequestSpecification getRequestSpec() 
@@ -4418,8 +4506,9 @@ Then the following method:
         .oauth2(getAccessToken("Admin"));
     }
     ...
+\end{lstlisting}
 
-will generate a JWT for an anonym user belonging to the `Admin` role and, 
+will generate a JWT for an anonymous user belonging to the `Admin` role and, 
 consequently, being able to invoke read-write endpoints, like `create*`, `update*`
 and `delete*`.
 
@@ -4441,7 +4530,140 @@ the JWT based authentication and authorization case where there aren't anymore
 users belonging to roles, but just groups that maps to roles and, consequently,
 these roles have to be, all of them, explictly mentioned, such that to be allowed access.
 
+## Securing RESTful services with HTTPS
 
+In the last two sections, we've illustrated how to secure Quarkus RESTful services
+using OAuth 2.0 and JWT based solutions. While these solutions bring a security
+first take to our RESTful services, they are far from being enough.
 
+With OAuth 2.0, *bearer tokens* are transmitted over plain HTTP and, consequently,
+they can be easily intercepted by attackers, who could use them further in order
+to fraudulently access our services. With JWT, it's even worse as the tokens contain
+sensitive information in their payloads and, even if they are signed, these Base64
+encoded signatures are easy to decode.
 
+Accordingly, the only way to avoid that an attacker reuses a captured token, until
+it expires, is to use HTTPS transport, such that to protect the tokens and all the other sensitive
+information. 
 
+> **_NOTE:_**  OAuth 2.0 and JWT handle authentication and authorization, but 
+> they don't provide transport security by themselves.
+
+In order to implement HTTPS based encrypted communications with Quarkus RESTful 
+services, one needs a CA (*Certification Authority*) [X509 certificate](https://www.geeksforgeeks.org/x-509-authentication-service/).
+While there are many organizations whose mission is to provide you with such 
+certificates, the simplest scenario for test purposes is to use a *self-signed*
+one. There are many helpful tools you can use for this purpose but, since this 
+is a Java booklet, let's look at the Java standard solution to create *self-signed*
+X509 certificates.
+
+Run the following command:
+
+    $ keytool -genkey -keyalg RSA -alias quarkus -keystore keystore.jks \
+        -storepass password -validity 365 -keysize 2048
+
+The `keytool` command is the standard Java swiss knife when it comes to cryptography
+and its documentation, as well as the `man` pages, are at your disposal if you 
+need to extend or deepen your knowledge. In any case, the example above a file,
+named `keystore.jks`, will be created in the current directory. It contains an
+RSA private key of 2048 bits long, together with an X509 certificate with the 
+associated public key and other metadata like: 
+
+  - validity period (365 days in this case);
+  - the owner DN (*Distinguished Name*);
+  - the certificate issuer (self-signed in this case);
+  - the digital signature.
+
+Once this file created, you can verify its content as shown below:
+
+\begin{lstlisting}[caption=Inspecting an X509 certificate content]
+    $ keytool -list -v -keystore keystore.jks
+      Enter keystore password:  
+      Keystore type: PKCS12
+      Keystore provider: SUN
+
+      Your keystore contains 1 entry
+
+      Alias name: quarkus
+      Creation date: Feb 14, 2025
+      Entry type: PrivateKeyEntry
+      Certificate chain length: 1
+      Certificate[1]:
+        Owner: CN=nicolas duminil, OU=IT, O=Simplex Software, L=Paris, ST=95, C=FR
+        Issuer: CN=nicolas duminil, OU=IT, O=Simplex Software, L=Paris, ST=95, C=FR
+        Serial number: 3eb3f12a
+        Valid from: Fri Feb 14 17:30:36 CET 2025 until: Sat Feb 14 17:30:36 CET 2026
+        Certificate fingerprints:
+          SHA1: ...
+          SHA256: ...
+        Signature algorithm name: SHA256withRSA
+        Subject Public Key Algorithm: 2048-bit RSA key
+        Version: 3
+        ...
+\end{lstlisting}
+
+As you can see, since our X509 certificate is self-signed, the `Owner` and the 
+`Issuer` are the same.
+
+With this X509 certificate in place, we need to define the following properties
+such that to use it during the *handshake* required by the SSL (*Secured Socket
+Layer*) algorithm, implemented by the HTTPS protocol:
+
+    quarkus.http.ssl.certificate.key-store-file=keystore.jks 
+    quarkus.http.ssl.certificate.key-store-password=password
+
+Of course, the password allowing the access to our key store should be encrypted
+but, in our case, for simplicity’s sake, we'll leave it in plain text. Remember
+nonetheless to not do that in a real case !
+
+Finally, we need to define the TCP port number used by the Undertow web server,
+embedded by Quarkus, to bind the HTTPS protocol:
+
+    quarkus.http.test-ssl-port=8443
+    quarkus.http.insecure-requests=redirect
+
+Here we define the TCP port number 8443 to be the one where the HTTPS protocol
+will be listening. And since we don't want to allow the insecure HTTP protocol
+to access our endpoints, we redirect to this same port any other incoming request.
+
+Last but not least, we need to slightly modify the integration test we used in 
+the `orders-jwt` project, such that to add the following SSL specific configuration:
+
+      RestAssured.config = RestAssured.config()
+        .sslConfig(new SSLConfig().relaxedHTTPSValidation());
+
+This configuration, required only for X509 self-signed certificates, allows 
+RESTassured to accept and trust HTTPS connections, even when the server's SSL
+certificate might not be fully trusted, like in the case of self-signed certificates.
+
+Running the integration tests, as usual:
+
+    $ cd orders-https
+    $ mvn -Dskiptests clean install
+    $ mvn failsafe:integration-test
+
+you'll notice that, this time, the endpoints will be invoked using the 
+https://localhost:8843 URL, which means that the information gets encrypted,
+end to end.
+
+# Conclusions
+
+We have just reached the end of our foray into the field of the Quarkus RESTful services. 
+Yours truly sincerely hope that
+you've liked it and that you learnt a few things by reading it.
+
+In this booklet, we explored the Jakarta EE RESTful services fundamentals, 
+as implemented by Quarkus, starting with
+their history, following their evolution through different Jakarta EE releases and illustrating
+with concrete real-world examples the most essentials use cases, from basics,
+like synchronous management, to the most advanced ones,
+like asynchronous or reactive ones.
+
+Remember that you can find all the code used in this booklet at https://github.com/nicolasduminil/50-shades-of-rest and please
+don't hesitate to let me know, should you find any missing part, bug or inconsistency.
+
+Last but not least, if you appreciate the format of this kind of booklet, you might
+be interested in others, already existent or coming soon. Check out my website
+at http://www.simplex-software.fr for further details.
+
+Thank you for reading.
