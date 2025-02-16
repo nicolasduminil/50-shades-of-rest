@@ -303,6 +303,7 @@ to communicate each-other, as well as with the external world.
 
 In this post series we'll examine all their 50 shades :-).
 
+\pagebreak
 \section{101 RESTful services}
 
 As we've seen, RESTful services are services that follow the *Representation State 
@@ -377,6 +378,7 @@ In order to use RESTeasy in your Quarkus application you need to include the
     ...
 \end{lstlisting}
 
+\pagebreak
 \section{Your first Quarkus RESTful service}
 
 The RESTeasy documentation, as well as the Jakarta RESTful Web Services specifications,
@@ -616,8 +618,8 @@ successful test report. For example:
     ...
     2024-12-07 13:40:59,690 INFO  [io.qua.dev.h2.dep.H2DevServicesProcessor] (build-10) 
       Dev Services for H2 started.
-    2024-12-07 13:40:59,695 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] (build-10) 
-      Dev Services for default datasource (h2) started
+    2024-12-07 13:40:59,695 INFO  [io.qua.dat.dep.dev.DevServicesDatasourceProcessor] 
+      (build-10) Dev Services for default datasource (h2) started
     ...
 \end{lstlisting}
 
@@ -757,7 +759,8 @@ mock the database access layer, for example:
       PanacheQuery<Customer> mockQuery = mock(PanacheQuery.class);
       when(customerRepository.findAll()).thenReturn(mockQuery);
       when(mockQuery.stream()).thenReturn(expectedCustomers.stream());
-      List<Customer> actualCustomers = customerRepository.findAll().stream().collect(Collectors.toList());
+      List<Customer> actualCustomers = customerRepository.findAll().stream()
+        .collect(Collectors.toList());
       assertThat(actualCustomers).isNotNull();
       assertThat(actualCustomers).hasSize(expectedCustomers.size());
       assertThat(actualCustomers).isEqualTo(expectedCustomers);
@@ -796,7 +799,7 @@ database and the simple occurrence of the following Maven dependency in the
       <scope>test</scope>
     </dependency>
     ...
-\end{lstListing}
+\end{lstlisting}
 
 automatically provisions a PostgreSQL image and runs it on the behalf of 
 `testcontainers`, in order to execute against it our integration tests. We only
@@ -1042,7 +1045,8 @@ The listing below shows the `CustomerMapper`:
       CustomerMapper INSTANCE = Mappers.getMapper(CustomerMapper.class);
       Customer toEntity(CustomerDTO dto);
       CustomerDTO fromEntity(Customer entity);
-      @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+      @BeanMapping(nullValuePropertyMappingStrategy = 
+        NullValuePropertyMappingStrategy.IGNORE)
       void updateEntityFromDTO(CustomerDTO customerDTO, @MappingTarget Customer customer);
     }
 \end{lstlisting}
@@ -1102,8 +1106,10 @@ Sometimes, the mapping definition is more complicated, as seen below:
         return order;
     }
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    public abstract void updateEntityFromDTO(OrderDTO customerDTO, @MappingTarget Order order);
+    @BeanMapping(nullValuePropertyMappingStrategy = 
+      NullValuePropertyMappingStrategy.IGNORE)
+    public abstract void updateEntityFromDTO(OrderDTO customerDTO, 
+      @MappingTarget Order order);
     ...
 \end{lstlisting}
 
@@ -1145,21 +1151,27 @@ The service implementation is quite simple, as shown below:
       @Override
       public List<CustomerDTO> getCustomers()
       {
-        return customerRepository.findAll().stream().map(CustomerMapper.INSTANCE::fromEntity).toList();
+        return customerRepository.findAll().stream()
+          .map(CustomerMapper.INSTANCE::fromEntity).toList();
       }
 
       @Override
       public CustomerDTO getCustomer(Long id)
       {
         return CustomerMapper.INSTANCE.fromEntity(customerRepository.findByIdOptional(id)
-          .orElseThrow(() -> new CustomerNotFoundException("### CustomerServiceImpl.getCustomer(): Customer not found for ID: " + id)));
+          .orElseThrow(() -> 
+            new CustomerNotFoundException("### CustomerServiceImpl.getCustomer(): Customer not found for ID: " 
+              + id)));
       }
 
       @Override
       public CustomerDTO getCustomerByEmail(String email)
       {
-        return CustomerMapper.INSTANCE.fromEntity(customerRepository.find("email", email).singleResultOptional()
-         .orElseThrow(() -> new CustomerNotFoundException("### CustomerServiceImpl.getCustomerByEmail(): Customer not found for email: " + email)));
+        return CustomerMapper.INSTANCE.fromEntity(customerRepository.find("email", email)
+         .singleResultOptional()
+         .orElseThrow(() -> 
+           new CustomerNotFoundException("### CustomerServiceImpl.getCustomerByEmail(): Customer not found for email: " 
+             + email)));
       }
 
       @Override
@@ -1253,7 +1265,8 @@ Lets' have a look at the `CustomerResource` RESTfull service:
       public Response getCustomerByEmail(@PathParam("email") String email)
       {
         return Response.ok()
-          .entity(customerService.getCustomerByEmail(URLDecoder.decode(email, StandardCharsets.UTF_8)))
+          .entity(customerService.getCustomerByEmail(URLDecoder.decode(email, 
+            StandardCharsets.UTF_8)))
           .build();
       }
 
@@ -1261,14 +1274,17 @@ Lets' have a look at the `CustomerResource` RESTfull service:
       @POST
       public Response createCustomer(CustomerDTO customerDTO)
       {
-        return Response.created(URI.create("/customers/" + customerDTO.id())).entity(customerService.createCustomer(customerDTO)).build();
+        return Response.created(URI
+         .create("/customers/" + customerDTO.id()))
+         .entity(customerService.createCustomer(customerDTO)).build();
       }
 
       @Override
       @PUT
       public Response updateCustomer(CustomerDTO customerDTO)
       {
-        return Response.accepted().entity(customerService.updateCustomer(customerDTO)).build();
+        return Response.accepted()
+         .entity(customerService.updateCustomer(customerDTO)).build();
       }
 
       @Override
@@ -1303,6 +1319,7 @@ into/from the database, by delegating each CRUD operation to the `CustomerServic
 This is all what we can say about this service and the associated one,
 `OrderConsumer`, is very similar.
 
+\pagebreak
 \section{Testing RESTfull services}
 
 With Quarkus, testing has never been so easy. All you need is to include the
@@ -1428,7 +1445,8 @@ A more complicated case is shown below:
       assertThat(customerDTO).isNotNull();
       CustomerDTO updatedCustomer = new CustomerDTO(customerDTO.id(), "Jane", "Doe",
         "jane.doe@email.com", "0987654321");
-      assertThat(given().body(updatedCustomer).contentType(ContentType.JSON).when()
+      assertThat(given().body(updatedCustomer).contentType(ContentType.JSON)
+        .when()
         .put(customersUrl).then()
         .statusCode(HttpStatus.SC_ACCEPTED).extract().body()
         .as(CustomerDTO.class).firstName()).isEqualTo("Jane");
@@ -1731,7 +1749,8 @@ using the Jakarta REST Client.
            .request().get(CustomerDTO.class);
           assertThat(customerDTO).isNotNull();
           Response response = client.target(customerSrvUri).request()
-            .build("DELETE", Entity.entity(customerDTO, MediaType.APPLICATION_JSON)).invoke();
+            .build("DELETE", Entity.entity(customerDTO, MediaType.APPLICATION_JSON))
+            .invoke();
           assertThat(response).isNotNull();
           assertThat(response.getStatus()).isEqualTo(HttpStatus.SC_NO_CONTENT);
           response.close();
@@ -1803,7 +1822,7 @@ Last but not least, the `DELETE` request is done as shown below:
         Entity.entity(customerDTO, MediaType.APPLICATION_JSON))
         .invoke();
     ...
-\end{lstListing}
+\end{lstlisting}
 
 As you can see, the `DELETE` request doesn't obey to the same rules as `PUT` and
 `POST` because it doesn't directly accept a body. Instead, the generic `build(...)`
@@ -1852,7 +1871,8 @@ in the `orders-classic` module:
           "john.doe@email.com", "1234567890");
         HttpResponse<String> response = httpClient.
           send(builder.uri(customersUri)
-          .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(customer)))
+          .POST(HttpRequest.BodyPublishers
+            .ofString(objectMapper.writeValueAsString(customer)))
           .build(), HttpResponse.BodyHandlers.ofString());
         assertThat(response.statusCode()).isEqualTo(HttpStatus.SC_CREATED);
         customer = objectMapper.readValue(response.body(), CustomerDTO.class);
@@ -2104,6 +2124,7 @@ and you'll be presented with the Swager UI main window, as shown below:
 Using this graphical interface you can now fully exercise your API and test it 
 by combining all the possible scenarios.
 
+\pagebreak
 \section{Eclipse MicroProfile Health}
 
 As mentioned earlier, Quarkus, as an implementation of the [Eclipse MicroProfile](https://microprofile.io/) 
@@ -2225,7 +2246,8 @@ readiness checks. Look at the class `DbHealthCheck` below:
       public HealthCheckResponse call()
       {
         HealthCheckResponseBuilder responseBuilder =
-        HealthCheckResponse.named(String.format("Database connection health check on %s %d", host, port));
+        HealthCheckResponse
+         .named(String.format("Database connection health check on %s %d", host, port));
         try
         {
           serverListening(host, port);
@@ -2287,6 +2309,7 @@ Last but not least, querying the endpoint http://localhost:8080/q/health will
 display both the liveness and readiness checks. Additionally, in dev mode, all
 the health checks are available through the Health-UI, at http://localhost:8080/q/health-ui.
 
+\pagebreak
 \section{Eclipse MicroProfile Metrics}
 
 During the previous paragraph we've seen how Eclipse MicroProfile Health helps 
@@ -2373,7 +2396,7 @@ The listing below shows the Quarkus specific metrics:
       "memory.maxNonHeap": -1,
       "memoryPool.usage.max;name=CodeHeap 'profiled nmethods'": 5071360
     }
-\end{lstlistings}
+\end{lstlisting}
 
 Let's have a look now at the application metrics that interest us the most.
 
@@ -2606,7 +2629,8 @@ application metrics:
 \begin{lstlisting}[caption=Getting the application defined metrics with `curl`]
     $ curl -H "Accept: application/json" http://localhost:8080/q/metrics/application
     {
-      "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerTimer": 
+      "fr.simplex_software.fifty_shades_of_rest.orders.provider
+        .CustomerResource.randomCustomerTimer": 
       {
         "p99": 1935.766229,
         "min": 109.026576,
@@ -2625,9 +2649,12 @@ application metrics:
         "oneMinRate": 0.014507326600483962,
         "elapsedTime": 3149.544873
       },
-      "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerGauge": 3,
-      "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerCounter": 4,
-       "fr.simplex_software.fifty_shades_of_rest.orders.provider.CustomerResource.randomCustomerMeter": 
+      "fr.simplex_software.fifty_shades_of_rest.orders.provider
+         .CustomerResource.randomCustomerGauge": 3,
+      "fr.simplex_software.fifty_shades_of_rest.orders.provider
+         .CustomerResource.randomCustomerCounter": 4,
+       "fr.simplex_software.fifty_shades_of_rest.orders.provider
+         .CustomerResource.randomCustomerMeter": 
        {
          "fiveMinRate": 0.0,
          "fifteenMinRate": 0.0,
@@ -2664,6 +2691,7 @@ a file. Then, the `/customers/random` endpoint is invoked 5 times, please feel
 free to adjust this number to the value which makes sense for you and don't 
 hesitate to add requests to the 2nd endpoint, such that to activate `randomCustomerMeter`.
 
+\pagebreak
 \section{Eclipse MicroProfile Fault Tolerance}
 
 *Fault Tolerance* is probably the most important section of the Eclipse MicroProfile
@@ -2879,6 +2907,7 @@ headers, run the following `curl` command:
 This concludes our whirlwind tour to the Eclipse MicroProfile Fault Tolerance as
 implemented by Quarkus.
 
+\pagebreak
 \section{Asynchronous processing with REST services}
 
 There are two levels of asynchronous processing as far as REST services are concerned:
@@ -3297,7 +3326,8 @@ result, such that to execute `join()` in a blocking mode, on the same thread.
 
 \begin{lstlisting}[language=Java, caption=Asynchronously invoking a blocking endpoint using JAX-RS 2.1]
     ...
-    public static CompletableFuture<Response> createCustomerRx(Client client, CustomerDTO customerDTO)
+    public static CompletableFuture<Response> createCustomerRx(Client client, 
+      CustomerDTO customerDTO)
     {
       return client.target(customerSrvUri)
        .request()
@@ -3518,7 +3548,7 @@ avoiding this way all the overhead of the "one thread per connection" model.
 JAS-RS 2.0, released in 2013, was the first release of the specs supporting server
 side asynchronous processing.
 
-## JAX-RS 2.0 asynchronous producers
+### JAX-RS 2.0 asynchronous producers
 
 To use REST JAX-RS 2.0 asynchronous producers requires to interact with the
 `AsynResponse` interface introduced by the version of the specs.
@@ -3562,10 +3592,12 @@ an extract:
       @Override
       @GET
       @Path("/email/{email}")
-      public void getCustomerByEmail(@PathParam("email") String email, @Suspended AsyncResponse ar)
+      public void getCustomerByEmail(@PathParam("email") String email, 
+        @Suspended AsyncResponse ar)
       {
         ar.resume(Response.ok()
-          .entity(customerService.getCustomerByEmail(URLDecoder.decode(email, StandardCharsets.UTF_8)))
+          .entity(customerService.getCustomerByEmail(URLDecoder.decode(email, 
+            StandardCharsets.UTF_8)))
           .build());
       }
 
@@ -3582,7 +3614,8 @@ an extract:
       @PUT
       public void updateCustomer(CustomerDTO customerDTO, @Suspended AsyncResponse ar)
       {
-        ar.resume(Response.accepted().entity(customerService.updateCustomer(customerDTO)).build());
+        ar.resume(Response.accepted()
+          .entity(customerService.updateCustomer(customerDTO)).build());
       }
 
       @Override
@@ -3805,7 +3838,7 @@ RESTassured test was synchronous while this one is asynchronous. This shows that
 the same RESTful asynchronous producer may be consumed via synchronous or 
 asynchronous consumers.
 
-## JAX-RS 2.1 asynchronous producers
+### JAX-RS 2.1 asynchronous producers
 
 In Chapter 7, when we discussed the RESTfull asynchronous consumers, we have 
 emphasized the new features that the JAX-RS 2.1 specifications brought, compared
@@ -3914,6 +3947,7 @@ synchronous or asynchronous, blocking or non-blocking, doesn't matter much from
 the point of view of the consumers, who may be indifferently synchronous, 
 asynchronous, blocking or non-blocking.
 
+\pagebreak
 \section{Reactive RESTfull services}
 
 The [ReactiveX](http://reactivex.io) website defines the reactive programming as follows:
@@ -4210,6 +4244,7 @@ Now, you can run the integration tests as follows:
     $ cd orders-reactive
     $ mvn test failsafe:integration-test
 
+\pagebreak
 \section{Securing RESTful services}
 
 While illustrating different RESTful services use cases in the preceding sections,
@@ -4656,6 +4691,7 @@ you'll notice that, this time, the endpoints will be invoked using the
 https://localhost:8843 URL, which means that the information gets encrypted,
 end to end.
 
+\pagebreak
 \section{Conclusions}
 
 We have just reached the end of our foray into the field of the Quarkus RESTful services. 
