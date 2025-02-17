@@ -4083,7 +4083,7 @@ Programming with RxJava](https://shorturl.at/DN0de) or [Reactive Systems in Java
 subtleties of these topics. What you're seeing here is just a short introduction
 to some basic concepts and, in order to illustrate them, lets look at some code.
 
-## Making reactive the Order Management service
+## Making reactive the RESTful services
 
 The listing below shows a fragment of the `CustomerResourceReact` class, which is
 the reactive version of the customer service. The complete code can be found in 
@@ -4243,6 +4243,11 @@ Now, you can run the integration tests as follows:
     $ mvn -DskipTests clean install
     $ cd orders-reactive
     $ mvn test failsafe:integration-test
+
+## Making reactive the repository layer
+
+## Making reactive the service layer
+
 
 \pagebreak
 \section{Securing RESTful services}
