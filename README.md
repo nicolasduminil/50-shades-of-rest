@@ -321,7 +321,7 @@ mobile apps, and IoT devices. By adhering to REST principles and best practices,
 RESTful APIs allow developers to build robust, scalable, and secure web services that
 meet the users and enterprises requirements.
 
-## 101 Java RESTful Web Services 
+## Jakarta RESTful basic annotations
 
 RESTful services can be implemented in any programming language. In this booklet we're 
 using Java and, accordingly, we'll focus on Java RESTful APIs.
@@ -377,6 +377,234 @@ In order to use RESTeasy in your Quarkus application you need to include the
     </dependency>
     ...
 \end{lstlisting}
+
+## HTTP methods, operations and mappings
+
+The Jakarta RESTful specifications define the following 5 annotations that map 
+to the HTTP operations of the same name:
+
+  - `@jakarta.ws.rs.GET`;
+  - `@jakarta.ws.rs.PUT`;
+  - `@jakarta.ws.rs.POST`;
+  - `@jakarta.ws.rs.DELETE`;
+  - `@jakarta.ws.rs.HEAD`;
+  - `@jakarta.ws.rs.OPTIONS`;
+
+All these annotations bind to the associated HTTP operation. A Java method annotated
+with one of these annotations will be called whenever the RESTful service receives
+the bound HTTP request. By annotating a method with one of these annotations, 
+the given method becomes a RESTful service endpoint.
+
+Lets' have a look at one of these annotations, for example `@GET`:
+
+\begin{lstlisting}[language=Java, caption=The @GET annotation]
+    package jakarta.ws.rs;
+
+    import ...;
+
+    @Target(ElementType.METHOD
+    @Retention(RetentionPolicy.ElementType.RUNTIME)
+    @HttpMethod(HttpMethod.GET)
+    public @interface GET {}
+\end{lstlisting}
+
+Beyond the simple binding, it's interesting to observe that what makes the `@GET`
+annotation meaningful is the meta-annotation `@jakarta.ws.rs.HttpMethod`. As 
+their name imply, meta-annotations are annotations that annotate other annotations.
+When Quarkus examines a Java method, it looks for any method annotation that uses
+the meta-annotation `@HttpMethod`, extracts its value, which is the actual HTTP 
+operation, and dispatches to the associated Java method the current request.
+
+The implication of this is that we can create new annotations that bind Java 
+methods to other HTTP operations than the ones mentioned above. One of the 
+classical examples in this sense is the WebDav protocol which adds a bunch of
+new methods to the HTTP protocol. Using a Jakarta RESTful compliant provider,
+like Quarkus, we can extend the annotations such that to support WebDav operations.
+
+## Jakarta CDI annotations supported by Quarkus RESTful services
+
+There are a lot of Jakarta CDI annotations that can be injected into Jakarta 
+RESTful services and, consequently, in Quarkus RESTful services.
+
+### `@PathParam` annotation
+
+We have already mentioned this annotation in the table above. It allows to inject
+the value of a named URI path parameters that were defined in the `@Path` expressions.
+Let's look at an example:
+
+\begin{lstlisting}[language=Java, caption=The @PathParam annotation]    
+    ...
+    @Path("/customers)
+    ...
+    @Path("{id}")
+    @GET
+    ...
+    public Customer getCustomer(@PathParam("id") Long id)
+    ...
+\end{lstlisting}
+
+In this example the endpoint `getCustomer(...)` accepts, as an input parameter,
+the ID of the customer to be retrieved by the `GET` request. This parameter is
+provided as an URI parameter, for example: http://<host>:<port>/customers/20.
+
+### `@MatrixParam` annotation
+
+Through this annotation the Jakarta RESTfull specifications allow to inject matrix
+parameters instead of URI ones.
+
+\begin{lstlisting}[language=Java, caption=The @MatrixParam annotation]    
+    ...
+    @Path("/customers)
+    ...
+    @GET
+    ...
+    public Customer getCustomer(@MatrixParam("firstName") String firstName,
+      @MatrixParam("lastName") String lastName, @MatrixParam("email") String email)
+    ...
+\end{lstlisting}
+
+Using the `@MatrixParam` annotation provides more readability to the code.
+
+### `@QueryParam` annotation
+
+This annotation allows to inject individual query parameters into endpoints. For
+example, if we wanted to query a subset of the customers in the database, then 
+the required URI would look like 
+
+    GET /customers?start=100&size=20
+
+and the associated endpoint:
+
+\begin{lstlisting}[language=Java, caption=The @QueryParam annotation]    
+    ...
+    @Path("/customers)
+    ...
+    @GET
+    ...
+    public Customer getCustomer(@QueryParam("start") int start, @QueryParam("size") int size)
+    ...
+\end{lstlisting}
+
+Here, we're using the `@QueryParam` annotation to inject the query parameters 
+`start` and `size` into the Java parameters of the same names. They are 
+automatically converted into integers from their string query representations.
+
+### `@FormParam` annotation
+
+This annotation is used to access `application/x-www-formurlencoded` request 
+bodies. In other wrds, it's used to access individual entries posted by HTML 
+form documents. For example:
+
+\begin{lstlisting}[language=Java, caption=The @FormParam annotation]    
+    ...
+    @Path("/customers)
+    ...
+    @POST
+    ...
+    public void createCustomer(@FormParam("firstName") String firstName, 
+      @FormParam("lastName") String lastName)
+    ...
+\end{lstlisting}
+
+Using the `@FormParam` annotation in the example above, we're injecting the 
+content of the input fields labeled `firstName` and `lastName`, from an HTML
+form, into the Java parameters of the same names.
+
+### `@HeaderParam` annotation
+
+The `@HeaderParam` annotation is used to inject HTTP requests header values. 
+
+\begin{lstlisting}[language=Java, caption=The @HeaderParam annotation]    
+    ...
+    @Path("/customers)
+    ...
+    @GET
+    ...
+    public Customer getCustomer(@HeaderParam("Authorization") String token)
+    ...
+\end{lstlisting}
+
+The `@HeaderParam` annotation is pulling the `Authorization` header directly 
+from the HTTP request and injects it into the `token` Java parameter.
+
+### `CookieParam` annotation
+
+Many web applications use cookies to set up conversations between consumers and
+producers. This way the endpoints are able to "remember" users identity or 
+preferences between requests. These cookies are transmitted, back and forth,
+between consumers and producers, via cookie headers.
+
+The `@CookieParam` annotation allows to inject cookies sent by a consumer into 
+the Quarkus endpoint method parameters. For example, admitting that a consumer 
+creates a cookie containing a customer ID, it can recreate the required context
+in order to interact with the same user as follows:
+
+\begin{lstlisting}[language=Java, caption=The @CookieParam annotation]    
+    ...
+    @Path("/customers)
+    ...
+    @GET
+    ...
+    public Customer getCustomer(@CookieParam("customerId") Long id)
+    ...
+\end{lstlisting}
+
+Quarkus, as a Jakarta RESTfull provider, searches all cookie headers for the 
+`customerId` cookie value and it converts it then into a `Long` and injects it
+into the `id` parameter.
+
+### `@BeanParam` annotation
+
+The `@BeanParam` annotation allows to inject an application specific POJO. For 
+example, given the following class:
+
+\begin{lstlisting}[language=Java, caption=The @BeanParam annotation]
+    public class CustomerData
+    {
+      @FormParam("firstName")
+      private String firstName;
+      @FormParam("lastName")
+      peivate String lastName;
+      @HeaderParam("Content-Type")
+      private String contentType;
+      ...
+    }
+\end{lstlisting}
+
+This POJO can be injected using the `@BeanParam` annotation, as follows:
+
+\begin{lstlisting}[language=Java, caption=The @BeanParam annotation]
+    ...
+    @Path("/customers")
+    ...
+    @POST
+    public void createCustomer (@BeanParam CustomerData customerData)
+    ...
+\end{lstlisting}
+
+In this example, Quarkus will introspect the `@BeanParam` type for injection 
+annotations and then set them as appropriate.
+
+### `@RestForm` annotation
+
+This annotation allows to handle `multipart/form-data` in RESTful services 
+endpoints. For example, let's consider the case of the following endpoint that
+receives a `POST` request to create a new customer. It takes as parameters a 
+customer JSON representation together with a file to be uloaded, containing the
+person't photo.
+
+\begin{lstlisting}[language=Java, caption=The @RestForm annotation]
+    ...
+    @Path("/customers")
+    ...
+    @POST
+    public void createCustomer (@RestForm ("photo") FileUpload photo, 
+      @RestForm @PartType(MediaType.APPLICATION_JSON) Customer customer))
+    ...
+\end{lstlisting}
+
+Here, `FileUpload` is a RESTeasy specific class. Quarkus REST, as a RESTeasy provider,
+supports it, of course.
 
 \pagebreak
 \section{Your first Quarkus RESTful service}
@@ -4083,7 +4311,7 @@ Programming with RxJava](https://shorturl.at/DN0de) or [Reactive Systems in Java
 subtleties of these topics. What you're seeing here is just a short introduction
 to some basic concepts and, in order to illustrate them, lets look at some code.
 
-## Making reactive the RESTful services
+## Making reactive the Order Management service
 
 The listing below shows a fragment of the `CustomerResourceReact` class, which is
 the reactive version of the customer service. The complete code can be found in 
@@ -4246,8 +4474,223 @@ Now, you can run the integration tests as follows:
 
 ## Making reactive the repository layer
 
+In the previous section, we've seen how to expose and consume reactive RESTful 
+endpoints. But we don't have to forget that these endpoints are using different
+other components, like repository and service layers, and these layers aren't
+reactive. In order to take advantage of the Quarkus reactivity, we need to modify
+these layers as well, such that to return Mutiny types.
+
+Let's begin with the repository layer. The first thing to do is to replace the
+`quarkus-hibernate-orm` and `quarkus-hibernate-orm-panache` extensions, used in
+the non-reactive repository layer, by the following:
+
+\begin{lstlisting}[language=XML, caption=The Maven dependencies for Hibernate and Panache reactive]
+    ...
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-reactive</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-reactive-panache</artifactId>
+    </dependency>
+    ...
+\end{lstlisting}
+
+Now, let's proceed with the implementation of the `CustomerReactiveRepository` 
+class. The listing below shows this implementation:
+
+\begin{lstlisting}[language=Java, caption=The class CustomerReactiveRepository]
+    @ApplicationScoped
+    public class CustomerReactiveRepository implements PanacheRepository<Customer>
+    {
+      public Uni<Customer> save(Customer customer)
+      {
+        return persist(customer).chain(() -> Uni.createFrom().item(customer));
+      }
+
+      public Uni<Customer> createCustomer(Customer customer)
+      {
+        return persist(customer).map(ignored -> customer);
+      }
+
+      public Uni<List<Customer>> findByLastName(String lastName)
+      {
+        return list("lastName", lastName);
+      }
+
+      public Uni<Optional<Customer>> findByEmail(String email)
+      {
+        return find("email", email).firstResult().map(Optional::ofNullable);
+      }
+
+      public Uni<List<Customer>> listCustomersWithOrders()
+      {
+        return list("""
+          select distinct c from Customer c
+            left join fetch c.orders
+            where c.id is not null
+            order by c.lastName""");
+      }
+
+      public Uni<List<Customer>> listCustomersByLastName(String lastName)
+      {
+        return list("lastName", lastName);
+      }
+
+      public Uni<Integer> updateById(Long id, Customer customer)
+      {
+        return update("firstName = ?1, lastName = ?2 where id = ?3",
+          customer.getFirstName(), customer.getLastName(), id);
+      }
+
+      public Uni<Long> deleteByLastName(String lastName)
+      {
+        return delete("lastName", lastName);
+      }
+
+      public Uni<Optional<Customer>> findByIdOptional(Long id)
+      {
+        return findById(id).map(Optional::ofNullable);
+      }
+    }
+\end{lstlisting}
+
+As you can see, the reactive version of this class is quite different from its
+non-reactive one. The key differences are, as follows:
+
+  1. Return Types:
+    - All methods return `Uni<T>` instead of `T`. `Uni<T>` represents a single asynchronous result.
+    - Collections are wrapped in `Uni<List<T>>` instead of `List<T>`.
+  2. Operations:
+    - The endpoints use reactive operators like `chain()` and `map()` for transformations.
+    - All database operations like `persist(...)`, `find(...)`, `update(...)`, `delete(...)` return `Uni<?>`.
+    - No blocking operations are used.
+  3. Query Results:
+    - `firstResult(...)` is used instead of `getSingleResult(...)`.
+    - Results are transformed using `map(...)` when needed.
+    - Optional values are handled reactively.
+
+Please don't hesitate to spend some time comparing the two classes and to 
+understand the modifications required such that to make reactive the repository 
+layer. This reactive approach allows the application to handle more concurrent 
+requests with fewer threads, as operations don't block waiting for database responses.
+
+The class `OrderRactiveRepository` is similar and the points above mentioned  
+regarding to `CustomerReactiveRepository` apply to it as well.
+
 ## Making reactive the service layer
 
+The same way as we did for the repository layer, the service layer has to be 
+transformed as well, such that to become reactive. Let's look at the interface 
+`CustomerReactiveService`:
+
+\begin{lstlisting}[language=Java, caption=The interface CustomerReactiveService]
+    public interface CustomerReactiveService
+    {
+      Uni<List<CustomerDTO>> getCustomers();
+      Uni<CustomerDTO> getCustomer(Long id);
+      Uni<CustomerDTO> getCustomerByEmail(String email);
+      Uni<CustomerDTO> createCustomer(CustomerDTO customerDTO);
+      Uni<CustomerDTO> updateCustomer(CustomerDTO customerDTO);
+      Uni<Boolean> deleteCustomer(Long id);
+      Uni<Customer> findCustomerById(Long id);
+    }
+\end{lstlisting}
+
+As you can notice, the interface `CustomerService` has been modified to become
+reactive and renamed `CustomerReactiveService`. Its implemnation as well, let's 
+see a code fragment:
+
+\begin{lstlisting}[language=Java, caption=The class CustomerReactiveServiceImpl]
+    ...
+    @Override
+    public Uni<CustomerDTO> getCustomer(Long id)
+    {
+      return customerRepository.findByIdOptional(id)
+        .map(optionalCustomer -> optionalCustomer
+        .map(CustomerReactiveMapper.INSTANCE::fromEntity)
+        .orElseThrow(() -> new CustomerNotFoundException("""
+          ### CustomerServiceImpl.getCustomer():
+            Customer not found for id: %s""".formatted(id))));
+    }
+
+    @Override
+    public Uni<CustomerDTO> getCustomerByEmail(String email) 
+    {
+      return customerRepository.findByEmail(email)
+       .map(optionalCustomer -> optionalCustomer
+       .map(CustomerReactiveMapper.INSTANCE::fromEntity)
+       .orElseThrow(() -> new CustomerNotFoundException("""
+         ### CustomerServiceImpl.getCustomerByEmail():
+           Customer not found for email: %s""".formatted(email))));
+    }
+
+    @Override
+    public Uni<CustomerDTO> createCustomer(CustomerDTO customerDTO)
+    {
+      return customerRepository
+       .createCustomer(CustomerReactiveMapper.INSTANCE.toEntity(customerDTO))
+         .map(CustomerReactiveMapper.INSTANCE::fromEntity);
+    }
+    ...
+\end{lstlisting}
+
+Nothing very spectacular here, in this code fragment, the same strategy discussed
+precedently and consisting in trying to adopt a consistent reactive prgramming 
+model by returning `Uni<T>` instead of `T`, to use `map(...)` functions for 
+transformation puprposes, etc.
+
+But if everything is "déjà vu" as far as the `CustomerReactiveServiceImpl` is 
+concerned, this is not exactly the case when it comes to mappers. You certainly
+remember that the service layer accepts DTOs as input parameters and calls the
+repository layer with JPA entity parameters, accordingly it is responsible for the
+DTOs to entities mapping. Conversely, it gets JPA entities from the repository
+layer and returns DTOs to the REST one, meaning that it needs to provide the 
+reverse conversion from JPA entities to DTOs. All these operations are done with
+the `mapstruct and, since this library doesn't support the reactive programming,
+some acrobaties are required, as shown in the code below:
+
+\begin{lstlisting}[language=Java, caption=The class OrderReactiveMapper]
+    ...
+    public Uni<Order> toEntity(OrderDTO orderDTO)
+    {
+      if (orderDTO.id() != null)
+      {
+        return orderService.findOrderById(orderDTO.id())
+          .onItem().ifNotNull()
+          .transform(existingOrder ->
+          {
+            updateEntityFromDTO(orderDTO, existingOrder);
+            return existingOrder;
+          })
+          .onItem().ifNull()
+          .switchTo(() -> createNewOrder(orderDTO));
+      }
+      return createNewOrder(orderDTO);
+    }
+
+    private Uni<Order> createNewOrder(OrderDTO orderDTO)
+    {
+      return customerService.findCustomerById(orderDTO.customerId())
+       .map(customer -> new Order(orderDTO.item(), orderDTO.price(), customer));
+    }
+
+    public abstract void updateEntityFromDTO(OrderDTO orderDTO, @MappingTarget Order order);
+    ...
+\end{lstlisting}
+
+The `toEntity(...]` method, in the listing above, maps an `OrderDTO` to an 
+`Uni<Order>`. If this DTO corresponds to an existing order, i.e. it has an ID,
+then the entity with the given ID is selected from the database. If such an order
+is found, then it is updated, mapped to the `Uni<CustomerDTO>` and returned to 
+the caller. Otherwise, if such an order isn't found, then it is created, mapped
+to an `Uni<CustomerDTO>` and returned to the caller.
+Last but not least, if the input DTO doesn't correspond to an existing order,
+i.e. its ID is null, then it is created directly, mapped and returned, as explained.
+
+This mapper is a bit convoluted, so don't hesitate to take the required time to 
+understand it.
 
 \pagebreak
 \section{Securing RESTful services}
